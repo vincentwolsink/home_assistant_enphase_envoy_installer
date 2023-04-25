@@ -14,7 +14,16 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import BATTERY_ENERGY_DISCHARGED_SENSOR, BATTERY_ENERGY_CHARGED_SENSOR, COORDINATOR, DOMAIN, NAME, SENSORS, ICON
+from .const import (
+    BATTERY_ENERGY_DISCHARGED_SENSOR,
+    BATTERY_ENERGY_CHARGED_SENSOR,
+    COORDINATOR,
+    DOMAIN,
+    NAME,
+    SENSORS,
+    ICON,
+)
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -28,24 +37,39 @@ async def async_setup_entry(
 
     entities = []
     for sensor_description in SENSORS:
-        if (sensor_description.key == "inverters"):
-            if (coordinator.data.get("inverters_production") is not None):
+        if sensor_description.key == "inverters":
+            if coordinator.data.get("inverters_production") is not None:
                 for inverter in coordinator.data["inverters_production"]:
-                    entity_name = f"{name} {sensor_description.name} {inverter}"
-                    split_name = entity_name.split(" ")
-                    serial_number = split_name[-1]
+                    device_name = f"Inverter {inverter}"
+                    entity_name = f"{device_name} {sensor_description.name}"
                     entities.append(
                         EnvoyInverterEntity(
                             sensor_description,
                             entity_name,
-                            name,
-                            config_entry.unique_id,
-                            serial_number,
+                            device_name,
+                            inverter,
+                            inverter,
                             coordinator,
                         )
                     )
-        elif (sensor_description.key == "batteries"):
-            if (coordinator.data.get("batteries") is not None):
+        elif sensor_description.key.startswith("inverters_"):
+            if coordinator.data.get("inverters_status") is not None:
+                for inverter in coordinator.data["inverters_status"].keys():
+                    device_name = f"Inverter {inverter}"
+                    entity_name = f"{device_name} {sensor_description.name}"
+                    entities.append(
+                        EnvoyInverterEntity(
+                            sensor_description,
+                            entity_name,
+                            device_name,
+                            inverter,
+                            None,
+                            coordinator,
+                        )
+                    )
+
+        elif sensor_description.key == "batteries":
+            if coordinator.data.get("batteries") is not None:
                 for battery in coordinator.data["batteries"]:
                     entity_name = f"{name} {sensor_description.name} {battery}"
                     serial_number = battery
@@ -56,19 +80,19 @@ async def async_setup_entry(
                             name,
                             config_entry.unique_id,
                             serial_number,
-                            coordinator
+                            coordinator,
                         )
                     )
 
-        elif (sensor_description.key == "current_battery_capacity"):
-            if (coordinator.data.get("batteries") is not None):
+        elif sensor_description.key == "current_battery_capacity":
+            if coordinator.data.get("batteries") is not None:
                 battery_capacity_entity = TotalBatteryCapacityEntity(
                     sensor_description,
                     f"{name} {sensor_description.name}",
                     name,
                     config_entry.unique_id,
                     None,
-                    coordinator
+                    coordinator,
                 )
                 entities.append(battery_capacity_entity)
 
@@ -80,7 +104,7 @@ async def async_setup_entry(
                         config_entry.unique_id,
                         None,
                         battery_capacity_entity,
-                        True
+                        True,
                     )
                 )
 
@@ -92,20 +116,22 @@ async def async_setup_entry(
                         config_entry.unique_id,
                         None,
                         battery_capacity_entity,
-                        False
+                        False,
                     )
                 )
 
-        elif (sensor_description.key == "total_battery_percentage"):
-            if (coordinator.data.get("batteries") is not None):
-                entities.append(TotalBatteryPercentageEntity(
+        elif sensor_description.key == "total_battery_percentage":
+            if coordinator.data.get("batteries") is not None:
+                entities.append(
+                    TotalBatteryPercentageEntity(
                         sensor_description,
                         f"{name} {sensor_description.name}",
                         name,
                         config_entry.unique_id,
                         None,
-                        coordinator
-                    ))
+                        coordinator,
+                    )
+                )
 
         else:
             data = coordinator.data.get(sensor_description.key)
@@ -125,6 +151,7 @@ async def async_setup_entry(
             )
 
     async_add_entities(entities)
+
 
 class EnvoyEntity(SensorEntity):
     """Envoy entity"""
@@ -179,6 +206,7 @@ class EnvoyEntity(SensorEntity):
             name=self._device_name,
         )
 
+
 class CoordinatedEnvoyEntity(EnvoyEntity, CoordinatorEntity):
     def __init__(
         self,
@@ -189,7 +217,9 @@ class CoordinatedEnvoyEntity(EnvoyEntity, CoordinatorEntity):
         serial_number,
         coordinator,
     ):
-        EnvoyEntity.__init__(self, description, name, device_name, device_serial_number, serial_number)
+        EnvoyEntity.__init__(
+            self, description, name, device_name, device_serial_number, serial_number
+        )
         CoordinatorEntity.__init__(self, coordinator)
 
     @property
@@ -197,7 +227,8 @@ class CoordinatedEnvoyEntity(EnvoyEntity, CoordinatorEntity):
         """Return the state of the sensor."""
         return self.coordinator.data.get(self.entity_description.key)
 
-class EnvoyInverterEntity(CoordinatedEnvoyEntity):
+
+class EnvoyInverterEntity(CoordinatorEntity, SensorEntity):
     """Envoy inverter entity."""
 
     def __init__(
@@ -209,39 +240,84 @@ class EnvoyInverterEntity(CoordinatedEnvoyEntity):
         serial_number,
         coordinator,
     ):
-        super().__init__(
-            description=description,
-            name=name,
-            device_name=device_name,
-            device_serial_number=device_serial_number,
-            serial_number=serial_number,
-            coordinator=coordinator
-        )
+        super().__init__(coordinator=coordinator)
+
+        self.entity_description = description
+        self._name = name
+        self._serial_number = serial_number
+        self._device_name = device_name
+        self._device_serial_number = device_serial_number
+
+    @property
+    def name(self):
+        """Return the name of the sensor."""
+        return self._name
+
+    @property
+    def icon(self):
+        """Icon to use in the frontend, if any."""
+        return ICON
+
+    @property
+    def unique_id(self):
+        """Return the unique id of the sensor."""
+        if self._serial_number:
+            return self._serial_number
+        if self._device_serial_number:
+            return f"{self._device_serial_number}_{self.entity_description.key}"
 
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        if (
-            self.coordinator.data.get("inverters_production") is not None
-        ):
-            return self.coordinator.data.get("inverters_production").get(
-                self._serial_number
-            )[0]
+        if self.entity_description.key.startswith("inverters_"):
+            if self.coordinator.data.get("inverters_status") is not None:
+                return (
+                    self.coordinator.data.get("inverters_status")
+                    .get(self._device_serial_number)
+                    .get(self.entity_description.key[10:])
+                )
+        elif self.coordinator.data.get("inverters_production") is not None:
+            return (
+                self.coordinator.data.get("inverters_production")
+                .get(self._device_serial_number)
+                .get("watt")
+            )
 
         return None
 
     @property
     def extra_state_attributes(self):
         """Return the state attributes."""
-        if (
-            self.coordinator.data.get("inverters_production") is not None
-        ):
-            value = self.coordinator.data.get("inverters_production").get(
-                self._serial_number
-            )[1]
+        if self.entity_description.key.startswith("inverters_"):
+            if self.coordinator.data.get("inverters_status") is not None:
+                value = (
+                    self.coordinator.data.get("inverters_status")
+                    .get(self._device_serial_number)
+                    .get("report_date")
+                )
+                return {"last_reported": value}
+        elif self.coordinator.data.get("inverters_production") is not None:
+            value = (
+                self.coordinator.data.get("inverters_production")
+                .get(self._serial_number)
+                .get("report_date")
+            )
             return {"last_reported": value}
 
         return None
+
+    @property
+    def device_info(self) -> DeviceInfo | None:
+        """Return the device_info of the device."""
+        if not self._device_serial_number:
+            return None
+        return DeviceInfo(
+            identifiers={(DOMAIN, str(self._device_serial_number))},
+            manufacturer="Enphase",
+            model="Inverter",
+            name=self._device_name,
+        )
+
 
 class EnvoyBatteryEntity(CoordinatedEnvoyEntity):
     """Envoy battery entity."""
@@ -261,39 +337,36 @@ class EnvoyBatteryEntity(CoordinatedEnvoyEntity):
             device_name=device_name,
             device_serial_number=device_serial_number,
             serial_number=serial_number,
-            coordinator=coordinator
+            coordinator=coordinator,
         )
 
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        if (
-            self.coordinator.data.get("batteries") is not None
-        ):
-            return self.coordinator.data.get("batteries").get(
-                self._serial_number
-            ).get("percentFull")
+        if self.coordinator.data.get("batteries") is not None:
+            return (
+                self.coordinator.data.get("batteries")
+                .get(self._serial_number)
+                .get("percentFull")
+            )
 
         return None
 
     @property
     def extra_state_attributes(self):
         """Return the state attributes."""
-        if (
-            self.coordinator.data.get("batteries") is not None
-        ):
-            battery = self.coordinator.data.get("batteries").get(
-                self._serial_number
-            )
+        if self.coordinator.data.get("batteries") is not None:
+            battery = self.coordinator.data.get("batteries").get(self._serial_number)
             last_reported = strftime(
                 "%Y-%m-%d %H:%M:%S", localtime(battery.get("last_rpt_date"))
             )
             return {
                 "last_reported": last_reported,
-                "capacity": battery.get("encharge_capacity")
+                "capacity": battery.get("encharge_capacity"),
             }
 
         return None
+
 
 class TotalBatteryCapacityEntity(CoordinatedEnvoyEntity):
     def __init__(
@@ -311,16 +384,14 @@ class TotalBatteryCapacityEntity(CoordinatedEnvoyEntity):
             device_name=device_name,
             device_serial_number=device_serial_number,
             serial_number=serial_number,
-            coordinator=coordinator
+            coordinator=coordinator,
         )
 
     @property
     def native_value(self):
         """Return the state of the sensor."""
         batteries = self.coordinator.data.get("batteries")
-        if (
-            batteries is not None
-        ):
+        if batteries is not None:
             total = 0
             for battery in batteries:
                 percentage = batteries.get(battery).get("percentFull")
@@ -348,16 +419,14 @@ class TotalBatteryPercentageEntity(CoordinatedEnvoyEntity):
             device_name=device_name,
             device_serial_number=device_serial_number,
             serial_number=serial_number,
-            coordinator=coordinator
+            coordinator=coordinator,
         )
 
     @property
     def native_value(self):
         """Return the state of the sensor."""
         batteries = self.coordinator.data.get("batteries")
-        if (
-            batteries is not None
-        ):
+        if batteries is not None:
             battery_sum = 0
             for battery in batteries:
                 battery_sum += batteries.get(battery).get("percentFull", 0)
@@ -365,6 +434,7 @@ class TotalBatteryPercentageEntity(CoordinatedEnvoyEntity):
             return round(battery_sum / len(batteries), 2)
 
         return None
+
 
 class BatteryEnergyChangeEntity(EnvoyEntity):
     def __init__(
@@ -375,7 +445,7 @@ class BatteryEnergyChangeEntity(EnvoyEntity):
         device_serial_number,
         serial_number,
         total_battery_capacity_entity,
-        positive: bool
+        positive: bool,
     ):
         super().__init__(
             description=description,
@@ -411,14 +481,14 @@ class BatteryEnergyChangeEntity(EnvoyEntity):
                 old_state_value = int(old_state.state)
                 new_state_value = int(new_state.state)
 
-                if (self._positive):
-                    if (new_state_value > old_state_value):
+                if self._positive:
+                    if new_state_value > old_state_value:
                         self._state = new_state_value - old_state_value
                     else:
                         self._state = 0
 
                 else:
-                    if (old_state_value > new_state_value):
+                    if old_state_value > new_state_value:
                         self._state = old_state_value - new_state_value
                     else:
                         self._state = 0

@@ -35,7 +35,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         enlighten_user=config[CONF_USERNAME],
         enlighten_pass=config[CONF_PASSWORD],
         inverters=True,
-#        async_client=get_async_client(hass),
         use_enlighten_owner_token=config.get(CONF_USE_ENLIGHTEN, False),
         enlighten_serial_num=config[CONF_SERIAL],
         https_flag='s' if config.get(CONF_USE_ENLIGHTEN, False) else ''
@@ -54,9 +53,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
             for description in SENSORS:
                 if description.key == "inverters":
-                    data[
-                        "inverters_production"
-                    ] = await envoy_reader.inverters_production()
+                    data["inverters_production"] = await envoy_reader.inverters_production()
+                    data["inverters_status"] = await envoy_reader.inverters_status()
+
+                elif (description.key.startswith("inverters_")):
+                    continue
 
                 elif description.key == "batteries":
                     battery_data = await envoy_reader.battery_storage()
@@ -67,10 +68,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
                         data[description.key] = battery_dict
 
-                elif (description.key not in ["current_battery_capacity", "total_battery_percentage"]):
-                    data[description.key] = await getattr(
-                        envoy_reader, description.key
-                    )()
+                elif (description.key in ["current_battery_capacity", "total_battery_percentage"]):
+                    continue
+
+                else:
+                    data[description.key] = await getattr(envoy_reader, description.key)()
 
             data["grid_status"] = await envoy_reader.grid_status()
 

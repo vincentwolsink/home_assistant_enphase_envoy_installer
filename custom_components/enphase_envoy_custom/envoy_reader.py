@@ -25,6 +25,7 @@ LIFE_PRODUCTION_REGEX = (
 )
 SERIAL_REGEX = re.compile(r"Envoy\s*Serial\s*Number:\s*([0-9]+)")
 
+ENDPOITN_URL_INVENTORY = "http{}://{}/inventory.json"
 ENDPOINT_URL_PRODUCTION_JSON = "http{}://{}/production.json"
 ENDPOINT_URL_PRODUCTION_V1 = "http{}://{}/api/v1/production"
 ENDPOINT_URL_PRODUCTION_INVERTERS = "http{}://{}/api/v1/production/inverters"
@@ -741,12 +742,12 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
         response_dict = {}
         try:
             for item in self.endpoint_production_inverters.json():
-                response_dict[item["serialNumber"]] = [
-                    item["lastReportWatts"],
-                    time.strftime(
+                response_dict[item["serialNumber"]] = {
+                    "watt": item["lastReportWatts"],
+                    "report_date": time.strftime(
                         "%Y-%m-%d %H:%M:%S", time.localtime(item["lastReportDate"])
                     ),
-                ]
+                }
         except (JSONDecodeError, KeyError, IndexError, TypeError, AttributeError):
             return None
 
@@ -834,7 +835,7 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
                             elif field == "acVoltageINmV":
                                 response_dict[serial]["ac_voltage"] = int(value) / 1000
                             elif field == "acPowerINmW":
-                                response_dict[serial]["ac_current"] = int(value) / 1000
+                                response_dict[serial]["ac_power"] = int(value) / 1000
                             else:
                                 response_dict[serial][field] = value
 

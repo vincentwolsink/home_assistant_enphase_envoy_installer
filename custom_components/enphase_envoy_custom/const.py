@@ -10,7 +10,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import ENERGY_WATT_HOUR, POWER_WATT, Platform, PERCENTAGE
+from homeassistant.const import ENERGY_WATT_HOUR, POWER_WATT, Platform, PERCENTAGE, UnitOfElectricPotential, UnitOfElectricCurrent, UnitOfTemperature
 
 DOMAIN = "enphase_envoy"
 
@@ -81,8 +81,32 @@ SENSORS = (
     ),
     SensorEntityDescription(
         key="inverters",
-        name="Inverter",
+        name="Production",
         native_unit_of_measurement=POWER_WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="inverters_ac_voltage",
+        name="AC Voltage",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="inverters_dc_voltage",
+        name="DC Voltage",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="inverters_dc_current",
+        name="DC Current",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="inverters_temperature",
+        name="Temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
