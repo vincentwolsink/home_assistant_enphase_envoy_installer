@@ -240,13 +240,12 @@ class EnvoyInverterEntity(CoordinatorEntity, SensorEntity):
         serial_number,
         coordinator,
     ):
-        super().__init__(coordinator=coordinator)
-
         self.entity_description = description
         self._name = name
         self._serial_number = serial_number
         self._device_name = device_name
         self._device_serial_number = device_serial_number
+        CoordinatorEntity.__init__(self, coordinator)
 
     @property
     def name(self):
