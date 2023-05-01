@@ -3,7 +3,7 @@
   "name": "Enphase Envoy (Installer)",
   "documentation": "https://www.home-assistant.io/integrations/enphase_envoy",
   "requirements": ["envoy-utils"],
-  "codeowners": ["@gtdiehl", "@briancmpbll", "@vincentwolsink"],
+  "codeowners": ["@vincentwolsink"],
   "config_flow": true,
   "integration_type": "hub",
   "iot_class": "local_polling",
