@@ -4,12 +4,12 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntityDescription,
 )
-
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntityDescription,
     SensorStateClass,
 )
+from homeassistant.components.switch import SwitchDeviceClass, SwitchEntityDescription
 from homeassistant.const import (
     Platform,
     PERCENTAGE,
@@ -22,12 +22,13 @@ from homeassistant.const import (
 
 DOMAIN = "enphase_envoy"
 
-PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
+PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SWITCH]
 
 ICON = "mdi:flash"
 
 COORDINATOR = "coordinator"
 NAME = "name"
+READER = "reader"
 
 CONF_SERIAL = "serial"
 CONF_USE_ENLIGHTEN = "use_enlighten"
@@ -171,4 +172,10 @@ BATTERY_ENERGY_CHARGED_SENSOR = SensorEntityDescription(
     native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
     state_class=SensorStateClass.TOTAL,
     device_class=SensorDeviceClass.ENERGY,
+)
+
+PRODUCION_POWER_SWITCH = SwitchEntityDescription(
+    key="production_power",
+    name="Production",
+    device_class=SwitchDeviceClass.SWITCH,
 )

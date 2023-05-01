@@ -52,7 +52,7 @@ ENLIGHTEN_TOKEN_URL = (
 )
 
 _LOGGER = logging.getLogger(__name__)
-
+_LOGGER.setLevel(logging.DEBUG)
 
 def has_production_and_consumption(json):
     """Check if json has keys for both production and consumption."""
@@ -236,7 +236,7 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
 
     async def _async_post(self, url, data, cookies=None, **kwargs):
         _LOGGER.debug("HTTP POST Attempt: %s", url)
-        # _LOGGER.debug("HTTP POST Data: %s", data)
+        _LOGGER.debug("HTTP POST Data: %s", data)
         try:
             async with self.async_client as client:
                 resp = await client.post(
@@ -244,6 +244,19 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
                 )
                 _LOGGER.debug("HTTP POST %s: %s: %s", url, resp, resp.text)
                 _LOGGER.debug("HTTP POST Cookie: %s", resp.cookies)
+                return resp
+        except httpx.TransportError:  # pylint: disable=try-except-raise
+            raise
+
+    async def _async_put(self, url, data, **kwargs):
+        _LOGGER.debug("HTTP PUT Attempt: %s Header: %s", url, self._authorization_header)
+        _LOGGER.debug("HTTP PUT Data: %s", data)
+        try:
+            async with self.async_client as client:
+                resp = await client.put(
+                    url, headers=self._authorization_header, json=data, timeout=30, **kwargs
+                )
+                _LOGGER.debug("HTTP PUT %s: %s: %s", url, resp, resp.text)
                 return resp
         except httpx.TransportError:  # pylint: disable=try-except-raise
             raise
@@ -800,6 +813,12 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
                 return not power_json["powerForcedOff"]
 
         return self.message_production_power_not_available
+
+    async def set_production_power(self, power_on):
+        if self.endpoint_production_power is not None:
+            formatted_url = ENDPOINT_URL_PRODUCTION_POWER.format(self.https_flag, self.host)
+            power_forced_off = 0 if power_on else 1
+            result = await self._async_put(formatted_url, data={'length': 1, 'arr': [power_forced_off]})
 
     async def inverters_status(self):
         """Running getData() beforehand will set self.enpoint_type and self.isDataRetrieved"""

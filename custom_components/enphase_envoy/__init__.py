@@ -15,7 +15,16 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import COORDINATOR, DOMAIN, NAME, PLATFORMS, SENSORS, CONF_USE_ENLIGHTEN, CONF_SERIAL
+from .const import (
+    COORDINATOR,
+    DOMAIN,
+    NAME,
+    PLATFORMS,
+    SENSORS,
+    CONF_USE_ENLIGHTEN,
+    CONF_SERIAL,
+    READER,
+)
 
 SCAN_INTERVAL = timedelta(seconds=60)
 
@@ -37,7 +46,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         inverters=True,
         use_enlighten_owner_token=config.get(CONF_USE_ENLIGHTEN, False),
         enlighten_serial_num=config[CONF_SERIAL],
-        https_flag='s' if config.get(CONF_USE_ENLIGHTEN, False) else ''
+        https_flag="s" if config.get(CONF_USE_ENLIGHTEN, False) else "",
     )
 
     async def async_update_data():
@@ -53,10 +62,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
             for description in SENSORS:
                 if description.key == "inverters":
-                    data["inverters_production"] = await envoy_reader.inverters_production()
+                    data[
+                        "inverters_production"
+                    ] = await envoy_reader.inverters_production()
                     data["inverters_status"] = await envoy_reader.inverters_status()
 
-                elif (description.key.startswith("inverters_")):
+                elif description.key.startswith("inverters_"):
                     continue
 
                 elif description.key == "batteries":
@@ -68,13 +79,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
                         data[description.key] = battery_dict
 
-                elif (description.key in ["current_battery_capacity", "total_battery_percentage"]):
+                elif description.key in [
+                    "current_battery_capacity",
+                    "total_battery_percentage",
+                ]:
                     continue
 
                 else:
-                    data[description.key] = await getattr(envoy_reader, description.key)()
+                    data[description.key] = await getattr(
+                        envoy_reader, description.key
+                    )()
 
             data["grid_status"] = await envoy_reader.grid_status()
+            data["production_power"] = await envoy_reader.production_power()
 
             _LOGGER.debug("Retrieved data from API: %s", data)
 
@@ -105,6 +122,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
         COORDINATOR: coordinator,
         NAME: name,
+        READER: envoy_reader,
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
