@@ -838,7 +838,11 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
             devstatus = self.endpoint_devstatus.json()
             for item in devstatus["pcu"]["values"]:
                 if "serialNumber" in devstatus["pcu"]["fields"]:
+                    if item[devstatus["pcu"]["fields"].index("devType")] == 12:  # this is a relay
+                        continue
+
                     serial = item[devstatus["pcu"]["fields"].index("serialNumber")]
+
                     response_dict[serial] = {}
 
                     for field in [
@@ -873,6 +877,61 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
 
         return response_dict
 
+    async def relay_status(self):
+        '''Return relay status from Envoys that have relays installed.'''
+        response_dict = {}
+        try:
+            devstatus = self.endpoint_devstatus.json()
+            for item in devstatus['pcu']['values']:
+                if "serialNumber" in devstatus["pcu"]["fields"]:
+                    if item[devstatus["pcu"]["fields"].index("devType")] != 12:  # this is a relay
+                        continue
+
+                    serial = item[devstatus["pcu"]["fields"].index("serialNumber")]
+                    dev = response_dict.setdefault(serial, {})
+                    for field in [
+                        "communicating",
+                        "reportDate",
+                    ]:
+                        if field in devstatus["pcu"]["fields"]:
+                            value = item[devstatus["pcu"]["fields"].index(field)]
+                            if field == "reportDate":
+                                dev["report_date"] = time.strftime(
+                                    "%Y-%m-%d %H:%M:%S", time.localtime(value)
+                                )
+                            else:
+                                dev[field] = value
+
+            for item in devstatus["nsrb"]["values"]:
+                if "serialNumber" in devstatus["nsrb"]["fields"]:
+                    serial = item[devstatus["nsrb"]["fields"].index("serialNumber")]
+                    response_dict[serial] = {}
+                    dev = response_dict.setdefault(serial, {})
+
+                    for field in [
+                        "relay",
+                        "forced",
+                        "reason_code",
+                        "reason",
+                    ]:
+                        if field in devstatus["nsrb"]["fields"]:
+                            value = item[devstatus["nsrb"]["fields"].index(field)]
+                            dev[field] = value
+        except (JSONDecodeError, KeyError, IndexError, TypeError, AttributeError):
+            return None
+
+        return response_dict
+
+        return self.message_relay_not_installed
+
+    async def firmware_data(self):
+        if self.endpoint_home_json_results == None: return None
+        home_json = self.endpoint_home_json_results.json()
+        return {
+            'update_status': home_json.get('update_status', 'n/a'),
+            'software_build_epoch': home_json['software_build_epoch'],
+        }
+
     def run_in_console(self):
         """If running this module directly, print all the values in the console."""
         print("Reading...")
@@ -896,6 +955,8 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
                 self.battery_storage(),
                 self.production_power(),
                 self.inverters_status(),
+                self.relay_status(),
+                self.firmware_data(),
                 return_exceptions=False,
             )
         )
@@ -921,6 +982,8 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
         print(f"battery_storage:         {results[9]}")
         print(f"production_power:        {results[10]}")
         print(f"inverters_status:        {results[11]}")
+        print(f"relays:                  {results[12]}")
+        print(f"firmware:                {results[13]}")
 
 
 if __name__ == "__main__":
