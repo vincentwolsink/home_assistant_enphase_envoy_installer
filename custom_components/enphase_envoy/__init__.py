@@ -21,8 +21,10 @@ from .const import (
     NAME,
     PLATFORMS,
     SENSORS,
+    PHASE_SENSORS,
     CONF_USE_ENLIGHTEN,
     CONF_SERIAL,
+    CONF_SHOW_PHASE,
     READER,
 )
 
@@ -86,6 +88,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     continue
 
                 else:
+                    data[description.key] = await getattr(
+                        envoy_reader, description.key
+                    )()
+
+            if config.get(CONF_SHOW_PHASE, False):
+                for description in PHASE_SENSORS:
                     data[description.key] = await getattr(
                         envoy_reader, description.key
                     )()
