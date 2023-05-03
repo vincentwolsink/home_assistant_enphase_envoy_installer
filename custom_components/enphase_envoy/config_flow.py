@@ -16,7 +16,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 
-from .const import DOMAIN, CONF_SERIAL, CONF_USE_ENLIGHTEN
+from .const import DOMAIN, CONF_SERIAL, CONF_USE_ENLIGHTEN, CONF_SHOW_PHASE
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,6 +34,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> EnvoyRead
         inverters=False,
         use_enlighten_owner_token=data.get(CONF_USE_ENLIGHTEN, False),
         enlighten_serial_num=data[CONF_SERIAL],
+        show_phase=data.get(CONF_SHOW_PHASE, False),
         https_flag="s" if data.get(CONF_USE_ENLIGHTEN, False) else "",
     )
 
@@ -74,6 +75,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         schema[vol.Optional(CONF_PASSWORD, default="")] = str
         schema[vol.Optional(CONF_SERIAL, default=self.unique_id)] = str
         schema[vol.Optional(CONF_USE_ENLIGHTEN)] = bool
+        schema[vol.Optional(CONF_SHOW_PHASE)] = bool
         return vol.Schema(schema)
 
     @callback
