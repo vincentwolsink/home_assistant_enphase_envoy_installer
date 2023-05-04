@@ -2,10 +2,18 @@
 
 [![GitHub Release][releases-shield]][releases]
 [![Maintainer][maintainer-shield]][maintainer]
+[![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
-This is a HACS custom integration for enphase envoys with firmware version 7.X. To be used with your installer account. It will create a seperate device per inverter with all information available. It will also add a "Production" switch to turn on/off solar power production.
+This is a HACS custom integration for enphase envoys with firmware version 7.X. To be used with your installer account.
 
-Based on https://github.com/briancmpbll/home_assistant_custom_envoy and https://github.com/posixx/home_assistant_custom_envoy/
+Features:
+- Seperate device per inverter with all information available. 
+- Seperate device per Q-relay with relay status.
+- "Production" switch to turn on/off solar power production.
+- Firmware update sensor.
+- 3 Phase CT readings.
+
+Based on work from [@briancmpbll](https://github.com/briancmpbll/home_assistant_custom_envoy) and [@posixx](https://github.com/posixx/home_assistant_custom_envoy)
 
 
 # Installation
@@ -19,3 +27,5 @@ Based on https://github.com/briancmpbll/home_assistant_custom_envoy and https://
 [releases]: https://github.com/vincentwolsink/home_assistant_enphase_envoy_installer/releases
 [maintainer-shield]: https://img.shields.io/badge/maintainer-vincentwolsink-blue.svg?style=for-the-badge
 [maintainer]: https://github.com/vincentwolsink
+[buymecoffee]: https://ko-fi.com/vincentwolsink
+[buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-tip-yellow.svg?style=for-the-badge
