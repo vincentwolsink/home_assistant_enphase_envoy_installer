@@ -20,6 +20,7 @@ from .const import (
     DOMAIN,
     NAME,
     PLATFORMS,
+    BINARY_SENSORS,
     SENSORS,
     PHASE_SENSORS,
     CONF_USE_ENLIGHTEN,
@@ -61,6 +62,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 raise ConfigEntryAuthFailed from err
             except httpx.HTTPError as err:
                 raise UpdateFailed(f"Error communicating with API: {err}") from err
+
+            for description in BINARY_SENSORS:
+                if description.key == "relays":
+                    data[description.key] = await envoy_reader.relay_status()
+
+                elif description.key == 'firmware':
+                    data[description.key] = await envoy_reader.firmware_data()
 
             for description in SENSORS:
                 if description.key == "inverters":
