@@ -8,8 +8,8 @@
 This is a HACS custom integration for enphase envoys with firmware version 7.X. To be used with your installer account.
 
 Features:
-- Seperate device per inverter with all information available. 
-- Seperate device per Q-relay with relay status.
+- Individual device per inverter with all information available. 
+- Individual device per Q-relay with relay status.
 - "Production" switch to turn on/off solar power production.
 - Firmware update sensor.
 - 3 Phase CT readings.
