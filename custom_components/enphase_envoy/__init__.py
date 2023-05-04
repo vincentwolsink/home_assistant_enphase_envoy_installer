@@ -67,7 +67,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 if description.key == "relays":
                     data[description.key] = await envoy_reader.relay_status()
 
-                elif description.key == 'firmware':
+                elif description.key == "firmware":
                     data[description.key] = await envoy_reader.firmware_data()
 
             for description in SENSORS:

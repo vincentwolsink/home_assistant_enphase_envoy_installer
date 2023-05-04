@@ -1114,7 +1114,9 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
             devstatus = self.endpoint_devstatus.json()
             for item in devstatus["pcu"]["values"]:
                 if "serialNumber" in devstatus["pcu"]["fields"]:
-                    if item[devstatus["pcu"]["fields"].index("devType")] == 12:  # this is a relay
+                    if (
+                        item[devstatus["pcu"]["fields"].index("devType")] == 12
+                    ):  # this is a relay
                         continue
 
                     serial = item[devstatus["pcu"]["fields"].index("serialNumber")]
@@ -1154,13 +1156,15 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
         return response_dict
 
     async def relay_status(self):
-        '''Return relay status from Envoys that have relays installed.'''
+        """Return relay status from Envoys that have relays installed."""
         response_dict = {}
         try:
             devstatus = self.endpoint_devstatus.json()
-            for item in devstatus['pcu']['values']:
+            for item in devstatus["pcu"]["values"]:
                 if "serialNumber" in devstatus["pcu"]["fields"]:
-                    if item[devstatus["pcu"]["fields"].index("devType")] != 12:  # this is a relay
+                    if (
+                        item[devstatus["pcu"]["fields"].index("devType")] != 12
+                    ):  # this is a relay
                         continue
 
                     serial = item[devstatus["pcu"]["fields"].index("serialNumber")]
@@ -1204,10 +1208,10 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
         if self.endpoint_home_json_results:
             home_json = self.endpoint_home_json_results.json()
 
-            if 'update_status' in home_json:
+            if "update_status" in home_json:
                 return {
-                    'update_status': home_json['update_status'],
-                    'software_build_epoch': home_json['software_build_epoch'],
+                    "update_status": home_json["update_status"],
+                    "software_build_epoch": home_json["software_build_epoch"],
                 }
         return None
 
