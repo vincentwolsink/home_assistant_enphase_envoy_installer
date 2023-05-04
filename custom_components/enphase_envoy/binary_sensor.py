@@ -66,18 +66,19 @@ async def async_setup_entry(
                     )
 
         elif sensor_description.key == 'firmware':
-            entity_name = f"{name} {sensor_description.name}"
-            serial_number = name.split(None, 1)[-1]
-            entities.append(
-                EnvoyFirmwareEntity(
-                    sensor_description,
-                    entity_name,
-                    name,
-                    config_entry.unique_id,
-                    serial_number,
-                    coordinator
+            if coordinator.data.get("firmware") is not None:
+                entity_name = f"{name} {sensor_description.name}"
+                serial_number = name.split(None, 1)[-1]
+                entities.append(
+                    EnvoyFirmwareEntity(
+                        sensor_description,
+                        entity_name,
+                        name,
+                        config_entry.unique_id,
+                        serial_number,
+                        coordinator
+                    )
                 )
-            )
 
     async_add_entities(entities)
 

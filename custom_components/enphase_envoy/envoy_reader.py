@@ -1201,12 +1201,15 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
         return self.message_relay_not_installed
 
     async def firmware_data(self):
-        if self.endpoint_home_json_results == None: return None
-        home_json = self.endpoint_home_json_results.json()
-        return {
-            'update_status': home_json.get('update_status', 'n/a'),
-            'software_build_epoch': home_json['software_build_epoch'],
-        }
+        if self.endpoint_home_json_results:
+            home_json = self.endpoint_home_json_results.json()
+
+            if 'update_status' in home_json:
+                return {
+                    'update_status': home_json['update_status'],
+                    'software_build_epoch': home_json['software_build_epoch'],
+                }
+        return None
 
     def run_in_console(self):
         """If running this module directly, print all the values in the console."""
