@@ -34,7 +34,6 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> EnvoyRead
         inverters=False,
         use_enlighten_owner_token=data.get(CONF_USE_ENLIGHTEN, False),
         enlighten_serial_num=data[CONF_SERIAL],
-        show_phase=data.get(CONF_SHOW_PHASE, False),
         https_flag="s" if data.get(CONF_USE_ENLIGHTEN, False) else "",
     )
 
