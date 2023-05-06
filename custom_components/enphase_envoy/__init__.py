@@ -25,7 +25,6 @@ from .const import (
     PHASE_SENSORS,
     CONF_USE_ENLIGHTEN,
     CONF_SERIAL,
-    CONF_SHOW_PHASE,
     READER,
 )
 
@@ -100,11 +99,31 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         envoy_reader, description.key
                     )()
 
-            if config.get(CONF_SHOW_PHASE, False):
-                for description in PHASE_SENSORS:
-                    data[description.key] = await getattr(
-                        envoy_reader, description.key
-                    )()
+            for description in PHASE_SENSORS:
+                if description.key.startswith("production_"):
+                    data[description.key] = await envoy_reader.production_phase(
+                        description.key
+                    )
+                elif description.key.startswith("consumption_"):
+                    data[description.key] = await envoy_reader.consumption_phase(
+                        description.key
+                    )
+                elif description.key.startswith("daily_production_"):
+                    data[description.key] = await envoy_reader.daily_production_phase(
+                        description.key
+                    )
+                elif description.key.startswith("daily_consumption_"):
+                    data[description.key] = await envoy_reader.daily_consumption_phase(
+                        description.key
+                    )
+                elif description.key.startswith("lifetime_production_"):
+                    data[
+                        description.key
+                    ] = await envoy_reader.lifetime_production_phase(description.key)
+                elif description.key.startswith("lifetime_consumption_"):
+                    data[
+                        description.key
+                    ] = await envoy_reader.lifetime_consumption_phase(description.key)
 
             data["grid_status"] = await envoy_reader.grid_status()
             data["production_power"] = await envoy_reader.production_power()
