@@ -16,7 +16,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 
-from .const import DOMAIN, CONF_SERIAL, CONF_USE_ENLIGHTEN, CONF_SHOW_PHASE
+from .const import DOMAIN, CONF_SERIAL, CONF_USE_ENLIGHTEN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -74,7 +74,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         schema[vol.Optional(CONF_PASSWORD, default="")] = str
         schema[vol.Optional(CONF_SERIAL, default=self.unique_id)] = str
         schema[vol.Optional(CONF_USE_ENLIGHTEN)] = bool
-        schema[vol.Optional(CONF_SHOW_PHASE)] = bool
         return vol.Schema(schema)
 
     @callback

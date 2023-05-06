@@ -23,7 +23,6 @@ from .const import (
     SENSORS,
     ICON,
     PHASE_SENSORS,
-    CONF_SHOW_PHASE,
 )
 
 
@@ -152,23 +151,22 @@ async def async_setup_entry(
                 )
             )
 
-    if config_entry.data.get(CONF_SHOW_PHASE, False):
-        for sensor_description in PHASE_SENSORS:
-            data = coordinator.data.get(sensor_description.key)
-            if isinstance(data, str) and "not available" in data:
-                continue
+    for sensor_description in PHASE_SENSORS:
+        data = coordinator.data.get(sensor_description.key)
+        if data == None:
+            continue
 
-            entity_name = f"{name} {sensor_description.name}"
-            entities.append(
-                CoordinatedEnvoyEntity(
-                    sensor_description,
-                    entity_name,
-                    name,
-                    config_entry.unique_id,
-                    None,
-                    coordinator,
-                )
+        entity_name = f"{name} {sensor_description.name}"
+        entities.append(
+            CoordinatedEnvoyEntity(
+                sensor_description,
+                entity_name,
+                name,
+                config_entry.unique_id,
+                None,
+                coordinator,
             )
+        )
 
     async_add_entities(entities)
 
