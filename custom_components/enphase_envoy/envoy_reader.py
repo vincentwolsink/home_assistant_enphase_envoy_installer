@@ -831,9 +831,7 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
 
             try:
                 return int(
-                    lifetime_production_phase=raw_json["production"][idx]["lines"][
-                        phase_map[phase]
-                    ]["whLifetime"]
+                    raw_json["production"][idx]["lines"][phase_map[phase]]["whLifetime"]
                 )
             except KeyError:
                 return None
