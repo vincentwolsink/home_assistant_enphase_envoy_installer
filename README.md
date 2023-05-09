@@ -14,6 +14,9 @@ Features:
 - Firmware update sensor.
 - 3 Phase CT readings.
 
+
+<img width="775" alt="ha_envoy_inverters" src="https://github.com/vincentwolsink/home_assistant_enphase_envoy_installer/assets/1639734/a070ab6e-3207-412f-b712-6bd31cf8ac83">
+
 Based on work from [@briancmpbll](https://github.com/briancmpbll/home_assistant_custom_envoy) and [@posixx](https://github.com/posixx/home_assistant_custom_envoy)
 
 
