@@ -23,7 +23,6 @@ from .const import (
     BINARY_SENSORS,
     SENSORS,
     PHASE_SENSORS,
-    CONF_USE_ENLIGHTEN,
     CONF_SERIAL,
     READER,
 )
@@ -41,14 +40,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     envoy_reader = EnvoyReader(
         config[CONF_HOST],
-        username=config[CONF_USERNAME],
-        password=config[CONF_PASSWORD],
         enlighten_user=config[CONF_USERNAME],
         enlighten_pass=config[CONF_PASSWORD],
         inverters=True,
-        use_enlighten_owner_token=config.get(CONF_USE_ENLIGHTEN, False),
         enlighten_serial_num=config[CONF_SERIAL],
-        https_flag="s" if config.get(CONF_USE_ENLIGHTEN, False) else "",
     )
 
     async def async_update_data():

@@ -14,12 +14,11 @@
       "user": {
         "data": {
           "host": "Host",
-          "password": "Password",
-          "username": "Username",
-          "serial": "Envoy Serial Number",
-          "use_enlighten": "Use Enlighten"
+          "password": "Enlighten Password",
+          "username": "Enlighten Username",
+          "serial": "Envoy Serial Number"
         },
-        "description": "For newer models, enter username `envoy` without a password. For older models, enter username `installer` without a password. For all other models, enter a valid username and password. For firmware D7.0.0 and above check `use enlighten`"
+        "description": "Enter the hostname/ip and serial of your Envoy. Use your Enlighten Installer account credentials."
       }
     }
   }
