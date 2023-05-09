@@ -16,7 +16,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 
-from .const import DOMAIN, CONF_SERIAL, CONF_USE_ENLIGHTEN
+from .const import DOMAIN, CONF_SERIAL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,14 +27,10 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> EnvoyRead
     """Validate the user input allows us to connect."""
     envoy_reader = EnvoyReader(
         data[CONF_HOST],
-        username=data[CONF_USERNAME],
-        password=data[CONF_PASSWORD],
         enlighten_user=data[CONF_USERNAME],
         enlighten_pass=data[CONF_PASSWORD],
         inverters=False,
-        use_enlighten_owner_token=data.get(CONF_USE_ENLIGHTEN, False),
         enlighten_serial_num=data[CONF_SERIAL],
-        https_flag="s" if data.get(CONF_USE_ENLIGHTEN, False) else "",
     )
 
     try:
@@ -70,10 +66,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         else:
             schema[vol.Required(CONF_HOST)] = str
 
-        schema[vol.Optional(CONF_USERNAME, default=self.username or "envoy")] = str
-        schema[vol.Optional(CONF_PASSWORD, default="")] = str
-        schema[vol.Optional(CONF_SERIAL, default=self.unique_id)] = str
-        schema[vol.Optional(CONF_USE_ENLIGHTEN)] = bool
+        schema[vol.Required(CONF_SERIAL, default=self.unique_id)] = str
+        schema[vol.Required(CONF_USERNAME, default=self.username)] = str
+        schema[vol.Required(CONF_PASSWORD, default="")] = str
+
         return vol.Schema(schema)
 
     @callback

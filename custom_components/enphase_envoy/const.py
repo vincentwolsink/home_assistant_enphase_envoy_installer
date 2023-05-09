@@ -31,7 +31,6 @@ NAME = "name"
 READER = "reader"
 
 CONF_SERIAL = "serial"
-CONF_USE_ENLIGHTEN = "use_enlighten"
 
 SENSORS = (
     SensorEntityDescription(
