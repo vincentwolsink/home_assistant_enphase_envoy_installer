@@ -38,6 +38,7 @@ SENSORS = (
         name="Current Power Production",
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.POWER,
     ),
     SensorEntityDescription(
         key="daily_production",
@@ -65,6 +66,7 @@ SENSORS = (
         name="Current Power Consumption",
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.POWER,
     ),
     SensorEntityDescription(
         key="daily_consumption",
@@ -92,30 +94,35 @@ SENSORS = (
         name="Production",
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.POWER,
     ),
     SensorEntityDescription(
         key="inverters_ac_voltage",
         name="AC Voltage",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.VOLTAGE,
     ),
     SensorEntityDescription(
         key="inverters_dc_voltage",
         name="DC Voltage",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.VOLTAGE,
     ),
     SensorEntityDescription(
         key="inverters_dc_current",
         name="DC Current",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.CURRENT,
     ),
     SensorEntityDescription(
         key="inverters_temperature",
         name="Temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.TEMPERATURE,
     ),
     SensorEntityDescription(
         key="batteries",
@@ -129,6 +136,7 @@ SENSORS = (
         name="Total Battery Percentage",
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.BATTERY,
     ),
     SensorEntityDescription(
         key="current_battery_capacity",
@@ -145,6 +153,7 @@ PHASE_SENSORS = (
         name="Current Power Production L1",
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.POWER,
     ),
     SensorEntityDescription(
         key="daily_production_l1",
@@ -165,6 +174,7 @@ PHASE_SENSORS = (
         name="Current Power Production L2",
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.POWER,
     ),
     SensorEntityDescription(
         key="daily_production_l2",
@@ -185,6 +195,7 @@ PHASE_SENSORS = (
         name="Current Power Production L3",
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.POWER,
     ),
     SensorEntityDescription(
         key="daily_production_l3",
@@ -205,6 +216,7 @@ PHASE_SENSORS = (
         name="Current Power Consumption L1",
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.POWER,
     ),
     SensorEntityDescription(
         key="daily_consumption_l1",
@@ -225,6 +237,7 @@ PHASE_SENSORS = (
         name="Current Power Consumption L2",
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.POWER,
     ),
     SensorEntityDescription(
         key="daily_consumption_l2",
@@ -245,6 +258,7 @@ PHASE_SENSORS = (
         name="Current Power Consumption L3",
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.POWER,
     ),
     SensorEntityDescription(
         key="daily_consumption_l3",
