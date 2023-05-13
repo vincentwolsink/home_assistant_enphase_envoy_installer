@@ -31,7 +31,7 @@ Based on work from [@briancmpbll](https://github.com/briancmpbll/home_assistant_
 [releases]: https://github.com/vincentwolsink/home_assistant_enphase_envoy_installer/releases
 [maintainer-shield]: https://img.shields.io/badge/maintainer-vincentwolsink-blue.svg?style=for-the-badge
 [maintainer]: https://github.com/vincentwolsink
-[buymecoffee]: https://ko-fi.com/vincentwolsink
+[buymecoffee]: https://donate.stripe.com/cN29DN0U3gwu7fO5kk
 [buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-tip-yellow.svg?style=for-the-badge
 [hacs-shield]: https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge
 [hacs-url]: https://github.com/vincentwolsink/home_assistant_enphase_envoy_installer
