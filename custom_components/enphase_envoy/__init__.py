@@ -62,7 +62,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     data[description.key] = await envoy_reader.relay_status()
 
                 elif description.key == "firmware":
-                    data[description.key] = await envoy_reader.firmware_data()
+                    envoy_info = await envoy_reader.envoy_info()
+                    data[description.key] = envoy_info.get("update_status", None)
 
             for description in SENSORS:
                 if description.key == "inverters":
@@ -122,6 +123,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
             data["grid_status"] = await envoy_reader.grid_status()
             data["production_power"] = await envoy_reader.production_power()
+            data["envoy_info"] = await envoy_reader.envoy_info()
+            data["inverters_info"] = await envoy_reader.inverters_info()
 
             _LOGGER.debug("Retrieved data from API: %s", data)
 

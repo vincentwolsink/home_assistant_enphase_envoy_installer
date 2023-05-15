@@ -66,7 +66,7 @@ async def async_setup_entry(
                     )
 
         elif sensor_description.key == "firmware":
-            if coordinator.data.get("firmware") is not None:
+            if coordinator.data.get("update_status") is not None:
                 entity_name = f"{name} {sensor_description.name}"
                 serial_number = name.split(None, 1)[-1]
                 entities.append(
@@ -293,10 +293,10 @@ class EnvoyFirmwareEntity(EnvoyBinaryEntity):
     @property
     def is_on(self) -> bool | None:
         """Return true if the binary sensor is on."""
-        if self.coordinator.data.get("firmware") == None:
-            return None
-        update_status = self.coordinator.data.get("firmware")["update_status"]
-        return update_status != "satisfied"
+        if self.coordinator.data.get("envoy_info"):
+            update_status = self.coordinator.data.get("envoy_info").get("update_status")
+            return update_status != "satisfied"
+        return False
 
     @property
     def extra_state_attributes(self) -> None:

@@ -7,6 +7,7 @@ import jwt
 import re
 import time
 from json.decoder import JSONDecodeError
+import xmltodict
 
 import httpx
 from bs4 import BeautifulSoup
@@ -14,16 +15,16 @@ from envoy_utils.envoy_utils import EnvoyUtils
 
 SERIAL_REGEX = re.compile(r"Envoy\s*Serial\s*Number:\s*([0-9]+)")
 
-ENDPOITN_URL_INVENTORY = "https://{}/inventory.json"
+ENDPOINT_URL_INVENTORY = "https://{}/inventory.json"
 ENDPOINT_URL_PRODUCTION_JSON = "https://{}/production.json?details=1"
 ENDPOINT_URL_PRODUCTION_V1 = "https://{}/api/v1/production"
 ENDPOINT_URL_PRODUCTION_INVERTERS = "https://{}/api/v1/production/inverters"
-ENDPOINT_URL_PRODUCTION = "https://{}/production"
 ENDPOINT_URL_CHECK_JWT = "https://{}/auth/check_jwt"
 ENDPOINT_URL_ENSEMBLE_INVENTORY = "https://{}/ivp/ensemble/inventory"
 ENDPOINT_URL_HOME_JSON = "https://{}/home.json"
 ENDPOINT_URL_DEVSTATUS = "https://{}/ivp/peb/devstatus"
 ENDPOINT_URL_PRODUCTION_POWER = "https://{}/ivp/mod/603980032/mode/power"
+ENDPOINT_URL_INFO_XML = "https://{}/info.xml"
 
 # pylint: disable=pointless-string-statement
 
@@ -107,6 +108,8 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
         self.endpoint_home_json_results = None
         self.endpoint_devstatus = None
         self.endpoint_production_power = None
+        self.endpoint_info_results = None
+        self.endpoint_inventory_results = None
         self.isMeteringEnabled = False  # pylint: disable=invalid-name
         self.installer_access = False
         self._async_client = async_client
@@ -136,6 +139,11 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
             await self._update_from_p_endpoint()
         if self.installer_access:
             await self._update_from_installer_endpoint()
+
+        await self._update_endpoint("endpoint_info_results", ENDPOINT_URL_INFO_XML)
+        await self._update_endpoint(
+            "endpoint_inventory_results", ENDPOINT_URL_INVENTORY
+        )
 
     async def _update_from_pc_endpoint(self):
         """Update from PC endpoint."""
@@ -449,6 +457,11 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
             pass
         if self.endpoint_production_power:
             self.installer_access = True
+
+        await self._update_endpoint("endpoint_info_results", ENDPOINT_URL_INFO_XML)
+        await self._update_endpoint(
+            "endpoint_inventory_results", ENDPOINT_URL_INVENTORY
+        )
 
     async def get_full_serial_number(self):
         """Method to get the  Envoy serial number."""
@@ -867,16 +880,40 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
 
         return self.message_relay_not_installed
 
-    async def firmware_data(self):
+    async def envoy_info(self):
+        device_data = {}
+
         if self.endpoint_home_json_results:
             home_json = self.endpoint_home_json_results.json()
-
             if "update_status" in home_json:
-                return {
-                    "update_status": home_json["update_status"],
-                    "software_build_epoch": home_json["software_build_epoch"],
-                }
-        return None
+                device_data["update_status"] = home_json["update_status"]
+                device_data["software_build_epoch"] = home_json["software_build_epoch"]
+
+        if self.endpoint_info_results:
+            try:
+                data = xmltodict.parse(self.endpoint_info_results.text)
+                device_data["software"] = data["envoy_info"]["device"]["software"]
+                device_data["pn"] = data["envoy_info"]["device"]["pn"]
+            except (KeyError, IndexError, TypeError, AttributeError):
+                pass
+
+        return device_data
+
+    async def inverters_info(self):
+        response_dict = {}
+        try:
+            devinfo = self.endpoint_inventory_results.json()
+            for item in devinfo:
+                if "type" in item and item["type"] == "PCU":
+                    for device in item["devices"]:
+                        if device["dev_type"] == 12:
+                            # this is a relay
+                            continue
+                        response_dict[device["serial_num"]] = device
+        except (KeyError, IndexError, TypeError, AttributeError):
+            pass
+
+        return response_dict
 
     def run_in_console(self):
         """If running this module directly, print all the values in the console."""
@@ -902,7 +939,8 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
                 self.production_power(),
                 self.inverters_status(),
                 self.relay_status(),
-                self.firmware_data(),
+                self.envoy_info(),
+                self.inverters_info(),
                 return_exceptions=False,
             )
         )
@@ -929,7 +967,8 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
         print(f"production_power:        {results[10]}")
         print(f"inverters_status:        {results[11]}")
         print(f"relays:                  {results[12]}")
-        print(f"firmware:                {results[13]}")
+        print(f"envoy_info:              {results[13]}")
+        print(f"inverters_info:          {results[14]}")
 
 
 if __name__ == "__main__":

@@ -43,14 +43,16 @@ async def async_setup_entry(
                 for inverter in coordinator.data["inverters_production"]:
                     device_name = f"Inverter {inverter}"
                     entity_name = f"{device_name} {sensor_description.name}"
+                    serial_number = inverter
                     entities.append(
                         EnvoyInverterEntity(
                             sensor_description,
                             entity_name,
                             device_name,
-                            inverter,
-                            inverter,
+                            serial_number,
+                            serial_number,
                             coordinator,
+                            config_entry.unique_id,
                         )
                     )
         elif sensor_description.key.startswith("inverters_"):
@@ -58,14 +60,16 @@ async def async_setup_entry(
                 for inverter in coordinator.data["inverters_status"].keys():
                     device_name = f"Inverter {inverter}"
                     entity_name = f"{device_name} {sensor_description.name}"
+                    serial_number = inverter
                     entities.append(
                         EnvoyInverterEntity(
                             sensor_description,
                             entity_name,
                             device_name,
-                            inverter,
+                            serial_number,
                             None,
                             coordinator,
+                            config_entry.unique_id,
                         )
                     )
 
@@ -212,18 +216,6 @@ class EnvoyEntity(SensorEntity):
         """Return the state attributes."""
         return None
 
-    @property
-    def device_info(self) -> DeviceInfo | None:
-        """Return the device_info of the device."""
-        if not self._device_serial_number:
-            return None
-        return DeviceInfo(
-            identifiers={(DOMAIN, str(self._device_serial_number))},
-            manufacturer="Enphase",
-            model="Envoy",
-            name=self._device_name,
-        )
-
 
 class CoordinatedEnvoyEntity(EnvoyEntity, CoordinatorEntity):
     def __init__(
@@ -245,6 +237,27 @@ class CoordinatedEnvoyEntity(EnvoyEntity, CoordinatorEntity):
         """Return the state of the sensor."""
         return self.coordinator.data.get(self.entity_description.key)
 
+    @property
+    def device_info(self) -> DeviceInfo | None:
+        """Return the device_info of the device."""
+        if not self._device_serial_number:
+            return None
+
+        sw_version = None
+        hw_version = None
+        if self.coordinator.data.get("envoy_info"):
+            sw_version = self.coordinator.data.get("envoy_info").get("software", None)
+            hw_version = self.coordinator.data.get("envoy_info").get("pn", None)
+
+        return DeviceInfo(
+            identifiers={(DOMAIN, str(self._device_serial_number))},
+            manufacturer="Enphase",
+            model="Envoy",
+            name=self._device_name,
+            sw_version=sw_version,
+            hw_version=hw_version,
+        )
+
 
 class EnvoyInverterEntity(CoordinatorEntity, SensorEntity):
     """Envoy inverter entity."""
@@ -257,12 +270,14 @@ class EnvoyInverterEntity(CoordinatorEntity, SensorEntity):
         device_serial_number,
         serial_number,
         coordinator,
+        parent_device,
     ):
         self.entity_description = description
         self._name = name
         self._serial_number = serial_number
         self._device_name = device_name
         self._device_serial_number = device_serial_number
+        self._parent_device = parent_device
         CoordinatorEntity.__init__(self, coordinator)
 
     @property
@@ -328,11 +343,31 @@ class EnvoyInverterEntity(CoordinatorEntity, SensorEntity):
         """Return the device_info of the device."""
         if not self._device_serial_number:
             return None
+
+        sw_version = None
+        hw_version = None
+        if self.coordinator.data.get("inverters_info") and self.coordinator.data.get(
+            "inverters_info"
+        ).get(self._device_serial_number):
+            sw_version = (
+                self.coordinator.data.get("inverters_info")
+                .get(self._device_serial_number)
+                .get("img_pnum_running")
+            )
+            hw_version = (
+                self.coordinator.data.get("inverters_info")
+                .get(self._device_serial_number)
+                .get("part_num")
+            )
+
         return DeviceInfo(
             identifiers={(DOMAIN, str(self._device_serial_number))},
             manufacturer="Enphase",
             model="Inverter",
             name=self._device_name,
+            via_device=(DOMAIN, self._parent_device),
+            sw_version=sw_version,
+            hw_version=hw_version,
         )
 
 

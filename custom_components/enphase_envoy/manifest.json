@@ -2,7 +2,7 @@
   "domain": "enphase_envoy",
   "name": "Enphase Envoy (Installer)",
   "documentation": "https://www.home-assistant.io/integrations/enphase_envoy",
-  "requirements": ["envoy-utils"],
+  "requirements": ["envoy-utils", "xmltodict"],
   "codeowners": ["@vincentwolsink"],
   "config_flow": true,
   "integration_type": "hub",
