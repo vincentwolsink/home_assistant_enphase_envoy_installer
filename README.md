@@ -3,7 +3,6 @@
 [![GitHub Release][releases-shield]][releases]
 [![Maintainer][maintainer-shield]][maintainer]
 [![HACS Custom][hacs-shield]][hacs-url]
-[![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
 This is a HACS custom integration for enphase envoys with firmware version 7.X. To be used with your installer account.
 
@@ -31,7 +30,5 @@ Based on work from [@briancmpbll](https://github.com/briancmpbll/home_assistant_
 [releases]: https://github.com/vincentwolsink/home_assistant_enphase_envoy_installer/releases
 [maintainer-shield]: https://img.shields.io/badge/maintainer-vincentwolsink-blue.svg?style=for-the-badge
 [maintainer]: https://github.com/vincentwolsink
-[buymecoffee]: https://donate.stripe.com/cN29DN0U3gwu7fO5kk
-[buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-tip-yellow.svg?style=for-the-badge
 [hacs-shield]: https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge
 [hacs-url]: https://github.com/vincentwolsink/home_assistant_enphase_envoy_installer
