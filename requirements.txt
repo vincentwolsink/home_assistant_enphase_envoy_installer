@@ -2,3 +2,4 @@ httpx
 jwt
 bs4
 envoy_utils
+xmltodict
