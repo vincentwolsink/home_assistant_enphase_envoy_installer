@@ -140,7 +140,7 @@ async def async_setup_entry(
 
         else:
             data = coordinator.data.get(sensor_description.key)
-            if isinstance(data, str) and "not available" in data:
+            if data is None:
                 continue
 
             entity_name = f"{name} {sensor_description.name}"
@@ -157,7 +157,7 @@ async def async_setup_entry(
 
     for sensor_description in PHASE_SENSORS:
         data = coordinator.data.get(sensor_description.key)
-        if data == None:
+        if data is None:
             continue
 
         entity_name = f"{name} {sensor_description.name}"

@@ -310,7 +310,7 @@ class EnvoyRelayEntity(EnvoyBinaryEntity):
     def is_on(self) -> bool | None:
         """Return true if the binary sensor is on."""
         relays = self.coordinator.data.get("relays")
-        if relays == None:
+        if relays is None:
             return None
 
         return relays.get(self._serial_number).get("relay") == "closed"

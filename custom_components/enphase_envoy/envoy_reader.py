@@ -64,26 +64,6 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
     # P for production data only (ie. Envoy model C, s/w >= R3.9)
     # PC for production and consumption data (ie. Envoy model S)
 
-    message_battery_not_available = (
-        "Battery storage data not available for your Envoy device."
-    )
-
-    message_consumption_not_available = (
-        "Consumption data not available for your Envoy device."
-    )
-
-    message_grid_status_not_available = (
-        "Grid status not available for your Envoy device."
-    )
-
-    message_production_power_not_available = (
-        "Production power status not available for your Envoy device."
-    )
-
-    message_devstatus_not_available = (
-        "Inverter status not available for your Envoy device."
-    )
-
     def __init__(  # pylint: disable=too-many-arguments
         self,
         host,
@@ -111,7 +91,6 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
         self.endpoint_info_results = None
         self.endpoint_inventory_results = None
         self.isMeteringEnabled = False  # pylint: disable=invalid-name
-        self.installer_access = False
         self._async_client = async_client
         self._authorization_header = None
         self._cookies = None
@@ -137,9 +116,8 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
             self.endpoint_type == ENVOY_MODEL_S and not self.isMeteringEnabled
         ):
             await self._update_from_p_endpoint()
-        if self.installer_access:
-            await self._update_from_installer_endpoint()
 
+        await self._update_from_installer_endpoint()
         await self._update_endpoint("endpoint_info_results", ENDPOINT_URL_INFO_XML)
         await self._update_endpoint(
             "endpoint_inventory_results", ENDPOINT_URL_INVENTORY
@@ -451,13 +429,7 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
                 + "'."
             )
 
-        try:
-            await self._update_from_installer_endpoint()
-        except httpx.HTTPError:
-            pass
-        if self.endpoint_production_power:
-            self.installer_access = True
-
+        await self._update_from_installer_endpoint()
         await self._update_endpoint("endpoint_info_results", ENDPOINT_URL_INFO_XML)
         await self._update_endpoint(
             "endpoint_inventory_results", ENDPOINT_URL_INVENTORY
@@ -532,7 +504,7 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
 
         """Only return data if Envoy supports Consumption"""
         if self.endpoint_type in ENVOY_MODEL_C:
-            return self.message_consumption_not_available
+            return None
 
         raw_json = self.endpoint_production_json_results.json()
         consumption = raw_json["consumption"][0]["wNow"]
@@ -594,7 +566,7 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
 
         """Only return data if Envoy supports Consumption"""
         if self.endpoint_type in ENVOY_MODEL_C:
-            return self.message_consumption_not_available
+            return None
 
         raw_json = self.endpoint_production_json_results.json()
         daily_consumption = raw_json["consumption"][0]["whToday"]
@@ -639,7 +611,7 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
 
         """Only return data if Envoy supports Consumption"""
         if self.endpoint_type in ENVOY_MODEL_C:
-            return self.message_consumption_not_available
+            return None
 
         raw_json = self.endpoint_production_json_results.json()
         seven_days_consumption = raw_json["consumption"][0]["whLastSevenDays"]
@@ -687,7 +659,7 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
 
         """Only return data if Envoy supports Consumption"""
         if self.endpoint_type in ENVOY_MODEL_C:
-            return self.message_consumption_not_available
+            return None
 
         raw_json = self.endpoint_production_json_results.json()
         lifetime_consumption = raw_json["consumption"][0]["whLifetime"]
@@ -749,7 +721,7 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
                 ensemble_json = self.endpoint_ensemble_json_results.json()
                 if len(ensemble_json) > 0 and "devices" in ensemble_json[0].keys():
                     return ensemble_json[0]["devices"]
-            return self.message_battery_not_available
+            return None
 
         return raw_json["storage"][0]
 
@@ -763,7 +735,7 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
             ):
                 return home_json["enpower"]["grid_status"]
 
-        return self.message_grid_status_not_available
+        return None
 
     async def production_power(self):
         """Return production power status reported by Envoy"""
@@ -772,7 +744,7 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
             if "powerForcedOff" in power_json.keys():
                 return not power_json["powerForcedOff"]
 
-        return self.message_production_power_not_available
+        return None
 
     async def set_production_power(self, power_on):
         if self.endpoint_production_power is not None:
@@ -878,7 +850,7 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
 
         return response_dict
 
-        return self.message_relay_not_installed
+        return None
 
     async def envoy_info(self):
         device_data = {}
@@ -953,16 +925,7 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
         print(f"seven_days_consumption:  {results[5]}")
         print(f"lifetime_production:     {results[6]}")
         print(f"lifetime_consumption:    {results[7]}")
-        if "401" in str(data_results):
-            print(
-                "inverters_production:    Unable to retrieve inverter data - Authentication failure"
-            )
-        elif results[8] is None:
-            print(
-                "inverters_production:    Inverter data not available for your Envoy device."
-            )
-        else:
-            print(f"inverters_production:    {results[8]}")
+        print(f"inverters_production:    {results[8]}")
         print(f"battery_storage:         {results[9]}")
         print(f"production_power:        {results[10]}")
         print(f"inverters_status:        {results[11]}")
