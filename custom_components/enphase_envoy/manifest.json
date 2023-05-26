@@ -1,11 +1,12 @@
 {
   "domain": "enphase_envoy",
   "name": "Enphase Envoy (Installer)",
-  "documentation": "https://www.home-assistant.io/integrations/enphase_envoy",
-  "requirements": ["envoy-utils", "xmltodict"],
   "codeowners": ["@vincentwolsink"],
   "config_flow": true,
+  "documentation": "https://www.home-assistant.io/integrations/enphase_envoy",
   "integration_type": "hub",
   "iot_class": "local_polling",
+  "issue_tracker": "https://www.home-assistant.io/integrations/enphase_envoy/issues",
+  "requirements": ["envoy-utils", "xmltodict"],
   "version": "0.2.0"
 }
