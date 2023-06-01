@@ -103,9 +103,7 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
     @property
     def async_client(self):
         """Return the httpx client."""
-        return self._async_client or httpx.AsyncClient(
-            verify=False, headers=self._authorization_header, cookies=self._cookies
-        )
+        return self._async_client or httpx.AsyncClient(verify=False)
 
     async def _update(self):
         """Update the data."""
@@ -197,13 +195,18 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
                 if attempt == 2:
                     raise e
 
-    async def _async_post(self, url, data, **kwargs):
+    async def _async_post(self, url, data=None, **kwargs):
         _LOGGER.debug("HTTP POST Attempt: %s", url)
         _LOGGER.debug("HTTP POST Data: %s", data)
         try:
             async with self.async_client as client:
                 resp = await client.post(
-                    url, cookies=cookies, data=data, timeout=30, **kwargs
+                    url,
+                    headers=self._authorization_header,
+                    cookies=self._cookies,
+                    data=data,
+                    timeout=30,
+                    **kwargs,
                 )
                 _LOGGER.debug("HTTP POST %s: %s: %s", url, resp, resp.text)
                 _LOGGER.debug("HTTP POST Cookie: %s", resp.cookies)
@@ -297,28 +300,17 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
         self._authorization_header = {"Authorization": "Bearer " + self._token}
 
         # Fetch the Enphase Token status from the local Envoy
-        token_validation_html = await self._async_fetch_with_retry(
+        token_validation = await self._async_post(
             ENDPOINT_URL_CHECK_JWT.format(self.host)
         )
 
-        # Parse the HTML return from Envoy and check the text
-        soup = BeautifulSoup(token_validation_html.text, features="html.parser")
-        token_validation = soup.find("h2").contents[0]
-        if self._is_enphase_token_valid(token_validation):
+        if token_validation.status_code == 200:
             # set the cookies for future clients
-            self._cookies = token_validation_html.cookies
+            self._cookies = token_validation.cookies
             return True
 
         # token not valid if we get here
         return False
-
-    def _is_enphase_token_valid(self, response):
-        if response == "Valid token.":
-            _LOGGER.debug("Token is valid")
-            return True
-        else:
-            _LOGGER.debug("Invalid token!")
-            return False
 
     def _is_enphase_token_expired(self, token):
         decode = jwt.decode(
