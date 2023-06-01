@@ -8,6 +8,6 @@
   "integration_type": "hub",
   "iot_class": "local_polling",
   "issue_tracker": "https://www.home-assistant.io/integrations/enphase_envoy/issues",
-  "requirements": ["envoy-utils", "xmltodict"],
+  "requirements": ["pyjwt", "xmltodict", "httpx"],
   "version": "0.2.1"
 }
