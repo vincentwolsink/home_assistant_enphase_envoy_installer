@@ -8,7 +8,6 @@ import re
 import time
 from json.decoder import JSONDecodeError
 import xmltodict
-
 import httpx
 from bs4 import BeautifulSoup
 from envoy_utils.envoy_utils import EnvoyUtils
@@ -165,15 +164,20 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
         """Retry 3 times to fetch the url if there is a transport error."""
         for attempt in range(3):
             _LOGGER.debug(
-                "HTTP GET Attempt #%s: %s: Header:%s",
+                "HTTP GET Attempt #%s: %s: Header:%s Cookies:%s",
                 attempt + 1,
                 url,
                 self._authorization_header,
+                self._cookies,
             )
             try:
                 async with self.async_client as client:
                     resp = await client.get(
-                        url, headers=self._authorization_header, timeout=30, **kwargs
+                        url,
+                        headers=self._authorization_header,
+                        cookies=self._cookies,
+                        timeout=30,
+                        **kwargs,
                     )
                     if resp.status_code == 401 and attempt < 2:
                         _LOGGER.debug(
@@ -193,7 +197,7 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
                 if attempt == 2:
                     raise e
 
-    async def _async_post(self, url, data, cookies=None, **kwargs):
+    async def _async_post(self, url, data, **kwargs):
         _LOGGER.debug("HTTP POST Attempt: %s", url)
         _LOGGER.debug("HTTP POST Data: %s", data)
         try:
@@ -217,6 +221,7 @@ class EnvoyReader:  # pylint: disable=too-many-instance-attributes
                 resp = await client.put(
                     url,
                     headers=self._authorization_header,
+                    cookies=self._cookies,
                     json=data,
                     timeout=30,
                     **kwargs,
