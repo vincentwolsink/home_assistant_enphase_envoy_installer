@@ -7,7 +7,7 @@ from time import strftime, localtime
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
+from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN, CONF_HOST
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -152,6 +152,7 @@ async def async_setup_entry(
                     config_entry.unique_id,
                     None,
                     coordinator,
+                    config_entry.data[CONF_HOST],
                 )
             )
 
@@ -169,6 +170,7 @@ async def async_setup_entry(
                 config_entry.unique_id,
                 None,
                 coordinator,
+                config_entry.data[CONF_HOST],
             )
         )
 
@@ -226,11 +228,13 @@ class CoordinatedEnvoyEntity(EnvoyEntity, CoordinatorEntity):
         device_serial_number,
         serial_number,
         coordinator,
+        device_host,
     ):
         EnvoyEntity.__init__(
             self, description, name, device_name, device_serial_number, serial_number
         )
         CoordinatorEntity.__init__(self, coordinator)
+        self.device_host = device_host
 
     @property
     def native_value(self):
@@ -256,6 +260,9 @@ class CoordinatedEnvoyEntity(EnvoyEntity, CoordinatorEntity):
             name=self._device_name,
             sw_version=sw_version,
             hw_version=hw_version,
+            configuration_url=f"https://{self.device_host}/"
+            if self.device_host
+            else None,
         )
 
 
