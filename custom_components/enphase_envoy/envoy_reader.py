@@ -7,6 +7,13 @@ import logging
 import jwt
 import xmltodict
 import httpx
+
+import hashlib
+import base64
+import random
+import string
+from urllib import parse
+
 from json.decoder import JSONDecodeError
 
 ENDPOINT_URL_INVENTORY = "https://{}/inventory.json"
@@ -27,7 +34,29 @@ ENVOY_MODEL_C = "P"
 ENLIGHTEN_AUTH_URL = "https://enlighten.enphaseenergy.com/login/login.json"
 ENLIGHTEN_TOKEN_URL = "https://entrez.enphaseenergy.com/tokens"
 
+# paths used for fetching enlighten token through envoy
+ENLIGHTEN_LOGIN_URL = "https://entrez.enphaseenergy.com/login"
+ENDPOINT_URL_GET_JWT = "https://{}/auth/get_jwt"
+
 _LOGGER = logging.getLogger(__name__)
+
+
+def random_content(length):
+    chars = string.ascii_letters + string.digits
+    return "".join(random.choice(chars) for i in range(length))
+
+
+def generate_challenge(code):
+    sha_code = hashlib.sha256()
+    sha_code.update(code.encode("utf-8"))
+
+    return (
+        base64.b64encode(sha_code.digest())
+        .decode("utf-8")
+        .replace("+", "-")  # + will be -
+        .replace("/", "_")  # / will be _
+        .replace("=", "")  # remove = chars
+    )
 
 
 def has_production_and_consumption(json):
@@ -83,6 +112,7 @@ class EnvoyReader:
         self.enlighten_user = enlighten_user
         self.enlighten_pass = enlighten_pass
         self.commissioned = commissioned
+        self.use_envoy_tokens = False
         self.enlighten_serial_num = enlighten_serial_num
         self._token = ""
         self.token_refresh_buffer_seconds = token_refresh_buffer_seconds
@@ -147,6 +177,7 @@ class EnvoyReader:
 
     async def _async_fetch_with_retry(self, url, **kwargs):
         """Retry 3 times to fetch the url if there is a transport error."""
+        received_401 = 0
         for attempt in range(3):
             _LOGGER.debug(
                 "HTTP GET Attempt #%s: %s: Header:%s Cookies:%s",
@@ -169,9 +200,17 @@ class EnvoyReader:
                             "Received 401 from Envoy; refreshing token, attempt %s of 2",
                             attempt + 1,
                         )
-                        could_refresh_cookies = await self._refresh_token_cookies()
+                        # Only on the first 401 response, we refresh token cookies,
+                        # otherwise we just fetch a new enphase token
+                        could_refresh_cookies = (
+                            await self._refresh_token_cookies()
+                            if received_401 == 0
+                            else False
+                        )
                         if not could_refresh_cookies:
                             await self._getEnphaseToken()
+
+                        received_401 += 1
                         continue
                     _LOGGER.debug("Fetched from %s: %s: %s", url, resp, resp.text)
                     if resp.status_code == 404:
@@ -221,11 +260,77 @@ class EnvoyReader:
         except httpx.TransportError:
             raise
 
+    async def _fetch_envoy_token_json(self):
+        """
+        Fetch a token, using the same procedure envoy uses in the webUI
+
+        :returns received access_token
+        """
+        _LOGGER.debug("Fetching envoy token")
+        async with self.async_client as client:
+            # Step 1, generate local secret
+            code_verifier = random_content(40)
+
+            _LOGGER.debug("Local auth secret: %s", code_verifier)
+
+            # Step 2, call the entrez login with form fields
+            # all params are reverse engineered, so prone to changes
+            login_data = dict(
+                username=self.enlighten_user,
+                password=self.enlighten_pass,
+                codeChallenge=generate_challenge(code_verifier),
+                redirectUri=f"https://{self.host}/auth/callback",
+                client="envoy-ui",
+                clientId="envoy-ui-client",
+                authFlow="oauth",
+                serialNum=self.enlighten_serial_num,
+                granttype="authorize",
+                state="",
+                invalidSerialNum="",
+            )
+            _LOGGER.debug("Doing authorize at entrez, with data %s", login_data)
+            resp = await client.post(ENLIGHTEN_LOGIN_URL, data=login_data)
+
+            if resp.status_code >= 400:
+                raise Exception("Could not Login via Enlighten")
+
+            # we should expect a 302 redirect
+            if resp.status_code != 302:
+                raise Exception("Login did not succeed")
+
+            # Step 3: Fetch the code from the query params.
+            redirectLocation = resp.headers.get("location")
+            url_parts = parse.urlparse(redirectLocation)
+            query_parts = parse.parse_qs(url_parts.query)
+
+            # Step 4: Fetch the JWT token through envoy
+            json_data = {
+                "client_id": "envoy-ui-1",
+                "code": query_parts["code"][0],
+                "code_verifier": code_verifier,
+                "grant_type": "authorization_code",
+                "redirect_uri": login_data["redirectUri"],
+            }
+            _LOGGER.debug("Checking JWT on envoy with params %s", json_data)
+            resp = await client.post(
+                ENDPOINT_URL_GET_JWT.format(self.host),
+                json=json_data,
+                timeout=30,
+            )
+
+            if resp.status_code != 200:
+                raise Exception(
+                    f"Could not fetch access token from envoy; HTTP {resp.status_code}: {resp.text}"
+                )
+
+            return resp.json()["access_token"]
+
     async def _fetch_owner_token_json(self):
         """
         Try to fetch the owner token json from Enlighten API
         :return:
         """
+        _LOGGER.debug("Fetching owner token")
         async with self.async_client as client:
             # login to Enlighten
             payload_login = {
@@ -251,8 +356,17 @@ class EnvoyReader:
             return resp.text
 
     async def _getEnphaseToken(self):
-        self._token = await self._fetch_owner_token_json()
-        _LOGGER.debug("Commissioned Token")
+        # When we have a valid commissioned token, but run into 401's,
+        # we should switch to envoy tokens, as those have more permissions for DHZ accounts
+        if self._token and not self._is_enphase_token_expired(self._token):
+            self.use_envoy_tokens = True
+
+        if self.use_envoy_tokens:
+            self._token = await self._fetch_envoy_token_json()
+            _LOGGER.debug("Envoy Token")
+        else:
+            self._token = await self._fetch_owner_token_json()
+            _LOGGER.debug("Commissioned Token")
 
         if self._is_enphase_token_expired(self._token):
             raise Exception("Just received token already expired")
