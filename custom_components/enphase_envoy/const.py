@@ -30,6 +30,8 @@ COORDINATOR = "coordinator"
 NAME = "name"
 READER = "reader"
 
+DEFAULT_SCAN_INTERVAL = 60  # default in seconds
+
 CONF_SERIAL = "serial"
 
 SENSORS = (

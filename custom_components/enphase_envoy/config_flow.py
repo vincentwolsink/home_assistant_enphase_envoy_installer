@@ -11,7 +11,13 @@ import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.components import zeroconf
-from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PASSWORD, CONF_USERNAME
+from homeassistant.const import (
+    CONF_HOST,
+    CONF_NAME,
+    CONF_PASSWORD,
+    CONF_USERNAME,
+    DEFAULT_SCAN_INTERVAL,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
@@ -181,6 +187,45 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=self._async_generate_schema(),
             errors=errors,
         )
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry):
+        return EnvoyOptionsFlowHandler(config_entry)
+
+
+class EnvoyOptionsFlowHandler(config_entries.OptionsFlow):
+    """Envoy config flow options handler."""
+
+    def __init__(self, config_entry):
+        """Initialize Envoy options flow."""
+        self.config_entry = config_entry
+
+    async def async_step_init(self, _user_input=None):
+        """Manage the options."""
+        return await self.async_step_user()
+
+    async def async_step_user(self, user_input=None):
+        """Handle a flow initialized by the user."""
+
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        schema = {
+            vol.Optional(
+                "time_between_update",
+                default=self.config_entry.options.get(
+                    "time_between_update", DEFAULT_SCAN_INTERVAL
+                ),
+            ): vol.All(vol.Coerce(int), vol.Range(min=0)),
+            vol.Optional(
+                "disable_negative_production",
+                default=self.config_entry.options.get(
+                    "disable_negative_production", False
+                ),
+            ): bool,
+        }
+        return self.async_show_form(step_id="user", data_schema=vol.Schema(schema))
 
 
 class CannotConnect(HomeAssistantError):

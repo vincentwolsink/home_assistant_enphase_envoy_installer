@@ -90,6 +90,7 @@ class EnvoyReader:
         enlighten_serial_num=None,
         token_refresh_buffer_seconds=0,
         store=None,
+        disable_negative_production=False,
     ):
         """Init the EnvoyReader."""
         self.host = host.lower()
@@ -123,6 +124,7 @@ class EnvoyReader:
             self.host = f"[{ipv6}]"
         except ipaddress.AddressValueError:
             pass
+        self.disable_negative_production = disable_negative_production
 
         self._store = store
         self._store_data = {}
@@ -604,6 +606,18 @@ class EnvoyReader:
         except (KeyError, IndexError):
             return None
 
+    def process_production_value(self, production):
+        if not self.disable_negative_production:
+            # return production as is (which is the default)
+            return production
+
+        # a limited negative production should not show (each relay uses about 3.5 watt,
+        # so lets make sure we can add up to 4 relays)
+        # If you have the CT the wrong way it will count negative, so if the negative
+        # is too big, we should show that value regardless, so the end user is able to
+        # see and detect this CT placement error.
+        return 0 if -15 < production < 0 else production
+
     async def production(self):
         """Running getData() beforehand will set self.enpoint_type and self.isDataRetrieved"""
         """so that this method will only read data from stored variables"""
@@ -611,11 +625,15 @@ class EnvoyReader:
         if self.endpoint_type == ENVOY_MODEL_S:
             raw_json = self.endpoint_production_json_results.json()
             idx = 1 if self.isMeteringEnabled else 0
-            production = raw_json["production"][idx]["wNow"]
+            production = int(raw_json["production"][idx]["wNow"])
         elif self.endpoint_type == ENVOY_MODEL_C:
             raw_json = self.endpoint_production_v1_results.json()
-            production = raw_json["wattsNow"]
-        return int(production)
+            production = int(raw_json["wattsNow"])
+        else:
+            # just in case the endpoint_type would be None or something new..
+            return None
+
+        return self.process_production_value(production)
 
     async def production_phase(self, phase):
         """Running getData() beforehand will set self.enpoint_type and self.isDataRetrieved"""
@@ -626,8 +644,8 @@ class EnvoyReader:
             raw_json = self.endpoint_production_json_results.json()
             idx = 1 if self.isMeteringEnabled else 0
             try:
-                return int(
-                    raw_json["production"][idx]["lines"][phase_map[phase]]["wNow"]
+                return self.process_production_value(
+                    int(raw_json["production"][idx]["lines"][phase_map[phase]]["wNow"])
                 )
             except (KeyError, IndexError):
                 return None

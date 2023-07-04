@@ -21,5 +21,19 @@
                 "description": "Voer de hostname/ip en serienummer van je Envoy in. Gebruik je Enlighten installer account gegevens."
             }
         }
+    },
+    "options": {
+      "step": {
+        "user": {
+          "title": "Envoy opties",
+          "data": {
+            "disable_negative_production": "Voorkom negatieve productie waardes",
+            "time_between_update": "Minimum tijd tussen entity updates [s]"
+          },
+          "data_description": {
+            "time_between_update": "Dit interval is alleen van toepassing voor het pollen van URLs"
+          }
+        }
+      }
     }
 }

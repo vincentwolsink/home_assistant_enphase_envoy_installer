@@ -26,9 +26,9 @@ from .const import (
     PHASE_SENSORS,
     CONF_SERIAL,
     READER,
+    DEFAULT_SCAN_INTERVAL,
 )
 
-SCAN_INTERVAL = timedelta(seconds=60)
 STORAGE_KEY = "envoy"
 STORAGE_VERSION = 1
 
@@ -39,6 +39,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Enphase Envoy from a config entry."""
 
     config = entry.data
+    options = entry.options
     name = config[CONF_NAME]
 
     # Setup persistent storage, to save tokens between home assistant restarts
@@ -51,6 +52,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         inverters=True,
         enlighten_serial_num=config[CONF_SERIAL],
         store=store,
+        disable_negative_production=options.get("disable_negative_production", False),
     )
     await envoy_reader._sync_store()
 
@@ -148,7 +150,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER,
         name=f"envoy {name}",
         update_method=async_update_data,
-        update_interval=SCAN_INTERVAL,
+        update_interval=timedelta(
+            seconds=options.get("time_between_update", DEFAULT_SCAN_INTERVAL)
+        ),
     )
 
     try:
