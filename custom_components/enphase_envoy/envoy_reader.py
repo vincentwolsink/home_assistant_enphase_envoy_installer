@@ -7,7 +7,7 @@ import logging
 import jwt
 import xmltodict
 import httpx
-
+import ipaddress
 import hashlib
 import base64
 import random
@@ -116,6 +116,13 @@ class EnvoyReader:
         self.enlighten_serial_num = enlighten_serial_num
         self._token = ""
         self.token_refresh_buffer_seconds = token_refresh_buffer_seconds
+
+        # If IPv6 address then enclose host in brackets
+        try:
+            ipv6 = ipaddress.IPv6Address(self.host)
+            self.host = f"[{ipv6}]"
+        except ipaddress.AddressValueError:
+            pass
 
     @property
     def async_client(self):
