@@ -554,6 +554,35 @@ class EnvoyReader:
             + "support the requested metric."
         )
 
+    async def voltage(self):
+        """Running getData() beforehand will set self.enpoint_type and self.isDataRetrieved"""
+        """so that this method will only read data from stored variables"""
+        if not self.isMeteringEnabled or self.endpoint_type != ENVOY_MODEL_S:
+            return None
+
+        try:
+            raw_json = self.endpoint_production_json_results.json()
+            return float(raw_json["production"][1]["rmsVoltage"])
+        except (KeyError, IndexError, AttributeError):
+            return None
+
+    async def voltage_phase(self, phase):
+        """Running getData() beforehand will set self.enpoint_type and self.isDataRetrieved"""
+        """so that this method will only read data from stored variables"""
+        phase_map = {"voltage_l1": 0, "voltage_l2": 1, "voltage_l3": 2}
+
+        if not self.isMeteringEnabled or self.endpoint_type != ENVOY_MODEL_S:
+            return None
+
+        raw_json = self.endpoint_production_json_results.json()
+        try:
+            return float(
+                raw_json["production"][1]["lines"][phase_map[phase]]["rmsVoltage"]
+            )
+
+        except (KeyError, IndexError):
+            return None
+
     async def production(self):
         """Running getData() beforehand will set self.enpoint_type and self.isDataRetrieved"""
         """so that this method will only read data from stored variables"""

@@ -145,6 +145,13 @@ SENSORS = (
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.ENERGY,
     ),
+    SensorEntityDescription(
+        key="voltage",
+        name="Current Voltage",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.VOLTAGE,
+    ),
 )
 
 PHASE_SENSORS = (
@@ -170,6 +177,13 @@ PHASE_SENSORS = (
         device_class=SensorDeviceClass.ENERGY,
     ),
     SensorEntityDescription(
+        key="voltage_l1",
+        name="Current Voltage L1",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.VOLTAGE,
+    ),
+    SensorEntityDescription(
         key="production_l2",
         name="Current Power Production L2",
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -191,6 +205,13 @@ PHASE_SENSORS = (
         device_class=SensorDeviceClass.ENERGY,
     ),
     SensorEntityDescription(
+        key="voltage_l2",
+        name="Current Voltage L2",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.VOLTAGE,
+    ),
+    SensorEntityDescription(
         key="production_l3",
         name="Current Power Production L3",
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -210,6 +231,13 @@ PHASE_SENSORS = (
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         state_class=SensorStateClass.TOTAL_INCREASING,
         device_class=SensorDeviceClass.ENERGY,
+    ),
+    SensorEntityDescription(
+        key="voltage_l3",
+        name="Current Voltage L3",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.VOLTAGE,
     ),
     SensorEntityDescription(
         key="consumption_l1",
