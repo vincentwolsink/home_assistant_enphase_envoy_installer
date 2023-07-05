@@ -270,6 +270,13 @@ class EnvoyBaseEntity(CoordinatorEntity):
         if self._parent_device:
             device_info_kw["via_device"] = (DOMAIN, self._parent_device)
 
+        if self.MODEL == "Relay":
+            info = self.coordinator.data.get("relay_info", {}).get(
+                self._device_serial_number, {}
+            )
+            device_info_kw["sw_version"] = info.get("img_pnum_running", None)
+            device_info_kw["hw_version"] = info.get("part_num", None)
+
         return DeviceInfo(
             identifiers={(DOMAIN, str(self._device_serial_number))},
             manufacturer="Enphase",
