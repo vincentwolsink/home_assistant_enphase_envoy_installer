@@ -316,7 +316,10 @@ class EnvoyReader:
                 state="",
                 invalidSerialNum="",
             )
-            _LOGGER.debug("Doing authorize at entrez, with data %s", login_data)
+            _LOGGER.debug(
+                "Doing authorize at entrez, with codeChallenge: %s",
+                login_data["codeChallenge"],
+            )
             resp = await client.post(ENLIGHTEN_LOGIN_URL, data=login_data)
 
             if resp.status_code >= 400:
