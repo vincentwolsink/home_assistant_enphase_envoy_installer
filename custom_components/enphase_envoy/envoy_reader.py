@@ -89,6 +89,7 @@ class EnvoyReader:
         commissioned=False,
         enlighten_serial_num=None,
         token_refresh_buffer_seconds=0,
+        store=None,
     ):
         """Init the EnvoyReader."""
         self.host = host.lower()
@@ -114,7 +115,6 @@ class EnvoyReader:
         self.commissioned = commissioned
         self.use_envoy_tokens = False
         self.enlighten_serial_num = enlighten_serial_num
-        self._token = ""
         self.token_refresh_buffer_seconds = token_refresh_buffer_seconds
 
         # If IPv6 address then enclose host in brackets
@@ -123,6 +123,27 @@ class EnvoyReader:
             self.host = f"[{ipv6}]"
         except ipaddress.AddressValueError:
             pass
+
+        self._store = store
+        self._store_data = {}
+        self._store_update_pending = False
+
+    @property
+    def _token(self):
+        return self._store_data.get("token", "")
+
+    @_token.setter
+    def _token(self, token_value):
+        self._store_data["token"] = token_value
+        self._store_update_pending = True
+
+    async def _sync_store(self):
+        if self._store and not self._store_data:
+            self._store_data = await self._store.async_load() or {}
+
+        if self._store and self._store_update_pending:
+            self._store_update_pending = False
+            await self._store.async_save(self._store_data)
 
     @property
     def async_client(self):
