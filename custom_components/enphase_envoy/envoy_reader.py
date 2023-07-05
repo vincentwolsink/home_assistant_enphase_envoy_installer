@@ -1037,6 +1037,22 @@ class EnvoyReader:
 
         return response_dict
 
+    async def relay_info(self):
+        response_dict = {}
+        try:
+            devinfo = self.endpoint_inventory_results.json()
+            for item in devinfo:
+                if "type" in item and item["type"] == "NSRB":
+                    for device in item["devices"]:
+                        if device["dev_type"] != 12:
+                            # this is not a relay
+                            continue
+                        response_dict[device["serial_num"]] = device
+        except (KeyError, IndexError, TypeError, AttributeError):
+            pass
+
+        return response_dict
+
     def run_in_console(self):
         """If running this module directly, print all the values in the console."""
         print("Reading...")
@@ -1063,6 +1079,7 @@ class EnvoyReader:
                 self.relay_status(),
                 self.envoy_info(),
                 self.inverters_info(),
+                self.relay_info(),
                 return_exceptions=False,
             )
         )
@@ -1082,6 +1099,7 @@ class EnvoyReader:
         print(f"relays:                  {results[12]}")
         print(f"envoy_info:              {results[13]}")
         print(f"inverters_info:          {results[14]}")
+        print(f"relay_info:              {results[15]}")
 
 
 if __name__ == "__main__":
