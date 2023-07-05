@@ -1,5 +1,3 @@
 httpx
-jwt
-bs4
-envoy_utils
+pyjwt
 xmltodict
