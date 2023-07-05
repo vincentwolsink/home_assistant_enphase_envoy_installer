@@ -614,6 +614,8 @@ class EnvoyReader:
             return None
 
         raw_json = self.endpoint_production_json_results.json()
+        if raw_json["consumption"][0]["activeCount"] == 0:
+            return None
         consumption = raw_json["consumption"][0]["wNow"]
         return int(consumption)
 
@@ -628,6 +630,8 @@ class EnvoyReader:
 
         raw_json = self.endpoint_production_json_results.json()
         try:
+            if raw_json["consumption"][0]["activeCount"] == 0:
+                return None
             return int(raw_json["consumption"][0]["lines"][phase_map[phase]]["wNow"])
         except (KeyError, IndexError):
             return None
@@ -676,6 +680,8 @@ class EnvoyReader:
             return None
 
         raw_json = self.endpoint_production_json_results.json()
+        if raw_json["consumption"][0]["activeCount"] == 0:
+            return None
         daily_consumption = raw_json["consumption"][0]["whToday"]
         return int(daily_consumption)
 
@@ -694,6 +700,8 @@ class EnvoyReader:
 
         raw_json = self.endpoint_production_json_results.json()
         try:
+            if raw_json["consumption"][0]["activeCount"] == 0:
+                return None
             return int(raw_json["consumption"][0]["lines"][0]["whToday"])
         except (KeyError, IndexError):
             return None
@@ -721,6 +729,8 @@ class EnvoyReader:
             return None
 
         raw_json = self.endpoint_production_json_results.json()
+        if raw_json["consumption"][0]["activeCount"] == 0:
+            return None
         seven_days_consumption = raw_json["consumption"][0]["whLastSevenDays"]
         return int(seven_days_consumption)
 
@@ -769,6 +779,8 @@ class EnvoyReader:
             return None
 
         raw_json = self.endpoint_production_json_results.json()
+        if raw_json["consumption"][0]["activeCount"] == 0:
+            return None
         lifetime_consumption = raw_json["consumption"][0]["whLifetime"]
         return int(lifetime_consumption)
 
@@ -787,6 +799,8 @@ class EnvoyReader:
 
         raw_json = self.endpoint_production_json_results.json()
         try:
+            if raw_json["consumption"][0]["activeCount"] == 0:
+                return None
             return int(
                 raw_json["consumption"][0]["lines"][phase_map[phase]]["whLifetime"]
             )

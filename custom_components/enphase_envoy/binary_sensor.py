@@ -62,6 +62,7 @@ async def async_setup_entry(
                             serial_number,
                             serial_number,
                             coordinator,
+                            config_entry.unique_id,
                         )
                     )
 
@@ -210,6 +211,8 @@ class EnvoyInverterEntity(CoordinatorEntity, BinarySensorEntity):
 class EnvoyBaseEntity(CoordinatorEntity):
     """Envoy entity"""
 
+    MODEL = "Envoy"
+
     def __init__(
         self,
         description,
@@ -218,6 +221,7 @@ class EnvoyBaseEntity(CoordinatorEntity):
         device_serial_number,
         serial_number,
         coordinator,
+        parent_device=None,
     ):
         """Initialize Envoy entity."""
         self.entity_description = description
@@ -225,6 +229,7 @@ class EnvoyBaseEntity(CoordinatorEntity):
         self._serial_number = serial_number
         self._device_name = device_name
         self._device_serial_number = device_serial_number
+        self._parent_device = parent_device
 
         super().__init__(coordinator)
 
@@ -261,11 +266,16 @@ class EnvoyBaseEntity(CoordinatorEntity):
         """Return the device_info of the device."""
         if not self._device_serial_number:
             return None
+        device_info_kw = {}
+        if self._parent_device:
+            device_info_kw["via_device"] = (DOMAIN, self._parent_device)
+
         return DeviceInfo(
             identifiers={(DOMAIN, str(self._device_serial_number))},
             manufacturer="Enphase",
-            model="Envoy",
+            model=self.MODEL,
             name=self._device_name,
+            **device_info_kw,
         )
 
 
@@ -278,6 +288,7 @@ class EnvoyBinaryEntity(EnvoyBaseEntity, BinarySensorEntity):
         device_serial_number,
         serial_number,
         coordinator,
+        parent_device=None,
     ):
         super().__init__(
             description=description,
@@ -286,6 +297,7 @@ class EnvoyBinaryEntity(EnvoyBaseEntity, BinarySensorEntity):
             device_serial_number=device_serial_number,
             serial_number=serial_number,
             coordinator=coordinator,
+            parent_device=parent_device,
         )
 
 
@@ -305,6 +317,8 @@ class EnvoyFirmwareEntity(EnvoyBinaryEntity):
 
 class EnvoyRelayEntity(EnvoyBinaryEntity):
     """Envoy relay entity."""
+
+    MODEL = "Relay"
 
     @property
     def is_on(self) -> bool | None:
@@ -328,16 +342,3 @@ class EnvoyRelayEntity(EnvoyBinaryEntity):
             }
 
         return None
-
-    @property
-    def device_info(self) -> DeviceInfo | None:
-        """Return the device_info of the device."""
-        if not self._device_serial_number:
-            return None
-
-        return DeviceInfo(
-            identifiers={(DOMAIN, str(self._device_serial_number))},
-            manufacturer="Enphase",
-            model="Relay",
-            name=self._device_name,
-        )
