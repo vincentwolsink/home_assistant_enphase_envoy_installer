@@ -13,16 +13,17 @@ A clear and concise description of what the bug is.
 **Account type**
 - [ ] Installer
 - [ ] DIY / DHZ
+- [ ] Home Owner (This integration is not (fully) functional with a home owner account!)
 
 **Envoy**
 - [ ] Metered
 - [ ] Standard
 
-FW version: D7.xxx
-Amount of micro inverters connected: x
+- FW version: D7.xxx
+- Amount of micro inverters connected: x
 
 **Home Assistant**
-Version: 2023.x
+- Version: 2023.x
 
 **Additional context**
 ```
