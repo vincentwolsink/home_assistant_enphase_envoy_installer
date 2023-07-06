@@ -217,7 +217,7 @@ class EnvoyOptionsFlowHandler(config_entries.OptionsFlow):
                 default=self.config_entry.options.get(
                     "time_between_update", DEFAULT_SCAN_INTERVAL
                 ),
-            ): vol.All(vol.Coerce(int), vol.Range(min=0)),
+            ): vol.All(vol.Coerce(int), vol.Range(min=5)),
             vol.Optional(
                 "disable_negative_production",
                 default=self.config_entry.options.get(
