@@ -4,7 +4,9 @@
 [![Maintainer][maintainer-shield]][maintainer]
 [![HACS Custom][hacs-shield]][hacs-url]
 
-This is a HACS custom integration for enphase envoys with firmware version 7.X. To be used with your installer account.
+This is a HACS custom integration for enphase envoys with firmware version 7.X.
+
+▶ To be used with your installer or DIY account. (Most of the functionality won't be available when using a Home Owner account.)
 
 Features:
 - Individual device per inverter with all information available. 
