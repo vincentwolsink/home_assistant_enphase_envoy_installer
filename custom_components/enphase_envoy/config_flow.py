@@ -21,7 +21,12 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 
-from .const import DOMAIN, CONF_SERIAL, DEFAULT_SCAN_INTERVAL
+from .const import (
+    DOMAIN,
+    CONF_SERIAL,
+    DEFAULT_SCAN_INTERVAL,
+    DEFAULT_REALTIME_UPDATE_THROTTLE,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -223,6 +228,16 @@ class EnvoyOptionsFlowHandler(config_entries.OptionsFlow):
                     "disable_negative_production", False
                 ),
             ): bool,
+            vol.Optional(
+                "enable_realtime_updates",
+                default=self.config_entry.options.get("enable_realtime_updates", False),
+            ): bool,
+            vol.Optional(
+                "realtime_update_throttle",
+                default=self.config_entry.options.get(
+                    "realtime_update_throttle", DEFAULT_REALTIME_UPDATE_THROTTLE
+                ),
+            ): vol.All(vol.Coerce(int), vol.Range(min=0)),
         }
         return self.async_show_form(step_id="user", data_schema=vol.Schema(schema))
 

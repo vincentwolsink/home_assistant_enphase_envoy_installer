@@ -23,6 +23,7 @@ from .const import (
     SENSORS,
     ICON,
     PHASE_SENSORS,
+    LIVE_UPDATEABLE_ENTITIES,
 )
 
 
@@ -35,6 +36,7 @@ async def async_setup_entry(
     data = hass.data[DOMAIN][config_entry.entry_id]
     coordinator = data[COORDINATOR]
     name = data[NAME]
+    live_entities = data[LIVE_UPDATEABLE_ENTITIES]
 
     entities = []
     for sensor_description in SENSORS:
@@ -162,17 +164,16 @@ async def async_setup_entry(
             continue
 
         entity_name = f"{name} {sensor_description.name}"
-        entities.append(
-            CoordinatedEnvoyEntity(
-                sensor_description,
-                entity_name,
-                name,
-                config_entry.unique_id,
-                None,
-                coordinator,
-                config_entry.data[CONF_HOST],
-            )
+        live_entities[sensor_description.key] = CoordinatedEnvoyEntity(
+            sensor_description,
+            entity_name,
+            name,
+            config_entry.unique_id,
+            None,
+            coordinator,
+            config_entry.data[CONF_HOST],
         )
+        entities.append(live_entities[sensor_description.key])
 
     async_add_entities(entities)
 
