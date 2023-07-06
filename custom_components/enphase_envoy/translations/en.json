@@ -21,5 +21,19 @@
         "description": "Enter the hostname/ip and serial of your Envoy. Use your Enlighten Installer account credentials."
       }
     }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "Envoy options",
+        "data": {
+          "disable_negative_production": "Disable negative production values",
+          "time_between_update": "Minimum time between entity updates [s]"
+        },
+        "data_description": {
+          "time_between_update": "This interval only applies to the polling interval (not on the live updates)"
+        }
+      }
+    }
   }
 }
