@@ -8,6 +8,8 @@ This is a HACS custom integration for enphase envoys with firmware version 7.X.
 
 ▶ To be used with your installer or DIY account. (Most of the functionality won't be available when using a Home Owner account.)
 
+⚠ Some older Envoy firmware versions exposed the needed API endpoints without proper authentication. This has been fixed by Enphase and they pushed an update to the Envoys. If you are using this integration with a Home Owner account you probably lost most of the functionality since.
+
 Features:
 - Individual device per inverter with all information available. 
 - Individual device per Q-relay with relay status.
