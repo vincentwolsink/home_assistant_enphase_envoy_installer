@@ -223,7 +223,12 @@ class EnvoyOptionsFlowHandler(config_entries.OptionsFlow):
                     "disable_negative_production", False
                 ),
             ): bool,
-        }
+            vol.Optional(
+                "disable_installer_account_use",
+                default=self.config_entry.options.get(
+                    "disable_installer_account_use", False
+                ),
+            ): bool,        }
         return self.async_show_form(step_id="user", data_schema=vol.Schema(schema))
 
 

@@ -1,39 +1,40 @@
 {
-    "config": {
-        "abort": {
-            "already_configured": "Apparaat is al geconfigureerd",
-            "reauth_successful": "Herauthenticatie was succesvol"
-        },
-        "error": {
-            "cannot_connect": "Kan geen verbinding maken",
-            "invalid_auth": "Ongeldige authenticatie",
-            "unknown": "Onverwachte fout"
-        },
-        "flow_title": "{serial} ({host})",
-        "step": {
-            "user": {
-                "data": {
-                    "host": "Host",
-                    "password": "Enlighten Wachtwoord",
-                    "username": "Enlighten Gebruikersnaam",
-                    "serial": "Envoy Serienummer"
-                },
-                "description": "Voer de hostname/ip en serienummer van je Envoy in. Gebruik je Enlighten installer account gegevens."
-            }
-        }
-    },
-    "options": {
+  "config": {
+      "abort": {
+          "already_configured": "Apparaat is al geconfigureerd",
+          "reauth_successful": "Herauthenticatie was succesvol"
+      },
+      "error": {
+          "cannot_connect": "Kan geen verbinding maken",
+          "invalid_auth": "Ongeldige authenticatie",
+          "unknown": "Onverwachte fout"
+      },
+      "flow_title": "{serial} ({host})",
       "step": {
-        "user": {
-          "title": "Envoy opties",
-          "data": {
-            "disable_negative_production": "Voorkom negatieve productie waardes",
-            "time_between_update": "Minimum tijd tussen entity updates [s]"
-          },
-          "data_description": {
-            "time_between_update": "Dit interval is alleen van toepassing voor het pollen van URLs"
+          "user": {
+              "data": {
+                  "host": "Host",
+                  "password": "Enlighten Wachtwoord",
+                  "username": "Enlighten Gebruikersnaam",
+                  "serial": "Envoy Serienummer"
+              },
+              "description": "Voer de hostname/ip en serienummer van je Envoy in. Gebruik je Enlighten installer account gegevens."
           }
+      }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "Envoy opties",
+        "data": {
+          "disable_negative_production": "Voorkom negatieve productie waardes",
+          "time_between_update": "Minimum tijd tussen entity updates [s]",
+          "disable_installer_account_use": "Haal geen data op die een installateur of DHZ enphase account vereisen"
+        },
+        "data_description": {
+          "time_between_update": "Dit interval is alleen van toepassing voor het pollen van URLs"
         }
       }
     }
+  }
 }

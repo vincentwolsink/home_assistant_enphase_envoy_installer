@@ -28,7 +28,8 @@
         "title": "Envoy options",
         "data": {
           "disable_negative_production": "Disable negative production values",
-          "time_between_update": "Minimum time between entity updates [s]"
+          "time_between_update": "Minimum time between entity updates [s]",
+          "disable_installer_account_use": "Do not collect data that requires installer or DIY enphase account"
         },
         "data_description": {
           "time_between_update": "This interval only applies to the polling interval (not on the live updates)"

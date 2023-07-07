@@ -91,6 +91,7 @@ class EnvoyReader:
         token_refresh_buffer_seconds=0,
         store=None,
         disable_negative_production=False,
+        disable_installer_account_use=False,
     ):
         """Init the EnvoyReader."""
         self.host = host.lower()
@@ -125,6 +126,7 @@ class EnvoyReader:
         except ipaddress.AddressValueError:
             pass
         self.disable_negative_production = disable_negative_production
+        self.disable_installer_account_use = disable_installer_account_use
 
         self._store = store
         self._store_data = {}
@@ -187,14 +189,17 @@ class EnvoyReader:
 
     async def _update_from_installer_endpoint(self):
         """Update from installer endpoint."""
-        await self._update_endpoint(
-            "endpoint_devstatus", ENDPOINT_URL_DEVSTATUS, only_on_success=True
+        if not self.disable_installer_account_use:
+            await self._update_endpoint(
+                "endpoint_devstatus", ENDPOINT_URL_DEVSTATUS, only_on_success=True
+            )
+            await self._update_endpoint(
+                "endpoint_production_power",
+                ENDPOINT_URL_PRODUCTION_POWER,
+                only_on_success=True
         )
-        await self._update_endpoint(
-            "endpoint_production_power",
-            ENDPOINT_URL_PRODUCTION_POWER,
-            only_on_success=True,
-        )
+        else:
+            _LOGGER.debug("Disable installer account use : %s ",self.disable_installer_account_use)
 
     async def _update_endpoint(self, attr, url, only_on_success=False):
         """Update a property from an endpoint."""
