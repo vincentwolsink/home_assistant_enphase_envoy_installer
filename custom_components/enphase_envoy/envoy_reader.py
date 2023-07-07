@@ -8,6 +8,8 @@ import jwt
 import xmltodict
 import httpx
 import ipaddress
+import json
+
 import hashlib
 import base64
 import random
@@ -26,6 +28,7 @@ ENDPOINT_URL_HOME_JSON = "https://{}/home.json"
 ENDPOINT_URL_DEVSTATUS = "https://{}/ivp/peb/devstatus"
 ENDPOINT_URL_PRODUCTION_POWER = "https://{}/ivp/mod/603980032/mode/power"
 ENDPOINT_URL_INFO_XML = "https://{}/info.xml"
+ENDPOINT_URL_STREAM = "https://{}/stream/meter"
 
 ENVOY_MODEL_S = "PC"
 ENVOY_MODEL_C = "P"
@@ -71,6 +74,53 @@ def has_metering_setup(json):
 
 class SwitchToHTTPS(Exception):
     pass
+
+
+class StreamData:
+    class PhaseData:
+        def __init__(self, phase_data):
+            self.watts = phase_data["p"]  # wNow, W
+            self.amps = phase_data["i"]  # rmsCurrent, A
+            self.volt_ampere = phase_data["s"]  # apparent_power, VA
+            self.volt = phase_data["v"]  # rmsVoltage, V
+            self.pf = phase_data["pf"]  # pwrFactor, PF
+            self.hz = phase_data["f"]  # Frequency, Hz
+
+            # no clue what the q key is (the webui also has no reference to it.)
+            # self.power_?? = phase_data["q"]
+
+        def __str__(self):
+            return "<Phase %s watts, %s volt, %s amps, %s va, %s hz, %s pf />" % (
+                self.watts,
+                self.volt,
+                self.amps,
+                self.volt_ampere,
+                self.hz,
+                self.pf,
+            )
+
+    def __init__(self, data):
+        self.production = {}
+        self.consumption = {}
+        self.total = {}
+
+        phase_mapping = {"ph-a": "l1", "ph-b": "l2", "ph-c": "l3"}
+        for data_key, attr in {
+            "production": "production",
+            "net-consumption": "consumption",
+            "total-consumption": "total",
+        }.items():
+            for phase_key, phase in phase_mapping.items():
+                if not data.get(data_key, {}).get(phase_key, False):
+                    continue
+                getattr(self, attr)[phase] = self.PhaseData(data[data_key][phase_key])
+
+    def __str__(self):
+        return "<StreamData production=%s, consumption=%s, total=%s />" % (
+            dict([[k, str(v)] for k, v in self.production.items()]),
+            dict([[k, str(v)] for k, v in self.consumption.items()]),
+            dict([[k, str(v)] for k, v in self.total.items()]),
+        )
 
 
 class EnvoyReader:
@@ -125,6 +175,8 @@ class EnvoyReader:
         except ipaddress.AddressValueError:
             pass
         self.disable_negative_production = disable_negative_production
+
+        self.is_receiving_realtime_data = False
 
         self._store = store
         self._store_data = {}
@@ -453,10 +505,7 @@ class EnvoyReader:
         if resp.status_code == 301:
             raise SwitchToHTTPS
 
-    async def getData(self, getInverters=True):
-        """Fetch data from the endpoint and if inverters selected default"""
-        """to fetching inverter data."""
-
+    async def init_authentication(self):
         _LOGGER.debug("Checking Token value: %s", self._token)
         # Check if a token has already been retrieved
         if self._token == "":
@@ -467,6 +516,85 @@ class EnvoyReader:
             if self._is_enphase_token_expired(self._token):
                 _LOGGER.debug("Found Expired token - Retrieving new token")
                 await self._getEnphaseToken()
+            else:
+                await self._refresh_token_cookies()
+
+    async def stream_reader(self, meter_callback=None, loop=None):
+        # First, login, etc, make sure we have a token.
+        await self.init_authentication()
+
+        if not self.isMeteringEnabled or self.endpoint_type != ENVOY_MODEL_S:
+            _LOGGER.debug(
+                "Metering is not enabled or endpoint type '%s' not supported",
+                self.endpoint_type,
+            )
+            return False
+
+        # Now we're either authenticated, or execution stopped.
+        url = ENDPOINT_URL_STREAM.format(self.host)
+        _LOGGER.debug("Connecting to %s", url)
+
+        try:
+            _LOGGER.debug(
+                "HTTP GET stream: %s: Header:%s Cookies:%s",
+                url,
+                self._authorization_header,
+                self._cookies,
+            )
+            async with self.async_client.stream(
+                "GET",
+                url,
+                headers=self._authorization_header,
+                cookies=self._cookies,
+            ) as response:
+                if response.status_code in (401, 404):
+                    _LOGGER.warning(
+                        "Could not load the stream, HTTP %s: %s",
+                        response.status_code,
+                        response.text,
+                    )
+                    # No access, lets stop reconnection.
+                    return False
+
+                if response.status_code != 200:
+                    await response.aread()
+                    _LOGGER.warning(
+                        "Error while fetching meter stream; HTTP %s: %s",
+                        response.status_code,
+                        response.text,
+                    )
+                    return True  # keep retrying.
+
+                self.is_receiving_realtime_data = True
+                _LOGGER.debug("Starting to read chunks of data.")
+
+                async for chunk in response.aiter_text():
+                    if not chunk.startswith("data:"):
+                        continue
+
+                    try:
+                        reading = json.loads(chunk[6:])
+                    except JSONDecodeError:
+                        _LOGGER.debug("Unable to decode json chunk: %s", chunk[6:])
+                        continue
+
+                    if meter_callback:
+                        try:
+                            meter_callback(StreamData(reading))
+                        except Exception as e:
+                            _LOGGER.exception("Unable to execute callback: %s", e)
+                            raise
+                    else:
+                        print(StreamData(reading))
+
+            return True
+        finally:
+            self.is_receiving_realtime_data = False
+
+    async def getData(self, getInverters=True):
+        """Fetch data from the endpoint and if inverters selected default"""
+        """to fetching inverter data."""
+        await self.init_authentication()
 
         if not self.endpoint_type:
             await self.detect_model()
@@ -1074,6 +1202,15 @@ class EnvoyReader:
 
         return response_dict
 
+    def run_stream(self):
+        print("Reading stream...")
+        loop = asyncio.get_event_loop()
+        self.isMeteringEnabled = True
+        self.endpoint_type = ENVOY_MODEL_S
+        data_results = loop.run_until_complete(
+            asyncio.gather(self.stream_reader(), return_exceptions=True)
+        )
+
     def run_in_console(self):
         """If running this module directly, print all the values in the console."""
         print("Reading...")
@@ -1147,10 +1284,17 @@ if __name__ == "__main__":
         dest="host",
         help="Envoy IP address or host name",
     )
+    parser.add_argument(
+        "--test-stream",
+        dest="test_stream",
+        help="test /stream/meter endpoint",
+        action="store_true",
+    )
     args = parser.parse_args()
 
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
+        # logging.getLogger('httpcore').setLevel(logging.INFO)
 
     TESTREADER = EnvoyReader(
         host=args.host,
@@ -1159,4 +1303,7 @@ if __name__ == "__main__":
         enlighten_pass=args.enlighten_pass,
         enlighten_serial_num=args.enlighten_serial_num,
     )
-    TESTREADER.run_in_console()
+    if args.test_stream:
+        TESTREADER.run_stream()
+    else:
+        TESTREADER.run_in_console()

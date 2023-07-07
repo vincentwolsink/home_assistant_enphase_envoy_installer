@@ -27,10 +27,13 @@
       "user": {
         "title": "Envoy options",
         "data": {
+          "enable_realtime_updates": "Enable realtime updates (only for metered envoys)",
+          "realtime_update_throttle": "Minimum time between realtime entity updates [s]",
           "disable_negative_production": "Disable negative production values",
           "time_between_update": "Minimum time between entity updates [s]"
         },
         "data_description": {
+          "realtime_update_throttle": "Only applies to realtime updates (to preventing any overload on the system)",
           "time_between_update": "This interval only applies to the polling interval (not on the live updates)"
         }
       }

@@ -27,10 +27,13 @@
         "user": {
           "title": "Envoy opties",
           "data": {
+            "enable_realtime_updates": "Gebruik real-time updates (werkt alleen met metered envoys)",
+            "realtime_update_throttle": "Minimale tijd tussen real-time updates [s]",
             "disable_negative_production": "Voorkom negatieve productie waardes",
             "time_between_update": "Minimum tijd tussen entity updates [s]"
           },
           "data_description": {
+            "realtime_update_throttle": "Dit interval is van toepassing op real-time updates (om eventuele overload met updates te voorkomen)",
             "time_between_update": "Dit interval is alleen van toepassing voor het pollen van URLs"
           }
         }
