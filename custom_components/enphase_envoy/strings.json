@@ -30,7 +30,8 @@
           "enable_realtime_updates": "Enable realtime updates (only for metered envoys)",
           "realtime_update_throttle": "Minimum time between realtime entity updates [s]",
           "disable_negative_production": "Disable negative production values",
-          "time_between_update": "Minimum time between entity updates [s]"
+          "time_between_update": "Minimum time between entity updates [s]",
+          "disable_installer_account_use": "Do not collect data that requires installer or DIY enphase account"
         },
         "data_description": {
           "realtime_update_throttle": "Only applies to realtime updates (to preventing any overload on the system)",

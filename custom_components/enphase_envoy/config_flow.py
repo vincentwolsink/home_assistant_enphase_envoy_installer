@@ -228,6 +228,7 @@ class EnvoyOptionsFlowHandler(config_entries.OptionsFlow):
                     "disable_negative_production", False
                 ),
             ): bool,
+
             vol.Optional(
                 "enable_realtime_updates",
                 default=self.config_entry.options.get("enable_realtime_updates", False),
@@ -238,6 +239,12 @@ class EnvoyOptionsFlowHandler(config_entries.OptionsFlow):
                     "realtime_update_throttle", DEFAULT_REALTIME_UPDATE_THROTTLE
                 ),
             ): vol.All(vol.Coerce(int), vol.Range(min=0)),
+            vol.Optional(
+                "disable_installer_account_use",
+                default=self.config_entry.options.get(
+                    "disable_installer_account_use", False
+                ),
+            ): bool,
         }
         return self.async_show_form(step_id="user", data_schema=vol.Schema(schema))
 
