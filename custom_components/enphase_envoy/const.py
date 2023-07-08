@@ -36,6 +36,7 @@ DEFAULT_REALTIME_UPDATE_THROTTLE = 10
 CONF_SERIAL = "serial"
 
 LIVE_UPDATEABLE_ENTITIES = "live-update-entities"
+DISABLE_INSTALLER_ACCOUNT_USE = "disable_installer_account_use"
 
 SENSORS = (
     SensorEntityDescription(

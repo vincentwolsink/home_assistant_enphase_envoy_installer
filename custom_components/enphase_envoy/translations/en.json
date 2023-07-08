@@ -16,7 +16,8 @@
           "host": "Host",
           "password": "Enlighten Password",
           "username": "Enlighten Username",
-          "serial": "Envoy Serial Number"
+          "serial": "Envoy Serial Number",
+          "disable_installer_account_use": "I have no installer or DIY enphase account, just Home owner"
         },
         "description": "Enter the hostname/ip and serial of your Envoy. Use your Enlighten Installer account credentials."
       }

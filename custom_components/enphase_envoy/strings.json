@@ -8,7 +8,8 @@
           "host": "[%key:common::config_flow::data::host%]",
           "username": "[%key:common::config_flow::data::username%]",
           "password": "[%key:common::config_flow::data::password%]",
-          "serial": "Envoy Serial Number"
+          "serial": "Envoy Serial Number",
+          "disable_installer_account_use": "I have no installer or DIY enphase account, just Home owner"
         }
       }
     },
