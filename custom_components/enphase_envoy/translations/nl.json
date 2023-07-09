@@ -31,6 +31,7 @@
             "enable_realtime_updates": "Gebruik real-time updates (werkt alleen met metered envoys)",
             "realtime_update_throttle": "Minimale tijd tussen real-time updates [s]",
             "disable_negative_production": "Voorkom negatieve productie waardes",
+            "time_between_update": "Minimum tijd tussen entity updates [s]",
             "disable_installer_account_use": "Haal geen data op die een installateur of DHZ enphase account vereisen"
           },
           "data_description": {
