@@ -35,8 +35,8 @@
             "disable_installer_account_use": "Haal geen data op die een installateur of DHZ enphase account vereisen"
           },
           "data_description": {
-            "realtime_update_throttle": "Dit interval is van toepassing op real-time updates (om eventuele overload met updates te voorkomen)",
-            "time_between_update": "Dit interval is alleen van toepassing voor het pollen van URLs"
+            "realtime_update_throttle": "Deze interval is van toepassing op real-time updates (om eventuele overload met updates te voorkomen)",
+            "time_between_update": "Deze interval is alleen van toepassing voor het pollen van URLs"
           }
         }
       }
