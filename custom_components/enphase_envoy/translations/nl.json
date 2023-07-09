@@ -16,7 +16,8 @@
                     "host": "Host",
                     "password": "Enlighten Wachtwoord",
                     "username": "Enlighten Gebruikersnaam",
-                    "serial": "Envoy Serienummer"
+                    "serial": "Envoy Serienummer",
+                    "disable_installer_account_use": "Ik heb geen installer of DHZ enphase account, alleen Home owner"
                 },
                 "description": "Voer de hostname/ip en serienummer van je Envoy in. Gebruik je Enlighten installer account gegevens."
             }
@@ -30,7 +31,8 @@
             "enable_realtime_updates": "Gebruik real-time updates (werkt alleen met metered envoys)",
             "realtime_update_throttle": "Minimale tijd tussen real-time updates [s]",
             "disable_negative_production": "Voorkom negatieve productie waardes",
-            "time_between_update": "Minimum tijd tussen entity updates [s]"
+            "time_between_update": "Minimum tijd tussen entity updates [s]",
+            "disable_installer_account_use": "Haal geen data op die een installateur of DHZ enphase account vereisen"
           },
           "data_description": {
             "realtime_update_throttle": "Dit interval is van toepassing op real-time updates (om eventuele overload met updates te voorkomen)",

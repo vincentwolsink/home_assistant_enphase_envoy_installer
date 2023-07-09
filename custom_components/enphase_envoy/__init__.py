@@ -40,6 +40,7 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_REALTIME_UPDATE_THROTTLE,
     LIVE_UPDATEABLE_ENTITIES,
+    DISABLE_INSTALLER_ACCOUNT_USE,
 )
 
 STORAGE_KEY = "envoy"
@@ -67,6 +68,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         enlighten_serial_num=config[CONF_SERIAL],
         store=store,
         disable_negative_production=options.get("disable_negative_production", False),
+        disable_installer_account_use=options.get(
+            DISABLE_INSTALLER_ACCOUNT_USE,
+            config.get(DISABLE_INSTALLER_ACCOUNT_USE, False),
+        ),
     )
     await envoy_reader._sync_store()
 
