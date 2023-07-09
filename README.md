@@ -16,7 +16,8 @@ Features:
 - "Production" switch to turn on/off solar power production.
 - Firmware update sensor.
 - 3 Phase CT readings.
-
+- Configurable polling interval.
+- Optional negative production reading correction.
 
 <img width="775" alt="ha_envoy_inverters" src="https://github.com/vincentwolsink/home_assistant_enphase_envoy_installer/assets/1639734/a070ab6e-3207-412f-b712-6bd31cf8ac83">
 
