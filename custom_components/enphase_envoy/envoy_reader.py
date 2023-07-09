@@ -248,10 +248,13 @@ class EnvoyReader:
             await self._update_endpoint(
                 "endpoint_production_power",
                 ENDPOINT_URL_PRODUCTION_POWER,
-                only_on_success=True
-        )
+                only_on_success=True,
+            )
         else:
-            _LOGGER.debug("Disable installer account use : %s ",self.disable_installer_account_use)
+            _LOGGER.debug(
+                "Disable installer account use : %s ",
+                self.disable_installer_account_use,
+            )
 
     async def _update_endpoint(self, attr, url, only_on_success=False):
         """Update a property from an endpoint."""
