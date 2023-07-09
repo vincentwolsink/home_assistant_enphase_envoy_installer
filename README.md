@@ -6,7 +6,7 @@
 
 This is a HACS custom integration for enphase envoys with firmware version 7.X.
 
-▶ To be used with your installer or DIY account. (Most of the functionality won't be available when using a Home Owner account, to disable the collection of these use the setting to not collect data that requires installer or DIY accounts.)
+▶ To be used with your installer or DIY account. (Most of the functionality won't be available when using a Home Owner account. If you still want it this way, select the option during configuration.)
 
 ⚠ Some older Envoy firmware versions exposed the needed API endpoints without proper authentication. This has been fixed by Enphase and they pushed an update to the Envoys. If you are using this integration with a Home Owner account you probably lost most of the functionality since.
 
@@ -33,7 +33,6 @@ Or follow these steps:
 2. Add this repository as a [custom integration repository](https://hacs.xyz/docs/faq/custom_repositories) in HACS
 4. Restart home assistant
 5. Add the integration through the home assistant configuration flow
-6. If you only have a Home owner account use the configureation option to not collect data that requires installer or DIY enphase account and relaod the integration
 
 [releases-shield]: https://img.shields.io/github/v/release/vincentwolsink/home_assistant_enphase_envoy_installer.svg?style=for-the-badge
 [releases]: https://github.com/vincentwolsink/home_assistant_enphase_envoy_installer/releases
