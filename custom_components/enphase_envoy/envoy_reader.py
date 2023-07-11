@@ -1112,46 +1112,50 @@ class EnvoyReader:
     async def relay_status(self):
         """Return relay status from Envoys that have relays installed."""
         response_dict = {}
-        try:
-            devstatus = self.endpoint_devstatus.json()
-            for item in devstatus["pcu"]["values"]:
-                if "serialNumber" in devstatus["pcu"]["fields"]:
-                    if (
-                        item[devstatus["pcu"]["fields"].index("devType")] != 12
-                    ):  # this is a relay
-                        continue
+        if self.endpoint_devstatus:
+            try:
+                devstatus = self.endpoint_devstatus.json()
+                for item in devstatus["pcu"]["values"]:
+                    if "serialNumber" in devstatus["pcu"]["fields"]:
+                        if (
+                            item[devstatus["pcu"]["fields"].index("devType")] != 12
+                        ):  # this is a relay
+                            continue
 
-                    serial = item[devstatus["pcu"]["fields"].index("serialNumber")]
-                    dev = response_dict.setdefault(serial, {})
-                    for field in [
-                        "communicating",
-                        "reportDate",
-                    ]:
-                        if field in devstatus["pcu"]["fields"]:
-                            value = item[devstatus["pcu"]["fields"].index(field)]
-                            if field == "reportDate":
-                                dev["report_date"] = time.strftime(
-                                    "%Y-%m-%d %H:%M:%S", time.localtime(value)
-                                )
-                            else:
+                        serial = item[devstatus["pcu"]["fields"].index("serialNumber")]
+                        dev = response_dict.setdefault(serial, {})
+                        for field in [
+                            "communicating",
+                            "reportDate",
+                        ]:
+                            if field in devstatus["pcu"]["fields"]:
+                                value = item[devstatus["pcu"]["fields"].index(field)]
+                                if field == "reportDate":
+                                    dev["report_date"] = time.strftime(
+                                        "%Y-%m-%d %H:%M:%S", time.localtime(value)
+                                    )
+                                else:
+                                    dev[field] = value
+
+                for item in devstatus["nsrb"]["values"]:
+                    if "serialNumber" in devstatus["nsrb"]["fields"]:
+                        serial = item[devstatus["nsrb"]["fields"].index("serialNumber")]
+                        response_dict[serial] = {}
+                        dev = response_dict.setdefault(serial, {})
+
+                        for field in [
+                            "relay",
+                            "forced",
+                            "reason_code",
+                            "reason",
+                        ]:
+                            if field in devstatus["nsrb"]["fields"]:
+                                value = item[devstatus["nsrb"]["fields"].index(field)]
                                 dev[field] = value
+            except (JSONDecodeError, KeyError, IndexError, TypeError, AttributeError):
+                return None
 
-            for item in devstatus["nsrb"]["values"]:
-                if "serialNumber" in devstatus["nsrb"]["fields"]:
-                    serial = item[devstatus["nsrb"]["fields"].index("serialNumber")]
-                    response_dict[serial] = {}
-                    dev = response_dict.setdefault(serial, {})
-
-                    for field in [
-                        "relay",
-                        "forced",
-                        "reason_code",
-                        "reason",
-                    ]:
-                        if field in devstatus["nsrb"]["fields"]:
-                            value = item[devstatus["nsrb"]["fields"].index(field)]
-                            dev[field] = value
-        except (JSONDecodeError, KeyError, IndexError, TypeError, AttributeError):
+        elif self.disable_installer_account_use:
             """home-owner accounts have no access to device status in recent fw, use info from inventory"""
             try:
                 inventory_json = self.endpoint_inventory_results.json()
@@ -1179,12 +1183,12 @@ class EnvoyReader:
                                     )
                                 else:
                                     dev[field] = value
-            except (KeyError, IndexError, TypeError, AttributeError) as error:
+            except (JSONDecodeError,KeyError, IndexError, TypeError, AttributeError):
                 return None
+        else:
+            return None
 
         return response_dict
-
-        return None
 
     async def envoy_info(self):
         device_data = {}
