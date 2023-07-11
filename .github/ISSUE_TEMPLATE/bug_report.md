@@ -16,7 +16,8 @@ A clear and concise description of what the bug is.
 - [ ] Home Owner (This integration is not (fully) functional with a home owner account!)
 
 **Envoy**
-- [ ] Metered
+- [ ] Metered with CTs installed
+- [ ] Metered without CTs
 - [ ] Standard
 
 - FW version: D7.xxx
