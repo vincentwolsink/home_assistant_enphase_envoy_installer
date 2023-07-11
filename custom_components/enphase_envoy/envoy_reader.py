@@ -1183,7 +1183,7 @@ class EnvoyReader:
                                     )
                                 else:
                                     dev[field] = value
-            except (JSONDecodeError,KeyError, IndexError, TypeError, AttributeError):
+            except (JSONDecodeError, KeyError, IndexError, TypeError, AttributeError):
                 return None
         else:
             return None
