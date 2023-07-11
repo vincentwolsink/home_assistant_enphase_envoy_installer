@@ -1152,7 +1152,35 @@ class EnvoyReader:
                             value = item[devstatus["nsrb"]["fields"].index(field)]
                             dev[field] = value
         except (JSONDecodeError, KeyError, IndexError, TypeError, AttributeError):
-            return None
+            """home-owner accounts have no access to device status in recent fw, use info from inventory"""
+            try:
+                inventory_json = self.endpoint_inventory_results.json()
+                for item in inventory_json:
+                    if "type" in item and item["type"] == "NSRB":
+                        for device in item["devices"]:
+                            if device["dev_type"] != 12:
+                                # this is not a relay
+                                continue
+                            serial = device["serial_num"]
+                            response_dict[serial] = {}
+                            dev = response_dict.setdefault(serial, {})
+
+                            for field in [
+                                "communicating",
+                                "last_rpt_date",
+                                "relay",
+                                "reason_code",
+                                "reason",
+                            ]:
+                                value = device[field]
+                                if field == "last_rpt_date":
+                                    dev["report_date"] = time.strftime(
+                                        "%Y-%m-%d %H:%M:%S", time.localtime(int(value))
+                                    )
+                                else:
+                                    dev[field] = value
+            except (KeyError, IndexError, TypeError, AttributeError) as error:
+                return None
 
         return response_dict
 
