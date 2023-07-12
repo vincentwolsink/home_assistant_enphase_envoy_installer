@@ -102,13 +102,13 @@ class StreamData:
     def __init__(self, data):
         self.production = {}
         self.consumption = {}
-        self.total = {}
+        self.net_consumption = {}
 
         phase_mapping = {"ph-a": "l1", "ph-b": "l2", "ph-c": "l3"}
         for data_key, attr in {
             "production": "production",
-            "net-consumption": "consumption",
-            "total-consumption": "total",
+            "total-consumption": "consumption",
+            "net-consumption": "net_consumption",
         }.items():
             for phase_key, phase in phase_mapping.items():
                 if not data.get(data_key, {}).get(phase_key, False):
@@ -116,10 +116,10 @@ class StreamData:
                 getattr(self, attr)[phase] = self.PhaseData(data[data_key][phase_key])
 
     def __str__(self):
-        return "<StreamData production=%s, consumption=%s, total=%s />" % (
+        return "<StreamData production=%s, consumption=%s, net_consumption=%s />" % (
             dict([[k, str(v)] for k, v in self.production.items()]),
             dict([[k, str(v)] for k, v in self.consumption.items()]),
-            dict([[k, str(v)] for k, v in self.total.items()]),
+            dict([[k, str(v)] for k, v in self.net_consumption.items()]),
         )
 
 
