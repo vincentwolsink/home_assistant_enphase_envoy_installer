@@ -343,7 +343,6 @@ class EnvoyRelayEntity(EnvoyBinaryEntity):
             relay = self.coordinator.data.get("relays").get(self._serial_number)
             return {
                 "last_reported": relay.get("report_date"),
-                "forced": relay.get("forced"),
                 "reason_code": relay.get("reason_code"),
                 "reason": relay.get("reason"),
             }
