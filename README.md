@@ -16,6 +16,7 @@ Features:
 - "Production" switch to turn on/off solar power production.
 - Firmware update sensor.
 - 3 Phase CT readings.
+- "Realtime" updates of CT readings.
 - Configurable polling interval.
 - Optional negative production reading correction.
 
