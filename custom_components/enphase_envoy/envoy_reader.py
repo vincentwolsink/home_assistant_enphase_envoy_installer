@@ -892,34 +892,6 @@ class EnvoyReader:
         except (KeyError, IndexError):
             return None
 
-    async def seven_days_production(self):
-        """Running getData() beforehand will set self.enpoint_type and self.isDataRetrieved"""
-        """so that this method will only read data from stored variables"""
-
-        if self.endpoint_type == ENVOY_MODEL_S and self.isMeteringEnabled:
-            raw_json = self.endpoint_production_json_results.json()
-            seven_days_production = raw_json["production"][1]["whLastSevenDays"]
-        elif self.endpoint_type == ENVOY_MODEL_C or (
-            self.endpoint_type == ENVOY_MODEL_S and not self.isMeteringEnabled
-        ):
-            raw_json = self.endpoint_production_v1_results.json()
-            seven_days_production = raw_json["wattHoursSevenDays"]
-        return int(seven_days_production)
-
-    async def seven_days_consumption(self):
-        """Running getData() beforehand will set self.enpoint_type and self.isDataRetrieved"""
-        """so that this method will only read data from stored variables"""
-
-        """Only return data if Envoy supports Consumption"""
-        if self.endpoint_type in ENVOY_MODEL_C:
-            return None
-
-        raw_json = self.endpoint_production_json_results.json()
-        if raw_json["consumption"][0]["activeCount"] == 0:
-            return None
-        seven_days_consumption = raw_json["consumption"][0]["whLastSevenDays"]
-        return int(seven_days_consumption)
-
     async def lifetime_production(self):
         """Running getData() beforehand will set self.enpoint_type and self.isDataRetrieved"""
         """so that this method will only read data from stored variables"""
@@ -1233,8 +1205,6 @@ class EnvoyReader:
                 self.consumption(),
                 self.daily_production(),
                 self.daily_consumption(),
-                self.seven_days_production(),
-                self.seven_days_consumption(),
                 self.lifetime_production(),
                 self.lifetime_consumption(),
                 self.inverters_production(),
@@ -1253,18 +1223,16 @@ class EnvoyReader:
         print(f"consumption:             {results[1]}")
         print(f"daily_production:        {results[2]}")
         print(f"daily_consumption:       {results[3]}")
-        print(f"seven_days_production:   {results[4]}")
-        print(f"seven_days_consumption:  {results[5]}")
-        print(f"lifetime_production:     {results[6]}")
-        print(f"lifetime_consumption:    {results[7]}")
-        print(f"inverters_production:    {results[8]}")
-        print(f"battery_storage:         {results[9]}")
-        print(f"production_power:        {results[10]}")
-        print(f"inverters_status:        {results[11]}")
-        print(f"relays:                  {results[12]}")
-        print(f"envoy_info:              {results[13]}")
-        print(f"inverters_info:          {results[14]}")
-        print(f"relay_info:              {results[15]}")
+        print(f"lifetime_production:     {results[4]}")
+        print(f"lifetime_consumption:    {results[5]}")
+        print(f"inverters_production:    {results[6]}")
+        print(f"battery_storage:         {results[7]}")
+        print(f"production_power:        {results[8]}")
+        print(f"inverters_status:        {results[9]}")
+        print(f"relays:                  {results[10]}")
+        print(f"envoy_info:              {results[11]}")
+        print(f"inverters_info:          {results[12]}")
+        print(f"relay_info:              {results[13]}")
 
 
 if __name__ == "__main__":
