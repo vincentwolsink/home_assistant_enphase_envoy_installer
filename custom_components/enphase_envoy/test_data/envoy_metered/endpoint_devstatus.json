@@ -1,0 +1,330 @@
+{
+    "counters": {
+        "pcu": {
+            "expected": 14,
+            "discovered": 14,
+            "ctrlsTotal": 14,
+            "ctrlsGone": 0,
+            "ctrlsCommunicating": 14,
+            "chansTotal": 14,
+            "chansRecent": 14,
+            "chansProducing": 14
+        },
+        "acb": {
+            "expected": 0,
+            "discovered": 0,
+            "ctrlsTotal": 0,
+            "ctrlsGone": 0,
+            "ctrlsCommunicating": 0,
+            "chansTotal": 0,
+            "chansRecent": 0,
+            "chansProducing": 0
+        },
+        "nsrb": {
+            "expected": 2,
+            "discovered": 2,
+            "ctrlsTotal": 2,
+            "ctrlsGone": 0,
+            "ctrlsCommunicating": 2,
+            "chansTotal": 2,
+            "chansRecent": 2,
+            "chansProducing": 0
+        },
+        "pld": {
+            "expected": 16,
+            "discovered": 16,
+            "ctrlsTotal": 16,
+            "ctrlsGone": 0,
+            "ctrlsCommunicating": 16,
+            "chansTotal": 16,
+            "chansRecent": 16,
+            "chansProducing": 14
+        },
+        "esub": {
+            "expected": 0,
+            "discovered": 0,
+            "ctrlsTotal": 0,
+            "ctrlsGone": 0,
+            "ctrlsCommunicating": 0,
+            "chansTotal": 0,
+            "chansRecent": 0,
+            "chansProducing": 0
+        }
+    },
+    "pcu": {
+        "fields": [
+            "serialNumber",
+            "devType",
+            "communicating",
+            "recent",
+            "producing",
+            "reportDate",
+            "temperature",
+            "dcVoltageINmV",
+            "dcCurrentINmA",
+            "acVoltageINmV",
+            "acPowerINmW"
+        ],
+        "values": [
+            [
+                "999999913010",
+                1,
+                true,
+                true,
+                true,
+                1689258553,
+                39,
+                30765,
+                8335,
+                250528,
+                251832
+            ],
+            [
+                "999999913012",
+                1,
+                true,
+                true,
+                true,
+                1689258403,
+                36,
+                31038,
+                8656,
+                249832,
+                229937
+            ],
+            [
+                "999999912750",
+                1,
+                true,
+                true,
+                true,
+                1689258555,
+                36,
+                32317,
+                6985,
+                250448,
+                223379
+            ],
+            [
+                "999999912983",
+                1,
+                true,
+                true,
+                true,
+                1689258584,
+                38,
+                30913,
+                8127,
+                249792,
+                253993
+            ],
+            [
+                "999999908520",
+                1,
+                true,
+                true,
+                true,
+                1689258526,
+                38,
+                30636,
+                9655,
+                248816,
+                289102
+            ],
+            [
+                "999999909983",
+                1,
+                true,
+                true,
+                true,
+                1689258313,
+                35,
+                30958,
+                9958,
+                251840,
+                218666
+            ],
+            [
+                "999999908521",
+                1,
+                true,
+                true,
+                true,
+                1689258526,
+                36,
+                30631,
+                9592,
+                249280,
+                286456
+            ],
+            [
+                "999999912669",
+                1,
+                true,
+                true,
+                true,
+                1689258285,
+                35,
+                32625,
+                9471,
+                250024,
+                220724
+            ],
+            [
+                "999999913748",
+                1,
+                true,
+                true,
+                true,
+                1689258586,
+                37,
+                30578,
+                9555,
+                249968,
+                287450
+            ],
+            [
+                "999999909985",
+                1,
+                true,
+                true,
+                true,
+                1689258284,
+                36,
+                31243,
+                9895,
+                249616,
+                211995
+            ],
+            [
+                "999999915285",
+                1,
+                true,
+                true,
+                true,
+                1689258345,
+                35,
+                32662,
+                9374,
+                251808,
+                244714
+            ],
+            [
+                "999999915246",
+                1,
+                true,
+                true,
+                true,
+                1689258405,
+                35,
+                31637,
+                9738,
+                250976,
+                259065
+            ],
+            [
+                "999999912590",
+                1,
+                true,
+                true,
+                true,
+                1689258344,
+                33,
+                34254,
+                2976,
+                251560,
+                99668
+            ],
+            [
+                "999999910862",
+                1,
+                true,
+                true,
+                true,
+                1689258285,
+                29,
+                31524,
+                1776,
+                249928,
+                51092
+            ],
+            [
+                "999999968177",
+                12,
+                true,
+                true,
+                false,
+                1689258314,
+                0,
+                0,
+                0,
+                0,
+                0
+            ],
+            [
+                "999999935944",
+                12,
+                true,
+                true,
+                false,
+                1689258315,
+                0,
+                0,
+                0,
+                0,
+                0
+            ]
+        ]
+    },
+    "acb": {
+        "fields": [
+            "serialNumber",
+            "SOC",
+            "minCellTemp",
+            "maxCellTemp",
+            "capacity",
+            "totVoltage",
+            "sleepEnabled",
+            "sleepMinSoc",
+            "sleepMaxSoc"
+        ],
+        "values": []
+    },
+    "nsrb": {
+        "fields": [
+            "serialNumber",
+            "relay",
+            "forced",
+            "reason_code",
+            "reason",
+            "line-count",
+            "line1-connected",
+            "line2-connected",
+            "line3-connected"
+        ],
+        "values": [
+            [
+                "999999968177",
+                "closed",
+                false,
+                -1,
+                "ok",
+                1,
+                true,
+                false,
+                false
+            ],
+            [
+                "999999935944",
+                "closed",
+                false,
+                -1,
+                "ok",
+                1,
+                true,
+                false,
+                false
+            ]
+        ]
+    }
+}

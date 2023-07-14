@@ -1,0 +1,81 @@
+{
+    "software_build_epoch": 1687430621,
+    "timezone": "Europe/Amsterdam",
+    "current_date": "07/13/2023",
+    "current_time": "16:30",
+    "network": {
+        "web_comm": true,
+        "ever_reported_to_enlighten": true,
+        "last_enlighten_report_time": 1689258312,
+        "primary_interface": "wlan0",
+        "interfaces": [
+            {
+                "type": "ethernet",
+                "interface": "eth0",
+                "mac": "FA:FE:FD:7C:AE:9D",
+                "dhcp": true,
+                "ip": "169.254.120.1",
+                "signal_strength": 0,
+                "signal_strength_max": 1,
+                "carrier": false
+            },
+            {
+                "signal_strength": 3,
+                "signal_strength_max": 5,
+                "type": "wifi",
+                "interface": "wlan0",
+                "mac": "FA:FE:FD:CE:3B:31",
+                "dhcp": true,
+                "ip": "192.168.123.105",
+                "carrier": true,
+                "supported": true,
+                "present": true,
+                "configured": true,
+                "status": "connected"
+            }
+        ]
+    },
+    "tariff": "time_of_use",
+    "comm": {
+        "num": 16,
+        "level": 5,
+        "pcu": {
+            "num": 14,
+            "level": 5
+        },
+        "acb": {
+            "num": 0,
+            "level": 0
+        },
+        "nsrb": {
+            "num": 2,
+            "level": 5
+        },
+        "esub": {
+            "num": 0,
+            "level": 0
+        },
+        "encharge": [
+            {
+                "num": 0,
+                "level": 0,
+                "level_24g": 0,
+                "level_subg": 0
+            }
+        ]
+    },
+    "wireless_connection": [
+        {
+            "signal_strength": 0,
+            "signal_strength_max": 0,
+            "type": "zigbee",
+            "connected": false
+        },
+        {
+            "signal_strength": 0,
+            "signal_strength_max": 0,
+            "type": "subghz",
+            "connected": false
+        }
+    ]
+}
