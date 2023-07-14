@@ -193,8 +193,8 @@ class EnvoyReader:
         self._store_data["token"] = token_value
         self._store_update_pending = True
 
-    async def _sync_store(self):
-        if self._store and not self._store_data:
+    async def _sync_store(self, load=False):
+        if (self._store and not self._store_data) or load:
             self._store_data = await self._store.async_load() or {}
 
         if self._store and self._store_update_pending:
