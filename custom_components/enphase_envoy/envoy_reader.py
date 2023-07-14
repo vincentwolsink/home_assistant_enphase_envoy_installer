@@ -855,10 +855,28 @@ class EnvoyReader:
     async def _getEnphaseToken(self):
         # When we have a valid commissioned token, but run into 401's,
         # we should switch to envoy tokens, as those have more permissions for DHZ accounts
-        if self._token and not self._is_enphase_token_expired(self._token):
+        if (self._token and not self._is_enphase_token_expired(self._token)) or (
+            self._token and self.token_type == "installer"
+        ):
             self.use_envoy_tokens = True
 
-        if self.use_envoy_tokens and not self.disable_installer_account_use:
+        # First attempt should be to auth using envoy token, as this could result in a installer token
+        if not self._token and not self.disable_installer_account_use:
+            self._token = await self._fetch_envoy_token_json()
+            _LOGGER.debug("Envoy Token")
+            if self._is_enphase_token_expired(self._token):
+                raise Exception("Just received token already expired")
+
+            if self.token_type != "installer":
+                _LOGGER.warning(
+                    "Received token is of type %s, disabling installer account usage",
+                    self.token_type,
+                )
+                self.disable_installer_account_use = True
+            else:
+                self.use_envoy_tokens = True
+
+        elif self.use_envoy_tokens and not self.disable_installer_account_use:
             self._token = await self._fetch_envoy_token_json()
             _LOGGER.debug("Envoy Token")
         else:
