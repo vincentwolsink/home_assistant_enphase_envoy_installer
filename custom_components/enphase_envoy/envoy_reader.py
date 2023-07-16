@@ -996,6 +996,7 @@ class EnvoyReader:
                 cookies=self._cookies,
             ) as response:
                 if response.status_code in (401, 404):
+                    await response.aread()
                     _LOGGER.warning(
                         "Could not load the stream, HTTP %s: %s",
                         response.status_code,
@@ -1036,7 +1037,10 @@ class EnvoyReader:
                         print(StreamData(reading))
 
             return True
+        except Exception as e:
+            _LOGGER.exception("Realtime data error: %s", str(e))
         finally:
+            _LOGGER.error("Stopped reading realtime data")
             self.is_receiving_realtime_data = False
 
     async def update_endpoints(self, endpoints=None):
@@ -1243,10 +1247,10 @@ class EnvoyReader:
     def run_stream(self):
         print("Reading stream...")
         loop = asyncio.get_event_loop()
-        self.isMeteringEnabled = True
+        self.data = EnvoyMeteredWithCT(self)
         self.endpoint_type = ENVOY_MODEL_S
         data_results = loop.run_until_complete(
-            asyncio.gather(self.stream_reader(), return_exceptions=True)
+            asyncio.gather(self.stream_reader(), return_exceptions=False)
         )
 
     async def getDataLoop(self):
