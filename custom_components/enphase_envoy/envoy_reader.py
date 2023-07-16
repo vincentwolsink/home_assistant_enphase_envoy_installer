@@ -647,8 +647,8 @@ class EnvoyReader:
         self._store_data["token"] = token_value
         self._store_update_pending = True
 
-    async def _sync_store(self):
-        if self._store and not self._store_data:
+    async def _sync_store(self, load=False):
+        if (self._store and not self._store_data) or load:
             self._store_data = await self._store.async_load() or {}
 
         if self._store and self._store_update_pending:
@@ -907,6 +907,17 @@ class EnvoyReader:
         if token_validation.status_code == 200:
             # set the cookies for future clients
             self._cookies = token_validation.cookies
+
+            # search for all cookies with session in the name (sessionId, session_id, etc)
+            session_cookies = [k for k in self._cookies if "session" in k.lower()]
+            if len(session_cookies) > 0:
+                # We have a session id, so let's drop the auth header
+                # to prevent any lookups for authentication (if any)
+                _LOGGER.debug(
+                    "We got a session cookie (%s), empty the auth header",
+                    ",".join(session_cookies),
+                )
+                self._authorization_header = {}
             return True
 
         # token not valid if we get here

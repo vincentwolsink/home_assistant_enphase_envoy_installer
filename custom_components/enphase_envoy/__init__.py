@@ -73,7 +73,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             config.get(DISABLE_INSTALLER_ACCOUNT_USE, False),
         ),
     )
-    await envoy_reader._sync_store()
+    await envoy_reader._sync_store(load=True)
 
     async def async_update_data():
         """Fetch data from API endpoint."""
