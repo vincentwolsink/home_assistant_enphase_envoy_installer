@@ -1,0 +1,100 @@
+[
+    {
+        "serialNumber": "999999913010",
+        "lastReportDate": 1689258553,
+        "devType": 1,
+        "lastReportWatts": 252,
+        "maxReportWatts": 297
+    },
+    {
+        "serialNumber": "999999913012",
+        "lastReportDate": 1689258403,
+        "devType": 1,
+        "lastReportWatts": 230,
+        "maxReportWatts": 297
+    },
+    {
+        "serialNumber": "999999912750",
+        "lastReportDate": 1689258555,
+        "devType": 1,
+        "lastReportWatts": 223,
+        "maxReportWatts": 297
+    },
+    {
+        "serialNumber": "999999912983",
+        "lastReportDate": 1689258584,
+        "devType": 1,
+        "lastReportWatts": 254,
+        "maxReportWatts": 297
+    },
+    {
+        "serialNumber": "999999908520",
+        "lastReportDate": 1689258525,
+        "devType": 1,
+        "lastReportWatts": 289,
+        "maxReportWatts": 297
+    },
+    {
+        "serialNumber": "999999909983",
+        "lastReportDate": 1689258644,
+        "devType": 1,
+        "lastReportWatts": 276,
+        "maxReportWatts": 297
+    },
+    {
+        "serialNumber": "999999908521",
+        "lastReportDate": 1689258526,
+        "devType": 1,
+        "lastReportWatts": 286,
+        "maxReportWatts": 297
+    },
+    {
+        "serialNumber": "999999912669",
+        "lastReportDate": 1689258618,
+        "devType": 1,
+        "lastReportWatts": 291,
+        "maxReportWatts": 297
+    },
+    {
+        "serialNumber": "999999913748",
+        "lastReportDate": 1689258586,
+        "devType": 1,
+        "lastReportWatts": 287,
+        "maxReportWatts": 297
+    },
+    {
+        "serialNumber": "999999909985",
+        "lastReportDate": 1689258619,
+        "devType": 1,
+        "lastReportWatts": 283,
+        "maxReportWatts": 297
+    },
+    {
+        "serialNumber": "999999915285",
+        "lastReportDate": 1689258345,
+        "devType": 1,
+        "lastReportWatts": 245,
+        "maxReportWatts": 297
+    },
+    {
+        "serialNumber": "999999915246",
+        "lastReportDate": 1689258405,
+        "devType": 1,
+        "lastReportWatts": 259,
+        "maxReportWatts": 297
+    },
+    {
+        "serialNumber": "999999912590",
+        "lastReportDate": 1689258344,
+        "devType": 1,
+        "lastReportWatts": 100,
+        "maxReportWatts": 297
+    },
+    {
+        "serialNumber": "999999910862",
+        "lastReportDate": 1689258620,
+        "devType": 1,
+        "lastReportWatts": 46,
+        "maxReportWatts": 297
+    }
+]

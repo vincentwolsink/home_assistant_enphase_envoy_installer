@@ -1,0 +1,36 @@
+{
+    "createdAt": 1689258566,
+    "reportType": "production",
+    "cumulative": {
+        "currW": 3366.764,
+        "actPower": 3366.764,
+        "apprntPwr": 3406.287,
+        "reactPwr": 283.013,
+        "whDlvdCum": 1820876.754,
+        "whRcvdCum": 3513.299,
+        "varhLagCum": 374043.865,
+        "varhLeadCum": 0.042,
+        "vahCum": 2007586.298,
+        "rmsVoltage": 248.761,
+        "rmsCurrent": 13.691,
+        "pwrFactor": 0.99,
+        "freqHz": 50.00
+    },
+    "lines": [
+        {
+            "currW": 3366.764,
+            "actPower": 3366.764,
+            "apprntPwr": 3406.287,
+            "reactPwr": 283.013,
+            "whDlvdCum": 1820876.754,
+            "whRcvdCum": 3513.299,
+            "varhLagCum": 374043.865,
+            "varhLeadCum": 0.042,
+            "vahCum": 2007586.298,
+            "rmsVoltage": 248.761,
+            "rmsCurrent": 13.691,
+            "pwrFactor": 0.99,
+            "freqHz": 50.00
+        }
+    ]
+}
