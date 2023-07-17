@@ -335,7 +335,7 @@ class EnvoyData(object):
         elif name in self._envoy_properties:
             result = getattr(self, name)
         else:
-            _LOGGER.warning("Attribute %s unknown", name)
+            _LOGGER.debug("Attribute %s unknown", name)
 
         _LOGGER.debug(f"EnvoyData.get({name}) -> {result}")
         return result
