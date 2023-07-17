@@ -565,7 +565,7 @@ class EnvoyReader:
         self.enlighten_user = enlighten_user
         self.enlighten_pass = enlighten_pass
         self.commissioned = commissioned
-        self.use_envoy_tokens = False
+        self.envoy_token_fetch_attempted = False
         self.enlighten_serial_num = enlighten_serial_num
         self.token_refresh_buffer_seconds = token_refresh_buffer_seconds
         self.token_type = None
@@ -853,16 +853,11 @@ class EnvoyReader:
             return resp.text
 
     async def _getEnphaseToken(self):
-        # When we have a valid commissioned token, but run into 401's,
-        # we should switch to envoy tokens, as those have more permissions for DHZ accounts
-        if (self._token and not self._is_enphase_token_expired(self._token)) or (
-            self._token and self.token_type == "installer"
-        ):
-            self.use_envoy_tokens = True
-
         # First attempt should be to auth using envoy token, as this could result in a installer token
-        if not self._token and not self.disable_installer_account_use:
+        if not self.disable_installer_account_use:
             self._token = await self._fetch_envoy_token_json()
+            self.envoy_token_fetch_attempted = True
+
             _LOGGER.debug("Envoy Token")
             if self._is_enphase_token_expired(self._token):
                 raise Exception("Just received token already expired")
@@ -873,12 +868,7 @@ class EnvoyReader:
                     self.token_type,
                 )
                 self.disable_installer_account_use = True
-            else:
-                self.use_envoy_tokens = True
 
-        elif self.use_envoy_tokens and not self.disable_installer_account_use:
-            self._token = await self._fetch_envoy_token_json()
-            _LOGGER.debug("Envoy Token")
         else:
             self._token = await self._fetch_owner_token_json()
             _LOGGER.debug("Commissioned Token")
@@ -1059,7 +1049,8 @@ class EnvoyReader:
                 continue
 
             if endpoint_settings.get("installer_required", False) and (
-                self.token_type != "installer" or self.disable_installer_account_use
+                (self.token_type != "installer" and self.envoy_token_fetch_attempted)
+                or self.disable_installer_account_use
             ):
                 _LOGGER.info(
                     "Skipping installer endpoint %s (got token %s and "
