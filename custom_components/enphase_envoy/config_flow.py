@@ -20,6 +20,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.util.network import is_ipv4_address, is_ipv6_address
 
 from .const import (
     DOMAIN,
@@ -101,9 +102,29 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         serial = discovery_info.properties["serialnum"]
         await self.async_set_unique_id(serial)
         self.ip_address = discovery_info.host
-        self._abort_if_unique_id_configured({CONF_HOST: self.ip_address})
+
         for entry in self._async_current_entries(include_ignore=False):
-            if (
+            if (entry.unique_id == self.unique_id) and (
+                entry.data[CONF_HOST] != self.ip_address
+            ):
+                """Update current host to new discovered one"""
+                if (
+                    is_ipv4_address(entry.data[CONF_HOST])
+                    and is_ipv4_address(self.ip_address)
+                ) or (
+                    is_ipv6_address(entry.data[CONF_HOST])
+                    and is_ipv6_address(self.ip_address)
+                ):
+                    self.hass.config_entries.async_update_entry(
+                        entry, CONF_HOST=self.ip_address
+                    )
+                    self.hass.async_create_task(
+                        self.hass.config_entries.async_reload(entry.entry_id)
+                    )
+                    return self.async_abort(reason="already_configured")
+
+                return self.async_abort(reason="already_configured_mismatch_ipv4_ipv6")
+            elif (
                 entry.unique_id is None
                 and CONF_HOST in entry.data
                 and entry.data[CONF_HOST] == self.ip_address
