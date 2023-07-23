@@ -303,7 +303,11 @@ class EnvoyData(object):
             _LOGGER.debug("the configured path %s did not return anything!", path)
             return default
 
-        if isinstance(result, list) and len(result) == 1:
+        if (
+            len(result) == 1
+            and isinstance(result, list)
+            and not isinstance(result[0], dict)
+        ):
             result = result[0]
 
         return result
