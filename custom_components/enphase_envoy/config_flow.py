@@ -10,7 +10,7 @@ import httpx
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.components import zeroconf
+from homeassistant.components import zeroconf, network
 from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
@@ -20,6 +20,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.util.network import is_ipv4_address
 
 from .const import (
     DOMAIN,
@@ -102,6 +103,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(serial)
         self.ip_address = discovery_info.host
         self._abort_if_unique_id_configured({CONF_HOST: self.ip_address})
+
+        ipv4_def = await self._ipv4_default_interface(self.hass)
+        if ipv4_def and not is_ipv4_address(discovery_info.host):
+            return self.async_abort(reason="ipv6_on_ipv4_interface")
+
         for entry in self._async_current_entries(include_ignore=False):
             if (
                 entry.unique_id is None
@@ -140,6 +146,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if serial:
             await self.async_set_unique_id(serial)
             return True
+        return False
+
+    async def _ipv4_default_interface(hass: HomeAssistant):
+        adapters = await network.async_get_adapters(hass)
+        for adapter in adapters:
+            if adapter["default"]:
+                return bool(adapter["ipv4"])
         return False
 
     async def async_step_user(
