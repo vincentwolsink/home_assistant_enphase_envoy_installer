@@ -104,27 +104,25 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.ip_address = discovery_info.host
 
         for entry in self._async_current_entries(include_ignore=False):
-            if (entry.unique_id == self.unique_id) and (
-                entry.data[CONF_HOST] != self.ip_address
-            ):
-                """Update current host to new discovered one"""
-                if (
-                    is_ipv4_address(entry.data[CONF_HOST])
-                    and is_ipv4_address(self.ip_address)
-                ) or (
-                    is_ipv6_address(entry.data[CONF_HOST])
-                    and is_ipv6_address(self.ip_address)
-                ):
-                    self.hass.config_entries.async_update_entry(
-                        entry, data={**entry.data, CONF_HOST: self.ip_address}
-                    )
-                    self.hass.async_create_task(
-                        self.hass.config_entries.async_reload(entry.entry_id),
-                        f"config entry reload {entry.title} {entry.domain} {entry.entry_id}",
-                    )
-                    return self.async_abort(reason="already_configured")
+            if entry.unique_id == self.unique_id:
+                if entry.data[CONF_HOST] != self.ip_address:
+                    """Update current host ip to new discovered one if same ip version"""
+                    if (
+                        is_ipv4_address(entry.data[CONF_HOST])
+                        and is_ipv4_address(self.ip_address)
+                    ) or (
+                        is_ipv6_address(entry.data[CONF_HOST])
+                        and is_ipv6_address(self.ip_address)
+                    ):
+                        self.hass.config_entries.async_update_entry(
+                            entry, data={**entry.data, CONF_HOST: self.ip_address}
+                        )
+                        self.hass.async_create_task(
+                            self.hass.config_entries.async_reload(entry.entry_id),
+                            f"config entry reload {entry.title} {entry.domain} {entry.entry_id}",
+                        )
 
-                return self.async_abort(reason="already_configured_mismatch_ipv4_ipv6")
+                return self.async_abort(reason="already_configured")
             elif (
                 entry.unique_id is None
                 and CONF_HOST in entry.data
