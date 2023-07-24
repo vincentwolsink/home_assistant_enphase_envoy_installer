@@ -116,10 +116,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     and is_ipv6_address(self.ip_address)
                 ):
                     self.hass.config_entries.async_update_entry(
-                        entry, CONF_HOST=self.ip_address
+                        entry, data={**entry.data, CONF_HOST: self.ip_address}
                     )
                     self.hass.async_create_task(
-                        self.hass.config_entries.async_reload(entry.entry_id)
+                        self.hass.config_entries.async_reload(entry.entry_id),
+                        f"config entry reload {entry.title} {entry.domain} {entry.entry_id}",
                     )
                     return self.async_abort(reason="already_configured")
 
