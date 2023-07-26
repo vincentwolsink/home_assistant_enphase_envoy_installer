@@ -303,11 +303,7 @@ class EnvoyData(object):
             _LOGGER.debug("the configured path %s did not return anything!", path)
             return default
 
-        if (
-            len(result) == 1
-            and isinstance(result, list)
-            and not isinstance(result[0], dict)
-        ):
+        if len(result) == 1 and isinstance(result, list):
             result = result[0]
 
         return result
@@ -318,7 +314,10 @@ class EnvoyData(object):
 
         new_dict = {}
         for path in paths:
-            for d in self._resolve_path(path, default=[]):
+            data = self._resolve_path(path, default=[])
+            if not isinstance(data, list):
+                data = [data]
+            for d in data:
                 key = d.get(keyfield)
                 new_dict.setdefault(key, d).update(**d)
 
