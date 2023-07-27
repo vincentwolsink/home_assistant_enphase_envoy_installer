@@ -494,7 +494,7 @@ class EnvoyMetered(EnvoyStandard):
     production_value = _production + ".wNow"
     lifetime_production_value = _production + ".whLifetime"
     daily_production_value = "endpoint_pdm_energy.production.pcu.wattHoursToday"
-    
+
     _production_ct = "endpoint_production_json_results.production[?(@.type=='eim' && @.activeCount > 0)]"
     _consumption_ct = "endpoint_production_json_results.consumption[?(@.measurementType == 'total-consumption' && @.activeCount > 0)]"
     voltage_value = _production_ct + ".rmsVoltage"
