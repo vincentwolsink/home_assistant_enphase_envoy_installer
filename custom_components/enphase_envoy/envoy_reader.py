@@ -191,6 +191,15 @@ def envoy_property(*a, **kw):
     return prop(*a)
 
 
+def path_by_token(owner, installer=None):
+    def path(cls):
+        if cls.reader.token_type == "installer" and installer:
+            return installer
+        return owner
+
+    return property(path)
+
+
 class EnvoyData(object):
     """Functions in this class will provide getters and setters for data to be provided"""
 
@@ -368,9 +377,18 @@ class EnvoyStandard(EnvoyData):
             "update_status": self.envoy_update_status,
         }
 
-    production_value = "endpoint_production_v1_results.wattsNow"
-    daily_production_value = "endpoint_production_v1_results.wattHoursToday"
-    lifetime_production_value = "endpoint_production_v1_results.wattHoursLifetime"
+    production_value = path_by_token(
+        owner="endpoint_production_v1_results.wattsNow",
+        installer="endpoint_pdm_energy.production.pcu.wattsNow",
+    )
+    daily_production_value = path_by_token(
+        owner="endpoint_production_v1_results.wattHoursToday",
+        installer="endpoint_pdm_energy.production.pcu.wattHoursToday",
+    )
+    lifetime_production_value = path_by_token(
+        owner="endpoint_production_v1_results.wattHoursLifetime",
+        installer="endpoint_pdm_energy.production.pcu.wattHoursLifetime",
+    )
 
     @envoy_property(required_endpoint="endpoint_production_power")
     def production_power(self):
@@ -492,7 +510,10 @@ class EnvoyMetered(EnvoyStandard):
 
     _production = "endpoint_production_json_results.production[?(@.type=='inverters')]"
     production_value = _production + ".wNow"
-    lifetime_production_value = _production + ".whLifetime"
+    lifetime_production_value = path_by_token(
+        owner=_production + ".whLifetime",
+        installer="endpoint_pdm_energy.production.pcu.wattHoursLifetime",
+    )
     daily_production_value = "endpoint_pdm_energy.production.pcu.wattHoursToday"
 
     _production_ct = "endpoint_production_json_results.production[?(@.type=='eim' && @.activeCount > 0)]"
