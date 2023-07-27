@@ -6,12 +6,10 @@
 
 This is a HACS custom integration for enphase envoys with firmware version 7.X.
 
-▶ To be used with your installer or DIY account. (Most of the functionality won't be available when using a Home Owner account. If you still want it this way, select the option during configuration.)
-
-⚠ Some older Envoy firmware versions exposed the needed API endpoints without proper authentication. This has been fixed by Enphase and they pushed an update to the Envoys. If you are using this integration with a Home Owner account you probably lost most of the functionality since.
+▶ Preferably to be used with your installer or DIY account. (Some of the functionality won't be available when using a Home Owner account. If you still want to use it this way, select the option during configuration.)
 
 Features:
-- Individual device per inverter with all information available. 
+- Individual device per inverter with all information available.
 - Individual device per Q-relay with relay status.
 - Production switch to turn on/off solar power production.
 - Firmware update sensor.
@@ -22,7 +20,7 @@ Features:
 
 <img width="775" alt="ha_envoy_inverters" src="https://github.com/vincentwolsink/home_assistant_enphase_envoy_installer/assets/1639734/a070ab6e-3207-412f-b712-6bd31cf8ac83">
 
-Based on work from [@briancmpbll](https://github.com/briancmpbll/home_assistant_custom_envoy) and [@posixx](https://github.com/posixx/home_assistant_custom_envoy)
+Based on work from [@briancmpbll](https://github.com/briancmpbll/home_assistant_custom_envoy)
 
 
 # Installation
