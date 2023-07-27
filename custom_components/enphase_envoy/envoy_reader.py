@@ -33,6 +33,7 @@ ENDPOINT_URL_DEVSTATUS = "https://{}/ivp/peb/devstatus"
 ENDPOINT_URL_PRODUCTION_POWER = "https://{}/ivp/mod/603980032/mode/power"
 ENDPOINT_URL_INFO_XML = "https://{}/info.xml"
 ENDPOINT_URL_STREAM = "https://{}/stream/meter"
+ENDPOINT_URL_PDM_ENERGY = "https://{}/ivp/pdm/energy"
 
 ENVOY_MODEL_S = "PC"
 ENVOY_MODEL_C = "P"
@@ -492,6 +493,7 @@ class EnvoyMetered(EnvoyStandard):
     _production = "endpoint_production_json_results.production[?(@.type=='inverters')]"
     production_value = _production + ".wNow"
     lifetime_production_value = _production + ".whLifetime"
+    daily_production_value = "endpoint_pdm_energy.production.pcu.wattHoursToday"
 
     _production_ct = "endpoint_production_json_results.production[?(@.type=='eim' && @.activeCount > 0)]"
     _consumption_ct = "endpoint_production_json_results.consumption[?(@.measurementType == 'total-consumption' && @.activeCount > 0)]"
@@ -593,6 +595,7 @@ class EnvoyReader:
         iurl("production_power", ENDPOINT_URL_PRODUCTION_POWER, cache=3600)
         url("info_results", ENDPOINT_URL_INFO_XML, cache=86400)
         url("inventory_results", ENDPOINT_URL_INVENTORY, cache=300)
+        iurl("pdm_energy", ENDPOINT_URL_PDM_ENERGY)
 
         # If IPv6 address then enclose host in brackets
         try:
@@ -934,17 +937,6 @@ class EnvoyReader:
         else:
             _LOGGER.debug("Token expired on: %s", exp_time)
             return True
-
-    async def check_connection(self):
-        """Check if the Envoy is reachable. Also check if HTTP or"""
-        """HTTPS is needed."""
-        _LOGGER.debug("Checking Host: %s", self.host)
-        resp = await self._async_fetch_with_retry(
-            ENDPOINT_URL_PRODUCTION_V1.format(self.host)
-        )
-        _LOGGER.debug("Check connection HTTP Code: %s", resp.status_code)
-        if resp.status_code == 301:
-            raise SwitchToHTTPS
 
     async def init_authentication(self):
         _LOGGER.debug("Checking Token value: %s", self._token)
