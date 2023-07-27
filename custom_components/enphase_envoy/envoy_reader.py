@@ -473,8 +473,6 @@ class EnvoyMetered(EnvoyStandard):
     from the wire(s) that power the envoy
     """
 
-    daily_production_value = "endpoint_pdm_energy.production.pcu.wattHoursToday"
-
     def __new__(cls, *a, **kw):
         # Add phase CT consumption value attributes, as production values
         # are fetched from inverters, but a CT _could_ be installed for consumption
@@ -495,7 +493,8 @@ class EnvoyMetered(EnvoyStandard):
     _production = "endpoint_production_json_results.production[?(@.type=='inverters')]"
     production_value = _production + ".wNow"
     lifetime_production_value = _production + ".whLifetime"
-
+    daily_production_value = "endpoint_pdm_energy.production.pcu.wattHoursToday"
+    
     _production_ct = "endpoint_production_json_results.production[?(@.type=='eim' && @.activeCount > 0)]"
     _consumption_ct = "endpoint_production_json_results.consumption[?(@.measurementType == 'total-consumption' && @.activeCount > 0)]"
     voltage_value = _production_ct + ".rmsVoltage"
@@ -938,17 +937,6 @@ class EnvoyReader:
         else:
             _LOGGER.debug("Token expired on: %s", exp_time)
             return True
-
-    async def check_connection(self):
-        """Check if the Envoy is reachable. Also check if HTTP or"""
-        """HTTPS is needed."""
-        _LOGGER.debug("Checking Host: %s", self.host)
-        resp = await self._async_fetch_with_retry(
-            ENDPOINT_URL_PRODUCTION_V1.format(self.host)
-        )
-        _LOGGER.debug("Check connection HTTP Code: %s", resp.status_code)
-        if resp.status_code == 301:
-            raise SwitchToHTTPS
 
     async def init_authentication(self):
         _LOGGER.debug("Checking Token value: %s", self._token)
