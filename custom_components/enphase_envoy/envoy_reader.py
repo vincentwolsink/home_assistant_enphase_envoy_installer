@@ -24,6 +24,7 @@ from json.decoder import JSONDecodeError
 
 ENDPOINT_URL_INVENTORY = "https://{}/inventory.json"
 ENDPOINT_URL_PRODUCTION_JSON = "https://{}/production.json?details=1"
+ENDPOINT_URL_PRODUCTION_V1 = "https://{}/api/v1/production"
 ENDPOINT_URL_PRODUCTION_INVERTERS = "https://{}/api/v1/production/inverters"
 ENDPOINT_URL_CHECK_JWT = "https://{}/auth/check_jwt"
 ENDPOINT_URL_ENSEMBLE_INVENTORY = "https://{}/ivp/ensemble/inventory"
@@ -32,7 +33,6 @@ ENDPOINT_URL_DEVSTATUS = "https://{}/ivp/peb/devstatus"
 ENDPOINT_URL_PRODUCTION_POWER = "https://{}/ivp/mod/603980032/mode/power"
 ENDPOINT_URL_INFO_XML = "https://{}/info.xml"
 ENDPOINT_URL_STREAM = "https://{}/stream/meter"
-ENDPOINT_URL_PDM_ENERGY = "https://{}/ivp/pdm/energy"
 
 ENVOY_MODEL_S = "PC"
 ENVOY_MODEL_C = "P"
@@ -367,10 +367,9 @@ class EnvoyStandard(EnvoyData):
             "update_status": self.envoy_update_status,
         }
 
-    _production = "endpoint_production_json_results.production[?(@.type=='inverters')]"
-    production_value = _production + ".wNow"
-    lifetime_production_value = _production + ".whLifetime"
-    daily_production_value = "endpoint_pdm_energy.production.pcu.wattHoursToday"
+    production_value = "endpoint_production_v1_results.wattsNow"
+    daily_production_value = "endpoint_production_v1_results.wattHoursToday"
+    lifetime_production_value = "endpoint_production_v1_results.wattHoursLifetime"
 
     @envoy_property(required_endpoint="endpoint_production_power")
     def production_power(self):
@@ -493,7 +492,6 @@ class EnvoyMetered(EnvoyStandard):
     _production = "endpoint_production_json_results.production[?(@.type=='inverters')]"
     production_value = _production + ".wNow"
     lifetime_production_value = _production + ".whLifetime"
-    daily_production_value = "endpoint_pdm_energy.production.pcu.wattHoursToday"
 
     _production_ct = "endpoint_production_json_results.production[?(@.type=='eim' && @.activeCount > 0)]"
     _consumption_ct = "endpoint_production_json_results.consumption[?(@.measurementType == 'total-consumption' && @.activeCount > 0)]"
@@ -586,6 +584,7 @@ class EnvoyReader:
 
         self.uri_registry = {}
         url("production_json_results", ENDPOINT_URL_PRODUCTION_JSON, cache=0)
+        url("production_v1_results", ENDPOINT_URL_PRODUCTION_V1, cache=20)
         url("production_inverters", ENDPOINT_URL_PRODUCTION_INVERTERS, cache=20)
         url("ensemble_json_results", ENDPOINT_URL_ENSEMBLE_INVENTORY)
         # cache for home_json will be set based on grid_status availability
@@ -594,7 +593,6 @@ class EnvoyReader:
         iurl("production_power", ENDPOINT_URL_PRODUCTION_POWER, cache=3600)
         url("info_results", ENDPOINT_URL_INFO_XML, cache=86400)
         url("inventory_results", ENDPOINT_URL_INVENTORY, cache=300)
-        iurl("pdm_energy", ENDPOINT_URL_PDM_ENERGY, cache=20)
 
         # If IPv6 address then enclose host in brackets
         try:
@@ -937,6 +935,17 @@ class EnvoyReader:
             _LOGGER.debug("Token expired on: %s", exp_time)
             return True
 
+    async def check_connection(self):
+        """Check if the Envoy is reachable. Also check if HTTP or"""
+        """HTTPS is needed."""
+        _LOGGER.debug("Checking Host: %s", self.host)
+        resp = await self._async_fetch_with_retry(
+            ENDPOINT_URL_PRODUCTION_V1.format(self.host)
+        )
+        _LOGGER.debug("Check connection HTTP Code: %s", resp.status_code)
+        if resp.status_code == 301:
+            raise SwitchToHTTPS
+
     async def init_authentication(self):
         _LOGGER.debug("Checking Token value: %s", self._token)
         # Check if a token has already been retrieved
@@ -1130,8 +1139,22 @@ class EnvoyReader:
             )
         ):
             self.endpoint_type = ENVOY_MODEL_S
+
         else:
-            self.endpoint_type = ENVOY_MODEL_C  # Envoy-C, standard envoy
+            await self.update_endpoints(["endpoint_production_v1_results"])
+            if (
+                self.endpoint_production_v1_results
+                and self.endpoint_production_v1_results.status_code == 200
+            ):
+                self.endpoint_type = ENVOY_MODEL_C  # Envoy-C, standard envoy
+
+        if not self.endpoint_type:
+            raise RuntimeError(
+                "Could not connect or determine Envoy model. "
+                + "Check that the device is up at 'https://"
+                + self.host
+                + "'."
+            )
 
         # Configure the correct self.data
         self.data = getEnvoyDataClass(
