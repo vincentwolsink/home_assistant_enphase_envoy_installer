@@ -33,6 +33,7 @@ ENDPOINT_URL_DEVSTATUS = "https://{}/ivp/peb/devstatus"
 ENDPOINT_URL_PRODUCTION_POWER = "https://{}/ivp/mod/603980032/mode/power"
 ENDPOINT_URL_INFO_XML = "https://{}/info.xml"
 ENDPOINT_URL_STREAM = "https://{}/stream/meter"
+ENDPOINT_URL_PDM_ENERGY = "https://{}/ivp/pdm/energy"
 
 ENVOY_MODEL_S = "PC"
 ENVOY_MODEL_C = "P"
@@ -472,6 +473,8 @@ class EnvoyMetered(EnvoyStandard):
     from the wire(s) that power the envoy
     """
 
+    daily_production_value = "endpoint_pdm_energy.production.pcu.wattHoursToday"
+
     def __new__(cls, *a, **kw):
         # Add phase CT consumption value attributes, as production values
         # are fetched from inverters, but a CT _could_ be installed for consumption
@@ -593,6 +596,7 @@ class EnvoyReader:
         iurl("production_power", ENDPOINT_URL_PRODUCTION_POWER, cache=3600)
         url("info_results", ENDPOINT_URL_INFO_XML, cache=86400)
         url("inventory_results", ENDPOINT_URL_INVENTORY, cache=300)
+        iurl("pdm_energy", ENDPOINT_URL_PDM_ENERGY)
 
         # If IPv6 address then enclose host in brackets
         try:
