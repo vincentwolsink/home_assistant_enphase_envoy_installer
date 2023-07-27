@@ -292,7 +292,7 @@ class EnvoyData(object):
         """A special property attribute, that will return all dynamic fields."""
         result = {}
         for attr in self._attributes:
-            result[attr] = getattr(self, attr)
+            result[attr] = self.get(attr)
 
         return result
 
@@ -324,14 +324,7 @@ class EnvoyData(object):
 
         return new_dict
 
-    def __getattr__(self, name):
-        """
-        This magic function will be called for all attributes that have not been defined explicitly
-        It will look for <variable>_value attribute, that should hold the json path to be searched
-        for in self.data
-
-        self.data is populated whenever EnvoyReader.update_endpoints has a successfull url download
-        """
+    def get(self, name):
         result = None
         if (attr := f"{name}_value") in dir(self):
             path = getattr(self, attr)
@@ -343,8 +336,6 @@ class EnvoyData(object):
 
         _LOGGER.debug(f"EnvoyData.get({name}) -> {result}")
         return result
-
-    get = __getattr__
 
 
 class EnvoyStandard(EnvoyData):
@@ -362,10 +353,10 @@ class EnvoyStandard(EnvoyData):
     @envoy_property
     def envoy_info(self):
         return {
-            "pn": self.envoy_pn,
-            "software": self.envoy_software,
-            "software_build_epoch": self.envoy_software_build_epoch,
-            "update_status": self.envoy_update_status,
+            "pn": self.get("envoy_pn"),
+            "software": self.get("envoy_software"),
+            "software_build_epoch": self.get("envoy_software_build_epoch"),
+            "update_status": self.get("envoy_update_status_value"),
         }
 
     production_value = "endpoint_production_v1_results.wattsNow"
@@ -1197,16 +1188,16 @@ class EnvoyReader:
         return 0 if -15 < production < 0 else production
 
     async def production(self):
-        return self.process_production_value(self.data.production)
+        return self.process_production_value(self.data.get("production"))
 
     async def production_l1(self):
-        return self.process_production_value(self.data.production_l1)
+        return self.process_production_value(self.data.get("production_l1"))
 
     async def production_l2(self):
-        return self.process_production_value(self.data.production_l2)
+        return self.process_production_value(self.data.get("production_l2"))
 
     async def production_l3(self):
-        return self.process_production_value(self.data.production_l3)
+        return self.process_production_value(self.data.get("production_l3"))
 
     ## Below *_phase methods are for backward compatibility
     async def _async_getattr(self, key):
