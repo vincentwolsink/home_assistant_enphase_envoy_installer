@@ -87,6 +87,7 @@ SENSORS = (
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=0,
     ),
     SensorEntityDescription(
         key="inverters_ac_voltage",
