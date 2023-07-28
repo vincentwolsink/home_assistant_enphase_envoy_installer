@@ -21,7 +21,6 @@ from .const import (
     DOMAIN,
     NAME,
     SENSORS,
-    ICON,
     PHASE_SENSORS,
     LIVE_UPDATEABLE_ENTITIES,
 )
@@ -210,11 +209,6 @@ class EnvoyEntity(SensorEntity):
             return f"{self._device_serial_number}_{self.entity_description.key}"
 
     @property
-    def icon(self):
-        """Icon to use in the frontend, if any."""
-        return ICON
-
-    @property
     def extra_state_attributes(self):
         """Return the state attributes."""
         return None
@@ -292,11 +286,6 @@ class EnvoyInverterEntity(CoordinatorEntity, SensorEntity):
     def name(self):
         """Return the name of the sensor."""
         return self._name
-
-    @property
-    def icon(self):
-        """Icon to use in the frontend, if any."""
-        return ICON
 
     @property
     def unique_id(self):

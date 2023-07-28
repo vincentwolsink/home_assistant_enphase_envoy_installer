@@ -5,7 +5,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.helpers.entity import DeviceInfo
 
-from .const import COORDINATOR, DOMAIN, NAME, ICON, PRODUCION_POWER_SWITCH, READER
+from .const import COORDINATOR, DOMAIN, NAME, PRODUCION_POWER_SWITCH, READER
 
 
 async def async_setup_entry(
@@ -54,11 +54,6 @@ class EnvoyProductionSwitchEntity(CoordinatorEntity, SwitchEntity):
         CoordinatorEntity.__init__(self, coordinator)
         self._is_on = False
         self.reader = reader
-
-    @property
-    def icon(self):
-        """Icon to use in the frontend, if any."""
-        return ICON
 
     @property
     def name(self):

@@ -5,7 +5,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.helpers.entity import DeviceInfo
 
-from .const import COORDINATOR, DOMAIN, NAME, ICON, BINARY_SENSORS
+from .const import COORDINATOR, DOMAIN, NAME, BINARY_SENSORS
 
 
 async def async_setup_entry(
@@ -102,11 +102,6 @@ class EnvoyGridStatusEntity(CoordinatorEntity, BinarySensorEntity):
         CoordinatorEntity.__init__(self, coordinator)
 
     @property
-    def icon(self):
-        """Icon to use in the frontend, if any."""
-        return ICON
-
-    @property
     def name(self):
         """Return the name of the sensor."""
         return self._name
@@ -153,11 +148,6 @@ class EnvoyInverterEntity(CoordinatorEntity, BinarySensorEntity):
         self._device_name = device_name
         self._device_serial_number = device_serial_number
         CoordinatorEntity.__init__(self, coordinator)
-
-    @property
-    def icon(self):
-        """Icon to use in the frontend, if any."""
-        return ICON
 
     @property
     def name(self):
@@ -250,11 +240,6 @@ class EnvoyBaseEntity(CoordinatorEntity):
     def native_value(self):
         """Return the state of the sensor."""
         return self.coordinator.data.get(self.entity_description.key)
-
-    @property
-    def icon(self):
-        """Icon to use in the frontend, if any."""
-        return ICON
 
     @property
     def extra_state_attributes(self):
