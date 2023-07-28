@@ -179,6 +179,13 @@ class StreamData:
         )
 
 
+def _async_get_property(key):
+    async def get(self):
+        return self.data.get(key)
+
+    return get
+
+
 def envoy_property(*a, **kw):
     endpoint = kw.pop("required_endpoint", None)
 
@@ -359,7 +366,7 @@ class EnvoyStandard(EnvoyData):
     envoy_update_status_value = "endpoint_home_json_results.update_status"
     serial_number_value = "endpoint_info_results.envoy_info.device.sn"
 
-    @envoy_property
+    @envoy_property()
     def envoy_info(self):
         return {
             "pn": self.get("envoy_pn"),
@@ -457,7 +464,7 @@ class EnvoyStandard(EnvoyData):
         )
 
     @envoy_property(required_endpoint="endpoint_devstatus")
-    def relay_status(self):
+    def relays(self):
         status = self._path_to_dict(
             [
                 "endpoint_devstatus.pcu[?(@.devType==12)]",
@@ -488,6 +495,16 @@ class EnvoyStandard(EnvoyData):
         # "ENCHARGE" batteries are part of the "ENSEMBLE" api instead
         # Check to see if it's there. Enphase has too much fun with these names
         return self._resolve_path("endpoint_ensemble_json_results[0].devices")
+
+    @envoy_property()
+    def batteries(self):
+        battery_data = self.battery_storage
+        if isinstance(battery_data, list) and len(battery_data) > 0:
+            battery_dict = {}
+            for item in battery_data:
+                battery_dict[item["serial_num"]] = item
+
+            return battery_dict
 
 
 class EnvoyMetered(EnvoyStandard):
@@ -638,20 +655,6 @@ class EnvoyReader:
         self._store = store
         self._store_data = {}
         self._store_update_pending = False
-
-    def __getattr__(self, name):
-        """
-        Magic attribute function that will return async method to be called from HA
-        for dynamically calling production, or consumption or other sensor data.
-        """
-
-        async def get_data():
-            return self.data.get(name)
-
-        if self.data:
-            return get_data
-
-        raise AttributeError(f"Attribute {name} not found")
 
     def register_url(self, attr, uri, cache=10, installer_required=False):
         self.uri_registry[attr] = {
@@ -1129,6 +1132,17 @@ class EnvoyReader:
         return
 
     @property
+    def all_values(self):
+        def iter():
+            for key, val in self.data.all_values.items():
+                if key.startswith("production"):
+                    yield key, self.process_production_value(val)
+                else:
+                    yield key, val
+
+        return dict(iter())
+
+    @property
     def isMeteringEnabled(self):
         return isinstance(self.data, EnvoyMeteredWithCT)
 
@@ -1234,9 +1248,27 @@ class EnvoyReader:
     async def production_l3(self):
         return self.process_production_value(self.data.get("production_l3"))
 
+    ## Below methods are only for backward compatibility.
+    battery_storage = _async_get_property("battery_storage")
+    consumption = _async_get_property("consumption")
+    daily_consumption = _async_get_property("daily_consumption")
+    daily_production = _async_get_property("daily_production")
+    envoy_info = _async_get_property("envoy_info")
+    grid_status = _async_get_property("grid_status")
+    inverters_info = _async_get_property("inverters_info")
+    inverters_production = _async_get_property("inverters_production")
+    inverters_status = _async_get_property("inverters_status")
+    lifetime_consumption = _async_get_property("lifetime_consumption")
+    lifetime_production = _async_get_property("lifetime_production")
+    production_power = _async_get_property("production_power")
+    relays = _async_get_property("relays")
+    relay_info = _async_get_property("relay_info")
+    relay_status = _async_get_property("relays")
+    voltage = _async_get_property("voltage")
+
     ## Below *_phase methods are for backward compatibility
     async def _async_getattr(self, key):
-        return await getattr(self, key)()
+        return self.data.get(key)
 
     production_phase = _async_getattr
     consumption_phase = _async_getattr
@@ -1305,6 +1337,7 @@ class EnvoyReader:
                 self.production(),
                 self.consumption(),
                 self.daily_production(),
+                self.daily_production_phase("daily_production_l1"),
                 self.daily_consumption(),
                 self.lifetime_production(),
                 self.lifetime_consumption(),
@@ -1327,6 +1360,7 @@ class EnvoyReader:
             "production",
             "consumption",
             "daily_production",
+            "daily_production_l1",
             "daily_consumption",
             "lifetime_production",
             "lifetime_consumption",
