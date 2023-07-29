@@ -406,20 +406,34 @@ class EnvoyStandard(EnvoyData):
 
         return grid_status
 
-    @envoy_property(required_endpoint="endpoint_production_inverters")
-    def inverters_production(self):
-        response_dict = {}
-        for item in self._resolve_path(
-            "endpoint_production_inverters.[?(@.devType==1)]", []
-        ):
-            response_dict[item["serialNumber"]] = {
-                "watt": item["lastReportWatts"],
-                "report_date": time.strftime(
-                    "%Y-%m-%d %H:%M:%S", time.localtime(item["lastReportDate"])
-                ),
-            }
+    inverters_data_value = path_by_token(
+        owner="endpoint_production_inverters.[?(@.devType==1)]",
+        installer="endpoint_devstatus.pcu[?(@.devType==1)]",
+    )
 
-        return response_dict
+    @envoy_property()
+    def inverters_production(self):
+        # We will use the endpoint based on the token_type, which is automatically resolved by the inverters_data property
+        data = self.get("inverters_data")
+
+        def iter():
+            if self.reader.token_type == "installer":
+                for item in data:
+                    yield item["serialNumber"], {
+                        "watt": item["ac_power"],
+                        "report_data": item["report_date"],
+                    }
+            else:
+                # endpoint_production_inverters endpoint
+                for item in data:
+                    yield item["serialNumber"], {
+                        "watt": item["lastReportWatts"],
+                        "report_data": time.strftime(
+                            "%Y-%m-%d %H:%M:%S", time.localtime(item["lastReportDate"])
+                        ),
+                    }
+
+        return dict(iter())
 
     @envoy_property(required_endpoint="endpoint_inventory_results")
     def inverters_info(self):
@@ -1109,8 +1123,8 @@ class EnvoyReader:
         # endpoints to be polled.
         self.data.initial_update_finished = True
 
-        if self.endpoint_production_inverters.status_code == 401:
-            self.endpoint_production_inverters.raise_for_status()
+        if self.endpoint_production_json_results.status_code == 401:
+            self.endpoint_production_json_results.raise_for_status()
 
         return
 
