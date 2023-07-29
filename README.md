@@ -18,7 +18,7 @@ Features:
 - Configurable polling interval.
 - Optional negative production reading correction.
 
-<img width="775" alt="ha_envoy_inverters" src="https://github.com/vincentwolsink/home_assistant_enphase_envoy_installer/assets/1639734/a070ab6e-3207-412f-b712-6bd31cf8ac83">
+![image](https://github.com/vincentwolsink/home_assistant_enphase_envoy_installer/assets/1639734/d0033e75-6b89-46dd-bf1e-449bbca957f2)
 
 Based on work from [@briancmpbll](https://github.com/briancmpbll/home_assistant_custom_envoy)
 
