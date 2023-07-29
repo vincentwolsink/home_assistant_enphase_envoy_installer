@@ -186,7 +186,7 @@ def envoy_property(*a, **kw):
         EnvoyData._envoy_properties[f.__name__] = endpoint
         return property(f)
 
-    if endpoint != None:
+    if endpoint != None or len(a) == 0:
         return prop
     return prop(*a)
 
