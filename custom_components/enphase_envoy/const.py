@@ -24,8 +24,6 @@ DOMAIN = "enphase_envoy"
 
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SWITCH]
 
-ICON = "mdi:flash"
-
 COORDINATOR = "coordinator"
 NAME = "name"
 READER = "reader"
@@ -105,6 +103,7 @@ SENSORS = (
     SensorEntityDescription(
         key="inverters_dc_current",
         name="DC Current",
+        icon="mdi:current-dc",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.CURRENT,
