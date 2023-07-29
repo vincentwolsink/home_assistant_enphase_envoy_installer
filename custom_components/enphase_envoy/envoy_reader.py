@@ -411,7 +411,7 @@ class EnvoyStandard(EnvoyData):
         installer="endpoint_devstatus.pcu[?(@.devType==1)]",
     )
 
-    @envoy_property()
+    @envoy_property
     def inverters_production(self):
         # We will use the endpoint based on the token_type, which is automatically resolved by the inverters_data property
         data = self.get("inverters_data")
