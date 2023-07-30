@@ -86,96 +86,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             except httpx.HTTPError as err:
                 raise UpdateFailed(f"Error communicating with API: {err}") from err
 
-            for description in BINARY_SENSORS:
-                if description.key == "relays":
-                    data[description.key] = await envoy_reader.relay_status()
+            # The envoy_reader.all_values will adjust production values, based on option key
+            data = envoy_reader.all_values
 
-                elif description.key == "firmware":
-                    envoy_info = await envoy_reader.envoy_info()
-                    data[description.key] = envoy_info.get("update_status", None)
-
-            for description in SENSORS:
-                if description.key == "inverters":
-                    data[
-                        "inverters_production"
-                    ] = await envoy_reader.inverters_production()
-                    data["inverters_status"] = await envoy_reader.inverters_status()
-
-                elif description.key.startswith("inverters_"):
-                    continue
-
-                elif description.key == "batteries":
-                    battery_data = await envoy_reader.battery_storage()
-                    if isinstance(battery_data, list) and len(battery_data) > 0:
-                        battery_dict = {}
-                        for item in battery_data:
-                            battery_dict[item["serial_num"]] = item
-
-                        data[description.key] = battery_dict
-
-                elif description.key in [
-                    "current_battery_capacity",
-                    "total_battery_percentage",
-                ]:
-                    continue
-
-                else:
-                    data[description.key] = await getattr(
-                        envoy_reader, description.key
-                    )()
-
-            for description in PHASE_SENSORS:
-                if description.key.startswith("production_"):
-                    if envoy_reader.is_receiving_realtime_data:
-                        # do not update, use current value
-                        data[description.key] = coordinator.data[description.key]
-                    else:
-                        data[description.key] = await envoy_reader.production_phase(
-                            description.key
-                        )
-                elif description.key.startswith("consumption_"):
-                    if envoy_reader.is_receiving_realtime_data:
-                        # do not update, use current value
-                        data[description.key] = coordinator.data[description.key]
-                    else:
-                        data[description.key] = await envoy_reader.consumption_phase(
-                            description.key
-                        )
-                elif description.key.startswith("daily_production_"):
-                    data[description.key] = await envoy_reader.daily_production_phase(
-                        description.key
-                    )
-                elif description.key.startswith("daily_consumption_"):
-                    data[description.key] = await envoy_reader.daily_consumption_phase(
-                        description.key
-                    )
-                elif description.key.startswith("lifetime_production_"):
-                    data[
-                        description.key
-                    ] = await envoy_reader.lifetime_production_phase(description.key)
-                elif description.key.startswith("lifetime_consumption_"):
-                    data[
-                        description.key
-                    ] = await envoy_reader.lifetime_consumption_phase(description.key)
-                elif description.key.startswith("voltage_"):
-                    if envoy_reader.is_receiving_realtime_data:
-                        # do not update, use current value
-                        data[description.key] = coordinator.data[description.key]
-                    else:
-                        data[description.key] = await envoy_reader.voltage_phase(
-                            description.key
-                        )
-
-            data["grid_status"] = await envoy_reader.grid_status()
-            data["production_power"] = await envoy_reader.production_power()
-            data["envoy_info"] = await envoy_reader.envoy_info()
-            data["inverters_info"] = await envoy_reader.inverters_info()
-            data["relay_info"] = await envoy_reader.relay_info()
-
-            _LOGGER.debug("Retrieved data from API: %s", data)
-
-            await envoy_reader._sync_store()
-            return data
+        await envoy_reader._sync_store()
+        return data
 
     coordinator = DataUpdateCoordinator(
         hass,
