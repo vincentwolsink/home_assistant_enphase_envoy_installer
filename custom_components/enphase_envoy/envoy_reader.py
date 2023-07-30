@@ -135,24 +135,25 @@ class SwitchToHTTPS(Exception):
 class StreamData:
     class PhaseData:
         def __init__(self, phase_data):
-            self.watts = phase_data["p"]  # wNow, W
+            # https://en.wikipedia.org/wiki/AC_power explains the terms/units
+            self.watts = phase_data["p"]  # wNow, active/real power, W
             self.amps = phase_data["i"]  # rmsCurrent, A
             self.volt_ampere = phase_data["s"]  # apparent_power, VA
             self.volt = phase_data["v"]  # rmsVoltage, V
             self.pf = phase_data["pf"]  # pwrFactor, PF
             self.hz = phase_data["f"]  # Frequency, Hz
-
-            # no clue what the q key is (the webui also has no reference to it.)
-            # self.power_?? = phase_data["q"]
+            self.var = phase_data["q"]  # Reactive power, var (volt ampere reactive)
 
         def __str__(self):
-            return "<Phase %s watts, %s volt, %s amps, %s va, %s hz, %s pf />" % (
+            desc = "<Phase %s watts, %s volt, %s amps, %s va, %s hz, %s pf, %s var />"
+            return desc % (
                 self.watts,
                 self.volt,
                 self.amps,
                 self.volt_ampere,
                 self.hz,
                 self.pf,
+                self.var,
             )
 
     def __init__(self, data):
