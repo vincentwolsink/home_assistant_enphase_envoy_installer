@@ -1298,9 +1298,11 @@ class EnvoyReader:
             asyncio.gather(self.stream_reader(), return_exceptions=False)
         )
 
-    async def getDataLoop(self):
+    async def getDataLoop(self, no_url_cache_loop=False):
         # We iterate multiple times to see if the url caching works.
         await self.getData()
+        if no_url_cache_loop:
+            return
 
         print("First getData cycle completed, waiting 10 secs for second cycle.")
         await asyncio.sleep(10)
@@ -1310,13 +1312,22 @@ class EnvoyReader:
         await asyncio.sleep(10)
         await self.getData()
 
-    def run_in_console(self, test_data_folder=None, data_parser="EnvoyMeteredWithCT"):
+    def run_in_console(
+        self,
+        test_data_folder=None,
+        data_parser="EnvoyMeteredWithCT",
+        no_url_cache_loop=False,
+        token_type="owner",
+    ):
         """If running this module directly, print all the values in the console."""
         import pprint
 
         print("Reading...")
 
         if test_data_folder:
+            if token_type:
+                self.token_type = token_type
+
             _parser_mapping = {
                 "EnvoyStandard": EnvoyStandard,
                 "EnvoyMetered": EnvoyMetered,
@@ -1329,7 +1340,10 @@ class EnvoyReader:
         else:
             loop = asyncio.get_event_loop()
             loop.run_until_complete(
-                asyncio.gather(self.getDataLoop(), return_exceptions=False)
+                asyncio.gather(
+                    self.getDataLoop(no_url_cache_loop),
+                    return_exceptions=False,
+                )
             )
 
         loop = asyncio.get_event_loop()
@@ -1423,6 +1437,13 @@ if __name__ == "__main__":
         choices=["EnvoyStandard", "EnvoyMetered", "EnvoyMeteredWithCT"],
         default="EnvoyMeteredWithCT",
     )
+    parser.add_argument(
+        "--token-type",
+        dest="token_type",
+        help="When using test data, then use this token type for parsing the endpoints",
+        choices=["owner", "installer"],
+        default="installer",
+    )
 
     parser.add_argument(
         "--disable-negative-production",
@@ -1434,6 +1455,12 @@ if __name__ == "__main__":
         "--disable-installer-account",
         dest="disable_installer_account_use",
         help="Disable installer account use",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--no-url-cache-loop",
+        dest="no_url_cache_loop",
+        help="Do not run multiple url fetch loops, just once is fine.",
         action="store_true",
     )
     args = parser.parse_args()
@@ -1459,4 +1486,6 @@ if __name__ == "__main__":
         TESTREADER.run_in_console(
             test_data_folder=args.test_data,
             data_parser=args.data_parser,
+            no_url_cache_loop=args.no_url_cache_loop,
+            token_type=args.token_type,
         )
