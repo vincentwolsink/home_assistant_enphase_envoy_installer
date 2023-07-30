@@ -50,6 +50,7 @@ SENSORS = (
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         state_class=SensorStateClass.TOTAL_INCREASING,
         device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=0,
     ),
     SensorEntityDescription(
         key="lifetime_production",
@@ -57,6 +58,7 @@ SENSORS = (
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         state_class=SensorStateClass.TOTAL_INCREASING,
         device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=0,
     ),
     SensorEntityDescription(
         key="consumption",
@@ -64,6 +66,7 @@ SENSORS = (
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=0,
     ),
     SensorEntityDescription(
         key="daily_consumption",
@@ -71,6 +74,7 @@ SENSORS = (
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         state_class=SensorStateClass.TOTAL_INCREASING,
         device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=0,
     ),
     SensorEntityDescription(
         key="lifetime_consumption",
@@ -78,6 +82,7 @@ SENSORS = (
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         state_class=SensorStateClass.TOTAL_INCREASING,
         device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=0,
     ),
     SensorEntityDescription(
         key="inverters",
@@ -156,6 +161,7 @@ for phase in ["l1", "l2", "l3"]:
                 native_unit_of_measurement=UnitOfPower.WATT,
                 state_class=SensorStateClass.MEASUREMENT,
                 device_class=SensorDeviceClass.POWER,
+                suggested_display_precision=0,
             ),
             SensorEntityDescription(
                 key=f"daily_production_{phase}",
@@ -163,6 +169,7 @@ for phase in ["l1", "l2", "l3"]:
                 native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
                 state_class=SensorStateClass.TOTAL_INCREASING,
                 device_class=SensorDeviceClass.ENERGY,
+                suggested_display_precision=0,
             ),
             SensorEntityDescription(
                 key=f"lifetime_production_{phase}",
@@ -170,6 +177,7 @@ for phase in ["l1", "l2", "l3"]:
                 native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
                 state_class=SensorStateClass.TOTAL_INCREASING,
                 device_class=SensorDeviceClass.ENERGY,
+                suggested_display_precision=0,
             ),
             SensorEntityDescription(
                 key=f"voltage_{phase}",
@@ -187,6 +195,7 @@ for phase in ["l1", "l2", "l3"]:
                 native_unit_of_measurement=UnitOfPower.WATT,
                 state_class=SensorStateClass.MEASUREMENT,
                 device_class=SensorDeviceClass.POWER,
+                suggested_display_precision=0,
             ),
             SensorEntityDescription(
                 key=f"daily_consumption_{phase}",
@@ -194,6 +203,7 @@ for phase in ["l1", "l2", "l3"]:
                 native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
                 state_class=SensorStateClass.TOTAL_INCREASING,
                 device_class=SensorDeviceClass.ENERGY,
+                suggested_display_precision=0,
             ),
             SensorEntityDescription(
                 key=f"lifetime_consumption_{phase}",
@@ -201,6 +211,7 @@ for phase in ["l1", "l2", "l3"]:
                 native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
                 state_class=SensorStateClass.TOTAL_INCREASING,
                 device_class=SensorDeviceClass.ENERGY,
+                suggested_display_precision=0,
             ),
         ]
     )
