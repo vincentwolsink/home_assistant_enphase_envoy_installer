@@ -474,7 +474,7 @@ class EnvoyStandard(EnvoyData):
         )
         if not status:
             # fallback to the information which is available with owner token.
-            status = self.relay_info
+            status = self.get("relay_info")
         return status
 
     @envoy_property(required_endpoint="endpoint_ensemble_json_results")

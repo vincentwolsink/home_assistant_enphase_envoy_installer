@@ -50,17 +50,39 @@ async def async_setup_entry(
         elif sensor_description.key == "relays":
             if coordinator.data.get("relays") is not None:
                 for relay in coordinator.data["relays"]:
-                    device_name = f"{sensor_description.name} {relay}"
-                    entity_name = f"{name} {device_name}"
+                    device_name = f"Relay {relay}"
+                    entity_name = f"{device_name} {sensor_description.name}"
 
                     serial_number = relay
                     entities.append(
-                        EnvoyRelayEntity(
+                        EnvoyRelayContactEntity(
                             sensor_description,
                             entity_name,
                             device_name,
                             serial_number,
                             serial_number,
+                            coordinator,
+                            config_entry.unique_id,
+                        )
+                    )
+
+        elif sensor_description.key.startswith("relays_"):
+            sensor_key = sensor_description.key.split("_", 1)[-1]
+            if coordinator.data.get("relays") != None:
+                for serial_number, data in coordinator.data["relays"].items():
+                    if data.get(sensor_key, None) == None:
+                        continue
+
+                    device_name = f"Relay {serial_number}"
+                    entity_name = f"{device_name} {sensor_description.name}"
+
+                    entities.append(
+                        EnvoyRelayGenericEntity(
+                            sensor_description,
+                            entity_name,
+                            device_name,
+                            serial_number,
+                            None,
                             coordinator,
                             config_entry.unique_id,
                         )
@@ -313,23 +335,64 @@ class EnvoyRelayEntity(EnvoyBinaryEntity):
     MODEL = "Relay"
 
     @property
+    def relay(self):
+        return self.coordinator.data.get("relays", {}).get(
+            self._device_serial_number, {}
+        )
+
+    @property
+    def value_key(self):
+        if "_" in self.entity_description.key:
+            return self.entity_description.key.split("_", 1)[-1]
+        return self.entity_description.key
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        if not self.coordinator.last_update_success:
+            return False
+
+        if self.value_key != "communicating":
+            return self.relay.get("communicating")
+
+        return True
+
+    @property
     def is_on(self) -> bool | None:
         """Return true if the binary sensor is on."""
-        relays = self.coordinator.data.get("relays")
-        if relays is None:
+        if self.relay is None:
             return None
 
-        return relays.get(self._serial_number).get("relay") == "closed"
+        return self.relay.get("relay") == "closed"
 
     @property
     def extra_state_attributes(self) -> dict | None:
         """Return the state attributes."""
-        if self.coordinator.data.get("relays") is not None:
-            relay = self.coordinator.data.get("relays").get(self._serial_number)
-            return {
-                "last_reported": relay.get("report_date"),
-                "reason_code": relay.get("reason_code"),
-                "reason": relay.get("reason"),
-            }
+        if self.relay is None:
+            return None
 
+        return {
+            "last_reported": self.relay.get("report_date"),
+            "reason_code": self.relay.get("reason_code"),
+            "reason": self.relay.get("reason"),
+        }
+
+
+class EnvoyRelayContactEntity(EnvoyRelayEntity):
+    @property
+    def icon(self):
+        return "mdi:electric-switch-closed" if self.is_on else "mdi:electric-switch"
+
+
+class EnvoyRelayGenericEntity(EnvoyRelayEntity):
+    @property
+    def is_on(self) -> bool | None:
+        """Return true if the binary sensor is on."""
+        if self.relay is None:
+            return None
+
+        return self.relay.get(self.value_key)
+
+    @property
+    def extra_state_attributes(self) -> dict | None:
         return None
