@@ -35,8 +35,8 @@ ENDPOINT_URL_INFO_XML = "https://{}/info.xml"
 ENDPOINT_URL_STREAM = "https://{}/stream/meter"
 ENDPOINT_URL_PDM_ENERGY = "https://{}/ivp/pdm/energy"
 
-ENVOY_MODEL_S = "PC"
-ENVOY_MODEL_C = "P"
+ENVOY_MODEL_M = "Metered"
+ENVOY_MODEL_S = "Standard"
 
 # paths for the enlighten installer token
 ENLIGHTEN_AUTH_URL = "https://enlighten.enphaseenergy.com/login/login.json"
@@ -374,6 +374,7 @@ class EnvoyStandard(EnvoyData):
             "software": self.get("envoy_software"),
             "software_build_epoch": self.get("envoy_software_build_epoch"),
             "update_status": self.get("envoy_update_status_value"),
+            "model": self.reader.endpoint_type,
         }
 
     production_value = path_by_token(
@@ -568,7 +569,7 @@ class EnvoyMeteredWithCT(EnvoyMetered):
 
 
 def getEnvoyDataClass(envoy_type, production_json):
-    if envoy_type == ENVOY_MODEL_C:
+    if envoy_type == ENVOY_MODEL_S:
         return EnvoyStandard
 
     # It is a metered Envoy, check the production json if the eim entry has activeCount > 0
@@ -986,7 +987,7 @@ class EnvoyReader:
         # First, login, etc, make sure we have a token.
         await self.init_authentication()
 
-        if not self.isMeteringEnabled or self.endpoint_type != ENVOY_MODEL_S:
+        if not self.isMeteringEnabled or self.endpoint_type != ENVOY_MODEL_M:
             _LOGGER.debug(
                 "Metering is not enabled or endpoint type '%s' not supported",
                 self.endpoint_type,
@@ -1171,7 +1172,7 @@ class EnvoyReader:
                 self.endpoint_production_json_results.json()
             )
         ):
-            self.endpoint_type = ENVOY_MODEL_S
+            self.endpoint_type = ENVOY_MODEL_M
 
         else:
             await self.update_endpoints(["endpoint_production_v1_results"])
@@ -1179,7 +1180,7 @@ class EnvoyReader:
                 self.endpoint_production_v1_results
                 and self.endpoint_production_v1_results.status_code == 200
             ):
-                self.endpoint_type = ENVOY_MODEL_C  # Envoy-C, standard envoy
+                self.endpoint_type = ENVOY_MODEL_S
 
         if not self.endpoint_type:
             raise RuntimeError(
@@ -1293,7 +1294,7 @@ class EnvoyReader:
         print("Reading stream...")
         loop = asyncio.get_event_loop()
         self.data = EnvoyMeteredWithCT(self)
-        self.endpoint_type = ENVOY_MODEL_S
+        self.endpoint_type = ENVOY_MODEL_M
         data_results = loop.run_until_complete(
             asyncio.gather(self.stream_reader(), return_exceptions=False)
         )
