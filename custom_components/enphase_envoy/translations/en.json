@@ -32,6 +32,7 @@
           "realtime_update_throttle": "Minimum time between realtime entity updates [s]",
           "disable_negative_production": "Disable negative production values",
           "time_between_update": "Minimum time between entity updates [s]",
+          "enable_additional_metrics": "[Metered only] Enable additional metrics like total amps, frequency, apparent and reactive power and power factor.",
           "disable_installer_account_use": "Do not collect data that requires installer or DIY enphase account"
         },
         "data_description": {

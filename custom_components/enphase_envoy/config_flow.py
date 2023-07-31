@@ -28,6 +28,7 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_REALTIME_UPDATE_THROTTLE,
     DISABLE_INSTALLER_ACCOUNT_USE,
+    ENABLE_ADDITIONAL_METRICS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -271,6 +272,10 @@ class EnvoyOptionsFlowHandler(config_entries.OptionsFlow):
                         ),
                     )
                 ),
+            ): bool,
+            vol.Optional(
+                ENABLE_ADDITIONAL_METRICS,
+                default=self.config_entry.options.get(ENABLE_ADDITIONAL_METRICS, False),
             ): bool,
         }
         return self.async_show_form(step_id="user", data_schema=vol.Schema(schema))

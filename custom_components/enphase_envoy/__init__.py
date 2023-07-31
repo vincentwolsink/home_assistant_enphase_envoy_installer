@@ -145,6 +145,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 {
                     "production_" + phase: production_watts,
                     "voltage_" + phase: streamdata.production[phase].volt,
+                    "ampere_" + phase: streamdata.production[phase].amps,
+                    "apparent_power_" + phase: streamdata.production[phase].volt_ampere,
+                    "power_factor" + phase: streamdata.production[phase].pf,
+                    "reactive_power_" + phase: streamdata.production[phase].var,
+                    "frequency_" + phase: streamdata.production[phase].hz,
                     "consumption_" + phase: streamdata.consumption[phase].watts,
                 }
             )

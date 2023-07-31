@@ -23,6 +23,8 @@ from .const import (
     SENSORS,
     PHASE_SENSORS,
     LIVE_UPDATEABLE_ENTITIES,
+    ENABLE_ADDITIONAL_METRICS,
+    ADDITIONAL_METRICS,
 )
 
 
@@ -36,9 +38,14 @@ async def async_setup_entry(
     coordinator = data[COORDINATOR]
     name = data[NAME]
     live_entities = data[LIVE_UPDATEABLE_ENTITIES]
+    options = config_entry.options
 
     entities = []
     for sensor_description in SENSORS:
+        if not options.get(ENABLE_ADDITIONAL_METRICS, False):
+            if sensor_description.key in ADDITIONAL_METRICS:
+                continue
+
         if sensor_description.key == "inverters":
             if coordinator.data.get("inverters_production") is not None:
                 for inverter in coordinator.data["inverters_production"]:
@@ -158,6 +165,10 @@ async def async_setup_entry(
             )
 
     for sensor_description in PHASE_SENSORS:
+        if not options.get(ENABLE_ADDITIONAL_METRICS, False):
+            if sensor_description.key in ADDITIONAL_METRICS:
+                continue
+
         data = coordinator.data.get(sensor_description.key)
         if data is None:
             continue

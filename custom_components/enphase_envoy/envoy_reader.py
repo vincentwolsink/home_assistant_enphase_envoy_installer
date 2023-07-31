@@ -33,6 +33,7 @@ ENDPOINT_URL_DEVSTATUS = "https://{}/ivp/peb/devstatus"
 ENDPOINT_URL_PRODUCTION_POWER = "https://{}/ivp/mod/603980032/mode/power"
 ENDPOINT_URL_INFO_XML = "https://{}/info.xml"
 ENDPOINT_URL_STREAM = "https://{}/stream/meter"
+ENDPOINT_URL_PRODUCTION_REPORT = "https://{}/ivp/meters/reports/production"
 ENDPOINT_URL_PDM_ENERGY = "https://{}/ivp/pdm/energy"
 
 ENVOY_MODEL_M = "Metered"
@@ -548,22 +549,43 @@ class EnvoyMetered(EnvoyStandard):
 class EnvoyMeteredWithCT(EnvoyMetered):
     """Adds CT based sensors, like current usage per phase"""
 
-    def __new__(cls, *a, **kw):
+    def __new__(cls, reader, **kw):
         # Add phase CT production value attributes, as this class is
         # chosen when one production CT is enabled.
         for attr, path in {
-            "production": ".wNow",
-            "daily_production": ".whToday",
-            "lifetime_production": ".whLifetime",
+            "production": ".currW",
+            "lifetime_production": ".whDlvdCum",
             "voltage": ".rmsVoltage",
+            "ampere": ".rmsCurrent",
+            "apparent_power": ".apprntPwr",
+            "power_factor": ".pwrFactor",
+            "reactive_power": ".reactPwr",
+            "frequency": ".freqHz",
         }.items():
-            ct_path = cls._production_ct
-            setattr(cls, f"{attr}_value", ct_path + path)
+            ct_path = "endpoint_production_report"
+            setattr(cls, f"{attr}_value", f"{ct_path}.cumulative{path}")
 
             # Also create paths for all phases.
             for i, phase in enumerate(["l1", "l2", "l3"]):
                 full_path = f"{ct_path}.lines[{i}]{path}"
                 setattr(cls, f"{attr}_{phase}_value", full_path)
+
+        setattr(
+            cls,
+            "daily_production_value",
+            "endpoint_production_json_results.production[?(@.type=='eim')].whToday",
+        )
+        for i, phase in enumerate(["l1", "l2", "l3"]):
+            setattr(
+                cls,
+                f"daily_production_{phase}_value"
+                "endpoint_production_json_results.production[?(@.type=='eim')].lines[{i}].whToday",
+            )
+
+        # When we're using the endpoint_production_report primarily, then the following
+        # endpoint can be used way less frequently
+        reader.uri_registry["endpoint_production_json_results"]["cache_time"] = 50
+        reader.uri_registry["endpoint_production_inverters"]["cache_time"] = 290
 
         return EnvoyMetered.__new__(cls)
 
@@ -640,6 +662,7 @@ class EnvoyReader:
         iurl("production_power", ENDPOINT_URL_PRODUCTION_POWER, cache=3600)
         url("info_results", ENDPOINT_URL_INFO_XML, cache=86400)
         url("inventory_results", ENDPOINT_URL_INVENTORY, cache=300)
+        url("production_report", ENDPOINT_URL_PRODUCTION_REPORT, cache=0)
         iurl("pdm_energy", ENDPOINT_URL_PDM_ENERGY)
 
         # If IPv6 address then enclose host in brackets
@@ -1279,6 +1302,11 @@ class EnvoyReader:
     lifetime_production_phase = _async_getattr
     lifetime_consumption_phase = _async_getattr
     voltage_phase = _async_getattr
+    frequency_phase = _async_getattr
+    ampere_phase = _async_getattr
+    apparent_power_phase = _async_getattr
+    power_factor_phase = _async_getattr
+    reactive_power_phase = _async_getattr
 
     async def set_production_power(self, power_on):
         if self.endpoint_production_power is not None:
@@ -1369,6 +1397,9 @@ class EnvoyReader:
                 self.production_phase("production_l1"),
                 self.production_phase("production_l2"),
                 self.production_phase("production_l3"),
+                self.frequency_phase("frequency_l1"),
+                self.frequency_phase("frequency_l2"),
+                self.frequency_phase("frequency_l3"),
                 return_exceptions=False,
             )
         )
@@ -1392,6 +1423,9 @@ class EnvoyReader:
             "production_phase(l1)",
             "production_phase(l2)",
             "production_phase(l3)",
+            "frequency(l1)",
+            "frequency(l2)",
+            "frequency(l3)",
         ]
         pprint.pprint(dict(zip(fields, results)))
 

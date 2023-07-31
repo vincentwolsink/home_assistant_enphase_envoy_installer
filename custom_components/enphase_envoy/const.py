@@ -13,11 +13,14 @@ from homeassistant.components.switch import SwitchDeviceClass, SwitchEntityDescr
 from homeassistant.const import (
     Platform,
     PERCENTAGE,
+    UnitOfApparentPower,
     UnitOfEnergy,
+    UnitOfFrequency,
     UnitOfPower,
     UnitOfElectricPotential,
     UnitOfElectricCurrent,
     UnitOfTemperature,
+    POWER_VOLT_AMPERE_REACTIVE,
 )
 
 DOMAIN = "enphase_envoy"
@@ -35,6 +38,8 @@ CONF_SERIAL = "serial"
 
 LIVE_UPDATEABLE_ENTITIES = "live-update-entities"
 DISABLE_INSTALLER_ACCOUNT_USE = "disable_installer_account_use"
+ENABLE_ADDITIONAL_METRICS = "enable_additional_metrics"
+ADDITIONAL_METRICS = []
 
 SENSORS = (
     SensorEntityDescription(
@@ -149,6 +154,26 @@ SENSORS = (
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.VOLTAGE,
     ),
+    SensorEntityDescription(
+        key=f"ampere",
+        name=f"Current Amps",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.CURRENT,
+    ),
+    SensorEntityDescription(
+        key=f"apparent_power",
+        name=f"Apparent Power",
+        native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.APPARENT_POWER,
+    ),
+)
+ADDITIONAL_METRICS.extend(
+    [
+        "ampere",
+        "apparent_power",
+    ]
 )
 
 PHASE_SENSORS = []
@@ -186,6 +211,43 @@ for phase in ["l1", "l2", "l3"]:
                 state_class=SensorStateClass.MEASUREMENT,
                 device_class=SensorDeviceClass.VOLTAGE,
             ),
+            SensorEntityDescription(
+                key=f"ampere_{phase}",
+                name=f"Current Amps {phase.upper()}",
+                native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+                state_class=SensorStateClass.MEASUREMENT,
+                device_class=SensorDeviceClass.CURRENT,
+            ),
+            SensorEntityDescription(
+                key=f"apparent_power_{phase}",
+                name=f"Apparent Power {phase.upper()}",
+                native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+                state_class=SensorStateClass.MEASUREMENT,
+                device_class=SensorDeviceClass.APPARENT_POWER,
+            ),
+            SensorEntityDescription(
+                key=f"reactive_power_{phase}",
+                name=f"Reactive Power {phase.upper()}",
+                native_unit_of_measurement=POWER_VOLT_AMPERE_REACTIVE,
+                state_class=SensorStateClass.MEASUREMENT,
+                device_class=SensorDeviceClass.REACTIVE_POWER,
+            ),
+            SensorEntityDescription(
+                key=f"frequency_{phase}",
+                name=f"Frequency {phase.upper()}",
+                native_unit_of_measurement=UnitOfFrequency.HERTZ,
+                state_class=SensorStateClass.MEASUREMENT,
+                device_class=SensorDeviceClass.FREQUENCY,
+                suggested_display_precision=1,
+            ),
+            SensorEntityDescription(
+                key=f"power_factor_{phase}",
+                name=f"Power Factor {phase.upper()}",
+                native_unit_of_measurement=None,
+                state_class=SensorStateClass.MEASUREMENT,
+                device_class=SensorDeviceClass.POWER_FACTOR,
+                suggested_display_precision=2,
+            ),
             #
             # Consumption entities
             #
@@ -213,6 +275,15 @@ for phase in ["l1", "l2", "l3"]:
                 device_class=SensorDeviceClass.ENERGY,
                 suggested_display_precision=0,
             ),
+        ]
+    )
+    ADDITIONAL_METRICS.extend(
+        [
+            f"ampere_{phase}",
+            f"apparent_power_{phase}",
+            f"reactive_power_{phase}",
+            f"frequency_{phase}",
+            f"power_factor_{phase}",
         ]
     )
 
