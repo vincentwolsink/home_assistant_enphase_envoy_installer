@@ -314,8 +314,18 @@ BINARY_SENSORS = (
     ),
     BinarySensorEntityDescription(
         key="relays",
-        name="Relay",
+        name="Contact",
         device_class=BinarySensorDeviceClass.POWER,
+    ),
+    BinarySensorEntityDescription(
+        key="relays_communicating",
+        name="Communicating",
+        device_class=BinarySensorDeviceClass.CONNECTIVITY,
+    ),
+    BinarySensorEntityDescription(
+        key="relays_forced",
+        name="Forced",
+        device_class=BinarySensorDeviceClass.TAMPER,
     ),
     BinarySensorEntityDescription(
         key="firmware",
