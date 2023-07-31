@@ -244,11 +244,10 @@ class CoordinatedEnvoyEntity(EnvoyEntity, CoordinatorEntity):
 
         sw_version = None
         hw_version = None
-        model = None
+        model = self.coordinator.data.get("envoy_info", {}).get("model", "Standard")
         if self.coordinator.data.get("envoy_info"):
             sw_version = self.coordinator.data.get("envoy_info").get("software", None)
             hw_version = self.coordinator.data.get("envoy_info").get("pn", None)
-            model = self.coordinator.data.get("envoy_info").get("model", None)
 
         return DeviceInfo(
             identifiers={(DOMAIN, str(self._device_serial_number))},

@@ -141,10 +141,13 @@ class EnvoyGridStatusEntity(CoordinatorEntity, BinarySensorEntity):
         """Return the device_info of the device."""
         if not self._device_serial_number:
             return None
+
+        model = self.coordinator.data.get("envoy_info", {}).get("model", "Standard")
+
         return DeviceInfo(
             identifiers={(DOMAIN, str(self._device_serial_number))},
             manufacturer="Enphase",
-            model="Envoy",
+            model=f"Envoy-S {model}",
             name=self._device_name,
         )
 
@@ -202,10 +205,13 @@ class EnvoyInverterEntity(CoordinatorEntity, BinarySensorEntity):
         """Return the device_info of the device."""
         if not self._device_serial_number:
             return None
+
+        model = self.coordinator.data.get("envoy_info", {}).get("model", "Standard")
+
         return DeviceInfo(
             identifiers={(DOMAIN, str(self._device_serial_number))},
             manufacturer="Enphase",
-            model="Envoy",
+            model=f"Envoy-S {model}",
             name=self._device_name,
         )
 
@@ -275,6 +281,8 @@ class EnvoyBaseEntity(CoordinatorEntity):
             return None
         device_info_kw = {}
         if self._parent_device:
+            model = self.coordinator.data.get("envoy_info", {}).get("model", "Standard")
+            self.MODEL = f"Envoy-S {model}"
             device_info_kw["via_device"] = (DOMAIN, self._parent_device)
 
         if self.MODEL == "Relay":
