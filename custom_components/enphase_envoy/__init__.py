@@ -187,6 +187,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.debug("Stopping loop for /stream/meter")
         task.cancel()
 
+        hass.data[DOMAIN][entry.entry_id]["realtime_loop"] = False
+
     # Make sure task is cancelled on shutdown (or tests complete)
     entry.async_on_unload(
         hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _async_stop)
@@ -202,10 +204,12 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     if task := hass.data[DOMAIN][entry.entry_id].get("realtime_loop", False):
         _LOGGER.debug("Stopping loop for /stream/meter")
-        task.cancel()
 
         with suppress(asyncio.CancelledError):
+            task.cancel()
             await task
+
+        hass.data[DOMAIN][entry.entry_id]["realtime_loop"] = False
 
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:

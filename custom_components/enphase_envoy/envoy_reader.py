@@ -135,24 +135,25 @@ class SwitchToHTTPS(Exception):
 class StreamData:
     class PhaseData:
         def __init__(self, phase_data):
-            self.watts = phase_data["p"]  # wNow, W
+            # https://en.wikipedia.org/wiki/AC_power explains the terms/units
+            self.watts = phase_data["p"]  # wNow, active/real power, W
             self.amps = phase_data["i"]  # rmsCurrent, A
             self.volt_ampere = phase_data["s"]  # apparent_power, VA
             self.volt = phase_data["v"]  # rmsVoltage, V
             self.pf = phase_data["pf"]  # pwrFactor, PF
             self.hz = phase_data["f"]  # Frequency, Hz
-
-            # no clue what the q key is (the webui also has no reference to it.)
-            # self.power_?? = phase_data["q"]
+            self.var = phase_data["q"]  # Reactive power, var (volt ampere reactive)
 
         def __str__(self):
-            return "<Phase %s watts, %s volt, %s amps, %s va, %s hz, %s pf />" % (
+            desc = "<Phase %s watts, %s volt, %s amps, %s va, %s hz, %s pf, %s var />"
+            return desc % (
                 self.watts,
                 self.volt,
                 self.amps,
                 self.volt_ampere,
                 self.hz,
                 self.pf,
+                self.var,
             )
 
     def __init__(self, data):
@@ -1297,9 +1298,11 @@ class EnvoyReader:
             asyncio.gather(self.stream_reader(), return_exceptions=False)
         )
 
-    async def getDataLoop(self):
+    async def getDataLoop(self, no_url_cache_loop=False):
         # We iterate multiple times to see if the url caching works.
         await self.getData()
+        if no_url_cache_loop:
+            return
 
         print("First getData cycle completed, waiting 10 secs for second cycle.")
         await asyncio.sleep(10)
@@ -1309,13 +1312,22 @@ class EnvoyReader:
         await asyncio.sleep(10)
         await self.getData()
 
-    def run_in_console(self, test_data_folder=None, data_parser="EnvoyMeteredWithCT"):
+    def run_in_console(
+        self,
+        test_data_folder=None,
+        data_parser="EnvoyMeteredWithCT",
+        no_url_cache_loop=False,
+        token_type="owner",
+    ):
         """If running this module directly, print all the values in the console."""
         import pprint
 
         print("Reading...")
 
         if test_data_folder:
+            if token_type:
+                self.token_type = token_type
+
             _parser_mapping = {
                 "EnvoyStandard": EnvoyStandard,
                 "EnvoyMetered": EnvoyMetered,
@@ -1328,7 +1340,10 @@ class EnvoyReader:
         else:
             loop = asyncio.get_event_loop()
             loop.run_until_complete(
-                asyncio.gather(self.getDataLoop(), return_exceptions=False)
+                asyncio.gather(
+                    self.getDataLoop(no_url_cache_loop),
+                    return_exceptions=False,
+                )
             )
 
         loop = asyncio.get_event_loop()
@@ -1422,6 +1437,13 @@ if __name__ == "__main__":
         choices=["EnvoyStandard", "EnvoyMetered", "EnvoyMeteredWithCT"],
         default="EnvoyMeteredWithCT",
     )
+    parser.add_argument(
+        "--token-type",
+        dest="token_type",
+        help="When using test data, then use this token type for parsing the endpoints",
+        choices=["owner", "installer"],
+        default="installer",
+    )
 
     parser.add_argument(
         "--disable-negative-production",
@@ -1433,6 +1455,12 @@ if __name__ == "__main__":
         "--disable-installer-account",
         dest="disable_installer_account_use",
         help="Disable installer account use",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--no-url-cache-loop",
+        dest="no_url_cache_loop",
+        help="Do not run multiple url fetch loops, just once is fine.",
         action="store_true",
     )
     args = parser.parse_args()
@@ -1458,4 +1486,6 @@ if __name__ == "__main__":
         TESTREADER.run_in_console(
             test_data_folder=args.test_data,
             data_parser=args.data_parser,
+            no_url_cache_loop=args.no_url_cache_loop,
+            token_type=args.token_type,
         )

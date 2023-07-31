@@ -89,7 +89,7 @@ async def async_setup_entry(
                     )
 
         elif sensor_description.key == "firmware":
-            if coordinator.data.get("update_status") is not None:
+            if coordinator.data.get("envoy_info", {}).get("update_status") is not None:
                 entity_name = f"{name} {sensor_description.name}"
                 serial_number = name.split(None, 1)[-1]
                 entities.append(
