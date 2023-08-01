@@ -5,7 +5,14 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.helpers.entity import DeviceInfo
 
-from .const import COORDINATOR, DOMAIN, NAME, BINARY_SENSORS
+from .const import (
+    COORDINATOR,
+    DOMAIN,
+    NAME,
+    BINARY_SENSORS,
+    resolve_hardware_id,
+    get_model_name,
+)
 
 
 async def async_setup_entry(
@@ -206,10 +213,15 @@ class EnvoyInverterEntity(CoordinatorEntity, BinarySensorEntity):
         if not self._device_serial_number:
             return None
 
+        hw_version = (
+            self.coordinator.data.get("inverters_info", {})
+            .get(self._device_serial_number, {})
+            .get("part_num", None)
+        )
         return DeviceInfo(
             identifiers={(DOMAIN, str(self._device_serial_number))},
             manufacturer="Enphase",
-            model="Inverter",
+            model=get_model_name("Inverter", hw_version),
             name=self._device_name,
         )
 
@@ -281,21 +293,25 @@ class EnvoyBaseEntity(CoordinatorEntity):
         if self._parent_device:
             device_info_kw["via_device"] = (DOMAIN, self._parent_device)
 
+        model_name = self.MODEL
         if self.MODEL == "Envoy":
             model = self.coordinator.data.get("envoy_info", {}).get("model", "Standard")
-            self.MODEL = f"Envoy-S {model}"
+            model_name = f"Envoy-S {model}"
 
         elif self.MODEL == "Relay":
             info = self.coordinator.data.get("relay_info", {}).get(
                 self._device_serial_number, {}
             )
             device_info_kw["sw_version"] = info.get("img_pnum_running", None)
-            device_info_kw["hw_version"] = info.get("part_num", None)
+            device_info_kw["hw_version"] = resolve_hardware_id(
+                info.get("part_num", None)
+            )
+            model_name = get_model_name(model_name, info.get("part_num", None))
 
         return DeviceInfo(
             identifiers={(DOMAIN, str(self._device_serial_number))},
             manufacturer="Enphase",
-            model=self.MODEL,
+            model=model_name,
             name=self._device_name,
             **device_info_kw,
         )
