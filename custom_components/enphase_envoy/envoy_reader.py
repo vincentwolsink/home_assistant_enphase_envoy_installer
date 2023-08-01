@@ -578,7 +578,7 @@ class EnvoyMeteredWithCT(EnvoyMetered):
         for i, phase in enumerate(["l1", "l2", "l3"]):
             setattr(
                 cls,
-                f"daily_production_{phase}_value"
+                f"daily_production_{phase}_value",
                 "endpoint_production_json_results.production[?(@.type=='eim')].lines[{i}].whToday",
             )
 
