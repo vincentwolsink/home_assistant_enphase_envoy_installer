@@ -41,6 +41,46 @@ DISABLE_INSTALLER_ACCOUNT_USE = "disable_installer_account_use"
 ENABLE_ADDITIONAL_METRICS = "enable_additional_metrics"
 ADDITIONAL_METRICS = []
 
+PRODUCT_ID_MAPPING = {
+    "800-00598-r04": {"name": "IQ Relay 1-phase", "sku": "Q-RELAY-1P-INT"},
+    "800-00654-r08": {"name": "Envoy-S-Metered-EU", "sku": "ENV-S-WM-230"},
+    "800-00656-r06": {"name": "Envoy-S-Standard-EU", "sku": "ENV-S-WB-230"},
+    "800-01359-r02": {"name": "IQ8+ Microinverter", "sku": "IQ8PLUS-72-M-INT"},
+    "800-01736-r02": {"name": "IQ7+ Microinverter", "sku": "IQ7PLUS-72-M-INT"},
+}
+
+
+def resolve_product_mapping(product_id):
+    if PRODUCT_ID_MAPPING.get(product_id, None) != None:
+        return PRODUCT_ID_MAPPING[product_id]
+
+    def id_iter():
+        yield product_id.rsplit("-", 1)[0]
+        yield product_id.split("-")[1]
+
+    for match in id_iter():
+        for key, product in PRODUCT_ID_MAPPING.items():
+            if key == match or match in key:
+                # Create alias for consecutive calls.
+                PRODUCT_ID_MAPPING[match] = product
+                return product
+
+
+def resolve_hardware_id(hardware_id):
+    info = resolve_product_mapping(hardware_id)
+    if not info:
+        return hardware_id
+
+    return f"{info['sku']} ({hardware_id})"
+
+
+def get_model_name(model, hardware_id):
+    product = resolve_product_mapping(hardware_id)
+    if product:
+        return product["name"]
+    return model
+
+
 SENSORS = (
     SensorEntityDescription(
         key="production",

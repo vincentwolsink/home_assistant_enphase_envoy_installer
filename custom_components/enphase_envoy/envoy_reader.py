@@ -375,7 +375,7 @@ class EnvoyStandard(EnvoyData):
             "software": self.get("envoy_software"),
             "software_build_epoch": self.get("envoy_software_build_epoch"),
             "update_status": self.get("envoy_update_status_value"),
-            "model": self.reader.endpoint_type,
+            "model": getattr(self, "ALIAS", self.__class__.__name__[5:]),
         }
 
     production_value = path_by_token(
@@ -548,6 +548,8 @@ class EnvoyMetered(EnvoyStandard):
 
 class EnvoyMeteredWithCT(EnvoyMetered):
     """Adds CT based sensors, like current usage per phase"""
+
+    ALIAS = "Metered (with CT)"
 
     def __new__(cls, reader, **kw):
         # Add phase CT production value attributes, as this class is

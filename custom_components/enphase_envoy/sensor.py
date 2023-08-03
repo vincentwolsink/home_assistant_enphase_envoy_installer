@@ -25,6 +25,8 @@ from .const import (
     LIVE_UPDATEABLE_ENTITIES,
     ENABLE_ADDITIONAL_METRICS,
     ADDITIONAL_METRICS,
+    resolve_hardware_id,
+    get_model_name,
 )
 
 
@@ -263,7 +265,7 @@ class CoordinatedEnvoyEntity(EnvoyEntity, CoordinatorEntity):
             model=f"Envoy-S {model}",
             name=self._device_name,
             sw_version=sw_version,
-            hw_version=hw_version,
+            hw_version=resolve_hardware_id(hw_version),
             configuration_url=f"https://{self.device_host}/"
             if self.device_host
             else None,
@@ -369,11 +371,11 @@ class EnvoyInverterEntity(CoordinatorEntity, SensorEntity):
         return DeviceInfo(
             identifiers={(DOMAIN, str(self._device_serial_number))},
             manufacturer="Enphase",
-            model="Inverter",
+            model=get_model_name("Inverter", hw_version),
             name=self._device_name,
             via_device=(DOMAIN, self._parent_device),
             sw_version=sw_version,
-            hw_version=hw_version,
+            hw_version=resolve_hardware_id(hw_version),
         )
 
 
