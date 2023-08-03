@@ -579,7 +579,7 @@ class EnvoyMeteredWithCT(EnvoyMetered):
             setattr(
                 cls,
                 f"daily_production_{phase}_value",
-                "endpoint_production_json_results.production[?(@.type=='eim')].lines[{i}].whToday",
+                f"endpoint_production_json_results.production[?(@.type=='eim')].lines[{i}].whToday",
             )
 
         # When we're using the endpoint_production_report primarily, then the following
