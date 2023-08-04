@@ -29,6 +29,7 @@ from .const import (
     DEFAULT_REALTIME_UPDATE_THROTTLE,
     DISABLE_INSTALLER_ACCOUNT_USE,
     ENABLE_ADDITIONAL_METRICS,
+    DEFAULT_GETDATA_TIMEOUT,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -277,6 +278,12 @@ class EnvoyOptionsFlowHandler(config_entries.OptionsFlow):
                 ENABLE_ADDITIONAL_METRICS,
                 default=self.config_entry.options.get(ENABLE_ADDITIONAL_METRICS, False),
             ): bool,
+            vol.Optional(
+                "getdata_timeout",
+                default=self.config_entry.options.get(
+                    "getdata_timeout", DEFAULT_GETDATA_TIMEOUT
+                ),
+            ): vol.All(vol.Coerce(int), vol.Range(min=30)),
         }
         return self.async_show_form(step_id="user", data_schema=vol.Schema(schema))
 
