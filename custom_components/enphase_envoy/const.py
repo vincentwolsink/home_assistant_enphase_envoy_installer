@@ -44,10 +44,12 @@ ADDITIONAL_METRICS = []
 
 PRODUCT_ID_MAPPING = {
     "800-00598-r04": {"name": "IQ Relay 1-phase", "sku": "Q-RELAY-1P-INT"},
+    "800-00597-r02": {"name": "IQ Relay 3-phase", "sku": "Q-RELAY-3P-INT"},
     "800-00654-r08": {"name": "Envoy-S-Metered-EU", "sku": "ENV-S-WM-230"},
     "800-00656-r06": {"name": "Envoy-S-Standard-EU", "sku": "ENV-S-WB-230"},
     "800-01359-r02": {"name": "IQ8+ Microinverter", "sku": "IQ8PLUS-72-M-INT"},
     "800-01736-r02": {"name": "IQ7+ Microinverter", "sku": "IQ7PLUS-72-M-INT"},
+    "800-01127-r02": {"name": "IQ7A Microinverter", "sku": "IQ7A-72-M-INT"},
 }
 
 
