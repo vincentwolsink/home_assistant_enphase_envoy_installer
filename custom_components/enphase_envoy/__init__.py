@@ -41,6 +41,7 @@ from .const import (
     DEFAULT_REALTIME_UPDATE_THROTTLE,
     LIVE_UPDATEABLE_ENTITIES,
     DISABLE_INSTALLER_ACCOUNT_USE,
+    DEFAULT_GETDATA_TIMEOUT,
 )
 
 STORAGE_KEY = "envoy"
@@ -78,7 +79,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def async_update_data():
         """Fetch data from API endpoint."""
         data = {}
-        async with async_timeout.timeout(30):
+        async with async_timeout.timeout(
+            options.get("getdata_timeout", DEFAULT_GETDATA_TIMEOUT)
+        ):
             try:
                 await envoy_reader.getData()
             except httpx.HTTPStatusError as err:

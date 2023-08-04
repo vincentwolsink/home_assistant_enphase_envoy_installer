@@ -32,6 +32,7 @@
             "realtime_update_throttle": "Minimale tijd tussen real-time updates [s]",
             "disable_negative_production": "Voorkom negatieve productie waardes",
             "time_between_update": "Minimum tijd tussen entity updates [s]",
+            "getdata_timeout": "Maximum tijd voor het ophalen van data vanaf envoy [s]",
             "enable_additional_metrics": "[Metered only] Extra metrics inschakelen, zoals total amps, frequency, apparent en reactive power en power factor.",
             "disable_installer_account_use": "Haal geen data op die een installateur of DHZ enphase account vereisen"
           },
