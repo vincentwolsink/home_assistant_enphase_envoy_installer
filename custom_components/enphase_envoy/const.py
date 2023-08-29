@@ -387,5 +387,6 @@ BATTERY_ENERGY_CHARGED_SENSOR = SensorEntityDescription(
 PRODUCION_POWER_SWITCH = SwitchEntityDescription(
     key="production_power",
     name="Production",
+    icon="mdi:solar-power",
     device_class=SwitchDeviceClass.SWITCH,
 )
