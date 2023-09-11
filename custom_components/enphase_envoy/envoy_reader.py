@@ -54,7 +54,7 @@ _LOGGER = logging.getLogger(__name__)
 
 def random_content(length):
     chars = string.ascii_letters + string.digits
-    return "".join(secrets.choice(chars) for i in range(length))
+    return "".join(secrets.choice(chars) for _ in range(length))
 
 
 def generate_challenge(code):
@@ -129,7 +129,15 @@ def load_test_data(full_fname):
         return fh.read()
 
 
-class SwitchToHTTPS(Exception):
+class EnvoyReaderError(Exception):
+    pass
+
+
+class EnlightenError(EnvoyReaderError):
+    pass
+
+
+class EnvoyError(EnvoyReaderError):
     pass
 
 
@@ -592,7 +600,7 @@ class EnvoyMeteredWithCT(EnvoyMetered):
         return EnvoyMetered.__new__(cls)
 
 
-def getEnvoyDataClass(envoy_type, production_json):
+def get_envoydataclass(envoy_type, production_json):
     if envoy_type == ENVOY_MODEL_S:
         return EnvoyStandard
 
@@ -694,7 +702,7 @@ class EnvoyReader:
         return self.uri_registry[attr]
 
     def _clear_endpoint_cache(self, attr):
-        if not attr in self.uri_registry[attr]:
+        if attr not in self.uri_registry[attr]:
             return
 
         # Setting last_fetch to 0 ensures it will be fetched upon next run
@@ -764,7 +772,7 @@ class EnvoyReader:
                             else False
                         )
                         if not could_refresh_cookies:
-                            await self._getEnphaseToken()
+                            await self._get_enphase_token()
 
                         received_401 += 1
                         continue
@@ -793,8 +801,9 @@ class EnvoyReader:
                 _LOGGER.debug("HTTP POST %s: %s: %s", url, resp, resp.text)
                 _LOGGER.debug("HTTP POST Cookie: %s", resp.cookies)
                 return resp
-        except httpx.TransportError:
-            raise
+        except httpx.TransportError as e:
+            _LOGGER.debug("TransportError: %s", e)
+            raise e
 
     async def _async_put(self, url, data, **kwargs):
         _LOGGER.debug(
@@ -813,8 +822,9 @@ class EnvoyReader:
                 )
                 _LOGGER.debug("HTTP PUT %s: %s: %s", url, resp, resp.text)
                 return resp
-        except httpx.TransportError:
-            raise
+        except httpx.TransportError as e:
+            _LOGGER.debug("TransportError: %s", e)
+            raise e
 
     async def _fetch_envoy_token_json(self):
         """
@@ -851,15 +861,15 @@ class EnvoyReader:
             resp = await client.post(ENLIGHTEN_LOGIN_URL, data=login_data)
 
             if resp.status_code >= 400:
-                raise Exception("Could not Login via Enlighten")
+                raise EnlightenError("Could not Login via Enlighten")
 
             # we should expect a 302 redirect
             if resp.status_code != 302:
-                raise Exception("Login did not succeed")
+                raise EnlightenError("Login did not succeed")
 
             # Step 3: Fetch the code from the query params.
-            redirectLocation = resp.headers.get("location")
-            url_parts = parse.urlparse(redirectLocation)
+            redirect_location = resp.headers.get("location")
+            url_parts = parse.urlparse(redirect_location)
             query_parts = parse.parse_qs(url_parts.query)
 
             # Step 4: Fetch the JWT token through envoy
@@ -878,7 +888,7 @@ class EnvoyReader:
             )
 
             if resp.status_code != 200:
-                raise Exception(
+                raise EnvoyError(
                     f"Could not fetch access token from envoy; HTTP {resp.status_code}: {resp.text}"
                 )
 
@@ -898,7 +908,7 @@ class EnvoyReader:
             }
             resp = await client.post(ENLIGHTEN_AUTH_URL, data=payload_login, timeout=30)
             if resp.status_code >= 400:
-                raise Exception("Could not Authenticate via Enlighten")
+                raise EnlightenError("Could not Authenticate via Enlighten")
 
             # now that we're in a logged in session, we can request the installer token
             login_data = resp.json()
@@ -911,10 +921,10 @@ class EnvoyReader:
                 ENLIGHTEN_TOKEN_URL, json=payload_token, timeout=30
             )
             if resp.status_code != 200:
-                raise Exception("Could not get installer token")
+                raise EnlightenError("Could not get installer token")
             return resp.text
 
-    async def _getEnphaseToken(self):
+    async def _get_enphase_token(self):
         # First attempt should be to auth using envoy token, as this could result in a installer token
         if not self.disable_installer_account_use:
             self._token = await self._fetch_envoy_token_json()
@@ -922,7 +932,7 @@ class EnvoyReader:
 
             _LOGGER.debug("Envoy Token")
             if self._is_enphase_token_expired(self._token):
-                raise Exception("Just received token already expired")
+                raise EnlightenError("Just received token already expired")
 
             if self.token_type != "installer":
                 _LOGGER.warning(
@@ -936,7 +946,7 @@ class EnvoyReader:
             _LOGGER.debug("Commissioned Token")
 
         if self._is_enphase_token_expired(self._token):
-            raise Exception("Just received token already expired")
+            raise EnlightenError("Just received token already expired")
 
         # this is normally owner or installer
         _LOGGER.info("TOKEN TYPE: %s", self.token_type)
@@ -999,20 +1009,20 @@ class EnvoyReader:
         # Check if a token has already been retrieved
         if self._token == "":
             _LOGGER.debug("Found empty token: %s", self._token)
-            await self._getEnphaseToken()
+            await self._get_enphase_token()
         else:
             _LOGGER.debug("Token is populated: %s", self._token)
             if self._is_enphase_token_expired(self._token):
                 _LOGGER.debug("Found Expired token - Retrieving new token")
-                await self._getEnphaseToken()
+                await self._get_enphase_token()
             else:
                 await self._refresh_token_cookies()
 
-    async def stream_reader(self, meter_callback=None, loop=None):
+    async def stream_reader(self, meter_callback=None):
         # First, login, etc, make sure we have a token.
         await self.init_authentication()
 
-        if not self.isMeteringEnabled or self.endpoint_type != ENVOY_MODEL_M:
+        if not self.is_metering_enabled or self.endpoint_type != ENVOY_MODEL_M:
             _LOGGER.debug(
                 "Metering is not enabled or endpoint type '%s' not supported",
                 self.endpoint_type,
@@ -1132,7 +1142,7 @@ class EnvoyReader:
             if self.data:
                 self.data.set_endpoint_data(endpoint, getattr(self, endpoint))
 
-    async def getData(self, getInverters=True):
+    async def get_data(self, get_inverters=True):
         """
         Fetch data from the endpoint and if inverters selected default
         to fetching inverter data.
@@ -1142,7 +1152,7 @@ class EnvoyReader:
         if not self.endpoint_type:
             await self.detect_model()
 
-        if not self.get_inverters or not getInverters:
+        if not self.get_inverters or not get_inverters:
             return
 
         # Fetch inverter status and stuff, raise exception if unauthorized.
@@ -1156,8 +1166,6 @@ class EnvoyReader:
         if self.endpoint_production_json_results.status_code == 401:
             self.endpoint_production_json_results.raise_for_status()
 
-        return
-
     @property
     def all_values(self):
         def iter():
@@ -1170,7 +1178,7 @@ class EnvoyReader:
         return dict(iter())
 
     @property
-    def isMeteringEnabled(self):
+    def is_metering_enabled(self):
         return isinstance(self.data, EnvoyMeteredWithCT)
 
     async def detect_model(self):
@@ -1216,7 +1224,7 @@ class EnvoyReader:
             )
 
         # Configure the correct self.data
-        self.data = getEnvoyDataClass(
+        self.data = get_envoydataclass(
             self.endpoint_type, self.endpoint_production_json_results.json()
         )(self)
 
@@ -1314,7 +1322,7 @@ class EnvoyReader:
         if self.endpoint_production_power is not None:
             formatted_url = ENDPOINT_URL_PRODUCTION_POWER.format(self.host)
             power_forced_off = 0 if power_on else 1
-            result = await self._async_put(
+            await self._async_put(
                 formatted_url, data={"length": 1, "arr": [power_forced_off]}
             )
             # Make sure the next poll will update the endpoint.
@@ -1325,23 +1333,23 @@ class EnvoyReader:
         loop = asyncio.get_event_loop()
         self.data = EnvoyMeteredWithCT(self)
         self.endpoint_type = ENVOY_MODEL_M
-        data_results = loop.run_until_complete(
+        loop.run_until_complete(
             asyncio.gather(self.stream_reader(), return_exceptions=False)
         )
 
-    async def getDataLoop(self, no_url_cache_loop=False):
+    async def get_data_loop(self, no_url_cache_loop=False):
         # We iterate multiple times to see if the url caching works.
-        await self.getData()
+        await self.get_data()
         if no_url_cache_loop:
             return
 
-        print("First getData cycle completed, waiting 10 secs for second cycle.")
+        print("First get_data cycle completed, waiting 10 secs for second cycle.")
         await asyncio.sleep(10)
-        await self.getData()
+        await self.get_data()
 
-        print("Second getData cycle completed, waiting 10 secs for final cycle.")
+        print("Second get_data cycle completed, waiting 10 secs for final cycle.")
         await asyncio.sleep(10)
-        await self.getData()
+        await self.get_data()
 
     def run_in_console(
         self,
@@ -1372,7 +1380,7 @@ class EnvoyReader:
             loop = asyncio.get_event_loop()
             loop.run_until_complete(
                 asyncio.gather(
-                    self.getDataLoop(no_url_cache_loop),
+                    self.get_data_loop(no_url_cache_loop),
                     return_exceptions=False,
                 )
             )
