@@ -16,7 +16,7 @@ from functools import partial
 
 import hashlib
 import base64
-import random
+import secrets
 import string
 from urllib import parse
 
@@ -54,7 +54,7 @@ _LOGGER = logging.getLogger(__name__)
 
 def random_content(length):
     chars = string.ascii_letters + string.digits
-    return "".join(random.choice(chars) for i in range(length))
+    return "".join(secrets.choice(chars) for i in range(length))
 
 
 def generate_challenge(code):
