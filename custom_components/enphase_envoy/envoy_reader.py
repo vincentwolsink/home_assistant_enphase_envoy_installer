@@ -47,7 +47,7 @@ ENLIGHTEN_TOKEN_URL = "https://entrez.enphaseenergy.com/tokens"
 ENLIGHTEN_LOGIN_URL = "https://entrez.enphaseenergy.com/login"
 ENDPOINT_URL_GET_JWT = "https://{}/auth/get_jwt"
 
-TEST_DATA_FOLDER = os.path.join(os.path.dirname(__file__), "test_data")
+TEST_DATA_FOLDER = os.path.join(os.path.dirname(__file__), "../../test_data")
 
 _LOGGER = logging.getLogger(__name__)
 
