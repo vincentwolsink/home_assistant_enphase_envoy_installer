@@ -49,7 +49,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> EnvoyRead
     )
 
     try:
-        await envoy_reader.getData()
+        await envoy_reader.get_data()
     except httpx.HTTPStatusError as err:
         raise InvalidAuth from err
     except (RuntimeError, httpx.HTTPError) as err:

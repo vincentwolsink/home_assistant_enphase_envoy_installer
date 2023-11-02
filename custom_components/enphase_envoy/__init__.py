@@ -83,7 +83,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             options.get("getdata_timeout", DEFAULT_GETDATA_TIMEOUT)
         ):
             try:
-                await envoy_reader.getData()
+                await envoy_reader.get_data()
             except httpx.HTTPStatusError as err:
                 raise ConfigEntryAuthFailed from err
             except httpx.HTTPError as err:
