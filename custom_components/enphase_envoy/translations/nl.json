@@ -28,12 +28,12 @@
       "user": {
         "title": "Envoy opties",
         "data": {
-          "enable_realtime_updates": "Gebruik real-time updates (werkt alleen met metered envoys)",
+          "enable_realtime_updates": "[Envoy-S Metered] Gebruik real-time updates",
           "realtime_update_throttle": "Minimale tijd tussen real-time updates [s]",
-          "disable_negative_production": "Voorkom negatieve productie waardes",
+          "disable_negative_production": "[Envoy-S Metered] Voorkom negatieve productie waardes",
           "time_between_update": "Minimum tijd tussen entity updates [s]",
           "getdata_timeout": "Maximum tijd voor het ophalen van data vanaf envoy [s]",
-          "enable_additional_metrics": "[Metered only] Extra metrics inschakelen, zoals total amps, frequency, apparent en reactive power en power factor.",
+          "enable_additional_metrics": "[Envoy-S Metered] Extra metrics inschakelen, zoals total amps, frequency, apparent en reactive power en power factor.",
           "disable_installer_account_use": "Haal geen data op die een installateur of DHZ enphase account vereisen"
         },
         "data_description": {
