@@ -1,0 +1,8 @@
+get_grid_profiles:
+set_grid_profile:
+  fields:
+    profile:
+      required: true
+      example: "EN 50549-1:2019 RfG E02 Netherlands:1.2.4"
+      selector:
+        text:

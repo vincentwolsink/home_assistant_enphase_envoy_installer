@@ -42,5 +42,21 @@
         }
       }
     }
+  },
+  "services": {
+    "set_grid_profile": {
+      "name": "Set grid profile",
+      "description": "Sets the grid profile the Envoy will upload to the inverters.",
+      "fields": {
+        "profile": {
+          "name": "Profile",
+          "description": "Grid profile ID"
+        }
+      }
+    },
+    "get_grid_profiles": {
+      "name": "Get grid profiles",
+      "description": "Get currently selected and all available profiles."
+    }
   }
 }
