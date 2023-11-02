@@ -20,7 +20,15 @@ from homeassistant.const import (
     CONF_USERNAME,
     EVENT_HOMEASSISTANT_STOP,
 )
-from homeassistant.core import HomeAssistant, callback, CoreState, Event
+from homeassistant.core import (
+    HomeAssistant,
+    callback,
+    CoreState,
+    Event,
+    ServiceCall,
+    ServiceResponse,
+    SupportsResponse,
+)
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.helpers.storage import Store
@@ -135,6 +143,30 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         seconds=options.get(
             "realtime_update_throttle", DEFAULT_REALTIME_UPDATE_THROTTLE
         ),
+    )
+
+    async def get_grid_profiles(call: ServiceCall) -> ServiceResponse:
+        return {
+            "selected_profile": coordinator.data.get("grid_profile"),
+            "available_profiles": [
+                k["profile_id"] for k in coordinator.data.get("grid_profiles_available")
+            ],
+        }
+
+    hass.services.async_register(
+        DOMAIN,
+        "get_grid_profiles",
+        get_grid_profiles,
+        supports_response=SupportsResponse.ONLY,
+    )
+
+    async def set_grid_profile(call: ServiceCall):
+        await envoy_reader.set_grid_profile(call.data["profile"])
+
+    hass.services.async_register(
+        DOMAIN,
+        "set_grid_profile",
+        set_grid_profile,
     )
 
     @Throttle(time_between_realtime_updates)

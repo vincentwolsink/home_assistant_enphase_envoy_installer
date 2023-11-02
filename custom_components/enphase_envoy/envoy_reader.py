@@ -36,6 +36,7 @@ ENDPOINT_URL_STREAM = "https://{}/stream/meter"
 ENDPOINT_URL_PRODUCTION_REPORT = "https://{}/ivp/meters/reports/production"
 ENDPOINT_URL_PDM_ENERGY = "https://{}/ivp/pdm/energy"
 ENDPOINT_URL_INSTALLER_AGF = "https://{}/installer/agf/index.json"
+ENDPOINT_URL_INSTALLER_AGF_SET_PROFILE = "https://{}/installer/agf/set_profile.json"
 
 ENVOY_MODEL_M = "Metered"
 ENVOY_MODEL_S = "Standard"
@@ -377,6 +378,7 @@ class EnvoyStandard(EnvoyData):
     envoy_update_status_value = "endpoint_home_json_results.update_status"
     serial_number_value = "endpoint_info_results.envoy_info.device.sn"
     grid_profile_value = "endpoint_installer_agf.selected_profile"
+    grid_profiles_available_value = "endpoint_installer_agf.profiles"
 
     @envoy_property()
     def envoy_info(self):
@@ -1330,6 +1332,21 @@ class EnvoyReader:
             )
             # Make sure the next poll will update the endpoint.
             self._clear_endpoint_cache("endpoint_production_power")
+
+    async def set_grid_profile(self, profile_id):
+        if self.endpoint_installer_agf is not None:
+            formatted_url = ENDPOINT_URL_INSTALLER_AGF_SET_PROFILE.format(self.host)
+            resp = await self._async_put(
+                formatted_url, data={"selected_profile": profile_id}
+            )
+
+        if "accepted" not in resp.text:
+            raise EnvoyError(
+                f"Failed setting grid profile: {resp.json().get('message')} - {resp.json().get('reason')}"
+            )
+
+        self._clear_endpoint_cache("endpoint_installer_agf")
+        return resp
 
     def run_stream(self):
         print("Reading stream...")
