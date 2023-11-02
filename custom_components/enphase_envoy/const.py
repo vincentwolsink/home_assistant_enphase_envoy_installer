@@ -343,11 +343,13 @@ BINARY_SENSORS = (
         key="inverters_producing",
         name="Producing",
         device_class=BinarySensorDeviceClass.POWER,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     BinarySensorEntityDescription(
         key="inverters_communicating",
         name="Communicating",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     BinarySensorEntityDescription(
         key="grid_status",
@@ -363,11 +365,13 @@ BINARY_SENSORS = (
         key="relays_communicating",
         name="Communicating",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     BinarySensorEntityDescription(
         key="relays_forced",
         name="Forced",
         device_class=BinarySensorDeviceClass.TAMPER,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     BinarySensorEntityDescription(
         key="firmware",
