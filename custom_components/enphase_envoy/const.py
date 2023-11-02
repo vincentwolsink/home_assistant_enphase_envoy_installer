@@ -21,6 +21,7 @@ from homeassistant.const import (
     UnitOfElectricCurrent,
     UnitOfTemperature,
     POWER_VOLT_AMPERE_REACTIVE,
+    EntityCategory,
 )
 
 DOMAIN = "enphase_envoy"
@@ -211,6 +212,12 @@ SENSORS = (
         native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.APPARENT_POWER,
+    ),
+    SensorEntityDescription(
+        key="grid_profile",
+        name="Grid Profile",
+        icon="mdi:transmission-tower",
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
 ADDITIONAL_METRICS.extend(
