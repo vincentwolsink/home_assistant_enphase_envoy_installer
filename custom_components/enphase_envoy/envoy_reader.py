@@ -35,6 +35,7 @@ ENDPOINT_URL_INFO_XML = "https://{}/info.xml"
 ENDPOINT_URL_STREAM = "https://{}/stream/meter"
 ENDPOINT_URL_PRODUCTION_REPORT = "https://{}/ivp/meters/reports/production"
 ENDPOINT_URL_PDM_ENERGY = "https://{}/ivp/pdm/energy"
+ENDPOINT_URL_INSTALLER_AGF = "https://{}/installer/agf/index.json"
 
 ENVOY_MODEL_M = "Metered"
 ENVOY_MODEL_S = "Standard"
@@ -375,6 +376,7 @@ class EnvoyStandard(EnvoyData):
     envoy_software_build_epoch_value = "endpoint_home_json_results.software_build_epoch"
     envoy_update_status_value = "endpoint_home_json_results.update_status"
     serial_number_value = "endpoint_info_results.envoy_info.device.sn"
+    grid_profile_value = "endpoint_installer_agf.selected_profile"
 
     @envoy_property()
     def envoy_info(self):
@@ -674,6 +676,7 @@ class EnvoyReader:
         url("inventory_results", ENDPOINT_URL_INVENTORY, cache=300)
         url("production_report", ENDPOINT_URL_PRODUCTION_REPORT, cache=0)
         iurl("pdm_energy", ENDPOINT_URL_PDM_ENERGY)
+        iurl("installer_agf", ENDPOINT_URL_INSTALLER_AGF)
 
         # If IPv6 address then enclose host in brackets
         try:
