@@ -28,12 +28,12 @@
       "user": {
         "title": "Envoy options",
         "data": {
-          "enable_realtime_updates": "Enable realtime updates (only for metered envoys)",
+          "enable_realtime_updates": "[Envoy-S Metered] Enable realtime updates",
           "realtime_update_throttle": "Minimum time between realtime entity updates [s]",
-          "disable_negative_production": "Disable negative production values",
+          "disable_negative_production": "[Envoy-S Metered] Disable negative production values",
           "time_between_update": "Minimum time between entity updates [s]",
           "getdata_timeout": "Timeout value for fetching data from envoy [s]",
-          "enable_additional_metrics": "[Metered only] Enable additional metrics like total amps, frequency, apparent and reactive power and power factor.",
+          "enable_additional_metrics": "[Envoy-S Metered] Enable additional metrics like total amps, frequency, apparent and reactive power and power factor.",
           "disable_installer_account_use": "Do not collect data that requires installer or DIY enphase account"
         },
         "data_description": {

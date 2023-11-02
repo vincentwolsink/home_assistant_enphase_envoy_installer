@@ -89,7 +89,7 @@ def parse_devstatus(data):
                 if key == "reportDate":
                     yield "report_date", time.strftime(
                         "%Y-%m-%d %H:%M:%S", time.localtime(value)
-                    )
+                    ) if value else None
                 elif key == "dcVoltageINmV":
                     yield "dc_voltage", int(value) / 1000
                 elif key == "dcCurrentINmA":
@@ -212,7 +212,11 @@ def envoy_property(*a, **kw):
 
 def path_by_token(owner, installer=None):
     def path(cls):
-        if cls.reader.token_type == "installer" and installer:
+        if (
+            cls.reader.token_type == "installer"
+            and not cls.reader.disable_installer_account_use
+            and installer
+        ):
             return installer
         return owner
 
@@ -439,18 +443,21 @@ class EnvoyStandard(EnvoyData):
         data = self.get("inverters_data")
 
         def iter():
-            if self.reader.token_type == "installer":
+            if (
+                self.reader.token_type == "installer"
+                and not self.reader.disable_installer_account_use
+            ):
                 for item in data:
                     yield item["serialNumber"], {
                         "watt": item["ac_power"],
-                        "report_data": item["report_date"],
+                        "report_date": item["report_date"],
                     }
             else:
                 # endpoint_production_inverters endpoint
                 for item in data:
                     yield item["serialNumber"], {
                         "watt": item["lastReportWatts"],
-                        "report_data": time.strftime(
+                        "report_date": time.strftime(
                             "%Y-%m-%d %H:%M:%S", time.localtime(item["lastReportDate"])
                         ),
                     }
