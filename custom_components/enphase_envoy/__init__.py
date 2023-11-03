@@ -162,6 +162,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def set_grid_profile(call: ServiceCall):
         await envoy_reader.set_grid_profile(call.data["profile"])
+        await coordinator.async_request_refresh()
 
     hass.services.async_register(
         DOMAIN,
