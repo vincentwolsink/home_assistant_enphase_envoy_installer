@@ -17,6 +17,7 @@ Features:
 - "Realtime" updates of CT readings.
 - Configurable polling interval.
 - Optional negative production reading correction.
+- Service call to retrieve and set grid profile.
 
 ![phase_sensors](https://github.com/vincentwolsink/home_assistant_enphase_envoy_installer/assets/1639734/87fc0c3d-1fd8-4e2c-b7ce-df48531c90e6)
 ![inverter_sensors](https://github.com/vincentwolsink/home_assistant_enphase_envoy_installer/assets/1639734/d0033e75-6b89-46dd-bf1e-449bbca957f2)
