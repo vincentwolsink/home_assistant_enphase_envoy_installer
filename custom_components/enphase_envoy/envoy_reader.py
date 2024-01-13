@@ -680,7 +680,7 @@ class EnvoyReader:
         # cache for home_json will be set based on grid_status availability
         url("home_json_results", ENDPOINT_URL_HOME_JSON)
         iurl("devstatus", ENDPOINT_URL_DEVSTATUS, cache=20)
-        iurl("production_power", ENDPOINT_URL_PRODUCTION_POWER, cache=3600)
+        iurl("production_power", ENDPOINT_URL_PRODUCTION_POWER, cache=20)
         url("info_results", ENDPOINT_URL_INFO_XML, cache=86400)
         url("inventory_results", ENDPOINT_URL_INVENTORY, cache=300)
         url("production_report", ENDPOINT_URL_PRODUCTION_REPORT, cache=0)
