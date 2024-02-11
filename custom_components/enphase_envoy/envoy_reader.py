@@ -1,4 +1,5 @@
 """Module to read production and consumption values from an Enphase Envoy on the local network."""
+
 import argparse
 import asyncio
 import datetime
@@ -37,7 +38,9 @@ ENDPOINT_URL_PRODUCTION_REPORT = "https://{}/ivp/meters/reports/production"
 ENDPOINT_URL_PDM_ENERGY = "https://{}/ivp/pdm/energy"
 ENDPOINT_URL_INSTALLER_AGF = "https://{}/installer/agf/index.json"
 ENDPOINT_URL_INSTALLER_AGF_SET_PROFILE = "https://{}/installer/agf/set_profile.json"
-ENDPOINT_URL_INSTALLER_AGF_UPLOAD_PROFILE = "https://{}/installer/agf/upload_profile_package"
+ENDPOINT_URL_INSTALLER_AGF_UPLOAD_PROFILE = (
+    "https://{}/installer/agf/upload_profile_package"
+)
 
 ENVOY_MODEL_M = "Metered"
 ENVOY_MODEL_S = "Standard"
@@ -88,9 +91,11 @@ def parse_devstatus(data):
         def iter():
             for key, value in dev.items():
                 if key == "reportDate":
-                    yield "report_date", time.strftime(
-                        "%Y-%m-%d %H:%M:%S", time.localtime(value)
-                    ) if value else None
+                    yield "report_date", (
+                        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(value))
+                        if value
+                        else None
+                    )
                 elif key == "dcVoltageINmV":
                     yield "dc_voltage", int(value) / 1000
                 elif key == "dcCurrentINmA":
@@ -1364,9 +1369,7 @@ class EnvoyReader:
             )
             message = resp.json().get("message")
             if message != "success":
-                raise EnvoyError(
-                    f"Failed uploading grid profile: {message}"
-                )
+                raise EnvoyError(f"Failed uploading grid profile: {message}")
 
         self._clear_endpoint_cache("endpoint_installer_agf")
         return resp

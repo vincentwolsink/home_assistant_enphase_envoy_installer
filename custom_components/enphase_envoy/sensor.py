@@ -1,4 +1,5 @@
 """Support for Enphase Envoy solar energy monitor."""
+
 from __future__ import annotations
 
 import datetime
@@ -266,9 +267,9 @@ class CoordinatedEnvoyEntity(EnvoyEntity, CoordinatorEntity):
             name=self._device_name,
             sw_version=sw_version,
             hw_version=resolve_hardware_id(hw_version),
-            configuration_url=f"https://{self.device_host}/"
-            if self.device_host
-            else None,
+            configuration_url=(
+                f"https://{self.device_host}/" if self.device_host else None
+            ),
         )
 
 
