@@ -6,3 +6,10 @@ set_grid_profile:
       example: "EN 50549-1:2019 RfG E02 Netherlands:1.2.4"
       selector:
         text:
+upload_grid_profile:
+  fields:
+    file:
+      required: true
+      example: "/share/grid_profiles/64d31e5868ac391817b21af1"
+      selector:
+        text:

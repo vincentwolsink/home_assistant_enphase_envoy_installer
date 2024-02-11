@@ -57,6 +57,16 @@
     "get_grid_profiles": {
       "name": "Get grid profiles",
       "description": "Get currently selected and all available profiles."
+    },
+    "upload_grid_profile": {
+      "name": "Upload grid profile",
+      "description": "Upload a grid profile package file to the Envoy so that it is available for selecting.",
+      "fields": {
+        "file": {
+          "name": "File",
+          "description": "Path to the grid profile package file"
+        }
+      }
     }
   }
 }
