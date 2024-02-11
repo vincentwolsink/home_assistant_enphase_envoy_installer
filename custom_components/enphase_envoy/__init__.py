@@ -170,6 +170,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         set_grid_profile,
     )
 
+    async def upload_grid_profile(call: ServiceCall):
+        await envoy_reader.upload_grid_profile(call.data["file"])
+        await coordinator.async_request_refresh()
+
+    hass.services.async_register(
+        DOMAIN,
+        "upload_grid_profile",
+        upload_grid_profile,
+    )
+
     @Throttle(time_between_realtime_updates)
     def update_production_meters(streamdata: StreamData):
         new_data = {}

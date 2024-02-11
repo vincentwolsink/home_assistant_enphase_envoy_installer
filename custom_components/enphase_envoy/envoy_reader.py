@@ -37,6 +37,7 @@ ENDPOINT_URL_PRODUCTION_REPORT = "https://{}/ivp/meters/reports/production"
 ENDPOINT_URL_PDM_ENERGY = "https://{}/ivp/pdm/energy"
 ENDPOINT_URL_INSTALLER_AGF = "https://{}/installer/agf/index.json"
 ENDPOINT_URL_INSTALLER_AGF_SET_PROFILE = "https://{}/installer/agf/set_profile.json"
+ENDPOINT_URL_INSTALLER_AGF_UPLOAD_PROFILE = "https://{}/installer/agf/upload_profile_package"
 
 ENVOY_MODEL_M = "Metered"
 ENVOY_MODEL_S = "Standard"
@@ -1351,6 +1352,21 @@ class EnvoyReader:
             raise EnvoyError(
                 f"Failed setting grid profile: {resp.json().get('message')} - {resp.json().get('reason')}"
             )
+
+        self._clear_endpoint_cache("endpoint_installer_agf")
+        return resp
+
+    async def upload_grid_profile(self, file):
+        if self.endpoint_installer_agf is not None:
+            formatted_url = ENDPOINT_URL_INSTALLER_AGF_UPLOAD_PROFILE.format(self.host)
+            resp = await self._async_post(
+                formatted_url, files={"file": open(file, "rb")}
+            )
+            message = resp.json().get("message")
+            if message != "success":
+                raise EnvoyError(
+                    f"Failed uploading grid profile: {message}"
+                )
 
         self._clear_endpoint_cache("endpoint_installer_agf")
         return resp
