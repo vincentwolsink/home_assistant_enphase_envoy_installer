@@ -19,13 +19,12 @@ Features:
 - Optional negative production reading correction.
 - Service call to retrieve and set grid profile.
 
+## Screenshots
+
 ![phase_sensors](https://github.com/vincentwolsink/home_assistant_enphase_envoy_installer/assets/1639734/87fc0c3d-1fd8-4e2c-b7ce-df48531c90e6)
 ![inverter_sensors](https://github.com/vincentwolsink/home_assistant_enphase_envoy_installer/assets/1639734/d0033e75-6b89-46dd-bf1e-449bbca957f2)
 
-Based on work from [@briancmpbll](https://github.com/briancmpbll/home_assistant_custom_envoy)
-
-
-# Installation
+## Installation
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=vincentwolsink&repository=home_assistant_enphase_envoy_installer&category=integration)
 
@@ -34,6 +33,9 @@ Or follow these steps:
 2. Add this repository as a [custom integration repository](https://hacs.xyz/docs/faq/custom_repositories) in HACS
 4. Restart home assistant
 5. Add the integration through the home assistant configuration flow
+
+## Credits
+Based on work from [@briancmpbll](https://github.com/briancmpbll/home_assistant_custom_envoy)
 
 [releases-shield]: https://img.shields.io/github/v/release/vincentwolsink/home_assistant_enphase_envoy_installer.svg?style=for-the-badge
 [releases]: https://github.com/vincentwolsink/home_assistant_enphase_envoy_installer/releases
