@@ -95,6 +95,24 @@ async def async_setup_entry(
                         )
                     )
 
+        elif sensor_description.key.startswith("batteries_"):
+            if coordinator.data.get("batteries") is not None:
+                for battery in coordinator.data["batteries"].keys():
+                    device_name = f"Battery {battery}"
+                    entity_name = f"{device_name} {sensor_description.name}"
+                    serial_number = battery
+                    entities.append(
+                        EnvoyBatteryEntity(
+                            sensor_description,
+                            entity_name,
+                            device_name,
+                            serial_number,
+                            None,
+                            coordinator,
+                            config_entry.unique_id,
+                        )
+                    )
+
         elif sensor_description.key == "firmware":
             if coordinator.data.get("envoy_info", {}).get("update_status") is not None:
                 entity_name = f"{name} {sensor_description.name}"
@@ -420,3 +438,91 @@ class EnvoyRelayGenericEntity(EnvoyRelayEntity):
     @property
     def extra_state_attributes(self) -> dict | None:
         return None
+
+
+class EnvoyBatteryEntity(CoordinatorEntity, BinarySensorEntity):
+    """Envoy battery entity."""
+
+    def __init__(
+        self,
+        description,
+        name,
+        device_name,
+        device_serial_number,
+        serial_number,
+        coordinator,
+        parent_device,
+    ):
+        self.entity_description = description
+        self._name = name
+        self._serial_number = serial_number
+        self._device_name = device_name
+        self._device_serial_number = device_serial_number
+        self._parent_device = parent_device
+        CoordinatorEntity.__init__(self, coordinator)
+
+    @property
+    def name(self):
+        """Return the name of the sensor."""
+        return self._name
+
+    @property
+    def unique_id(self):
+        """Return the unique id of the sensor."""
+        if self._serial_number:
+            return self._serial_number
+        if self._device_serial_number:
+            return f"{self._device_serial_number}_{self.entity_description.key}"
+
+    @property
+    def is_on(self) -> bool:
+        """Return the status of the requested attribute."""
+        if self.coordinator.data.get("batteries") is not None:
+            return (
+                self.coordinator.data.get("batteries")
+                .get(self._device_serial_number)
+                .get(self.entity_description.key[10:])
+            )
+
+    @property
+    def extra_state_attributes(self):
+        """Return the state attributes."""
+        if self.coordinator.data.get("batteries") is not None:
+            battery = self.coordinator.data.get("batteries").get(
+                self._device_serial_number
+            )
+            return {"last_reported": battery.get("report_date")}
+
+        return None
+
+    @property
+    def device_info(self) -> DeviceInfo | None:
+        """Return the device_info of the device."""
+        if not self._device_serial_number:
+            return None
+
+        sw_version = None
+        hw_version = None
+        if self.coordinator.data.get("batteries") and self.coordinator.data.get(
+            "batteries"
+        ).get(self._device_serial_number):
+            sw_version = (
+                self.coordinator.data.get("batteries")
+                .get(self._device_serial_number)
+                .get("img_pnum_running")
+            )
+            hw_version = (
+                self.coordinator.data.get("batteries")
+                .get(self._device_serial_number)
+                .get("part_num")
+            )
+
+        return DeviceInfo(
+            identifiers={(DOMAIN, str(self._device_serial_number))},
+            manufacturer="Enphase",
+            model=get_model_name("Battery", hw_version),
+            name=self._device_name,
+            via_device=(DOMAIN, self._parent_device),
+            sw_version=sw_version,
+            hw_version=resolve_hardware_id(hw_version),
+        )

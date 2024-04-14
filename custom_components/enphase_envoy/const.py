@@ -50,7 +50,7 @@ PRODUCT_ID_MAPPING = {
     "800-00656-r06": {"name": "Envoy-S-Standard-EU", "sku": "ENV-S-WB-230"},
     "800-00656-r07": {"name": "Envoy-S-Standard-EU", "sku": "ENV-S-WB-230"},
     "800-01359-r02": {"name": "IQ8+ Microinverter", "sku": "IQ8PLUS-72-M-INT"},
-    "800-01391-r03 ": {"name": "IQ8HC Microinverter", "sku": "IQ8HC-72-M-INT"},
+    "800-01391-r03": {"name": "IQ8HC Microinverter", "sku": "IQ8HC-72-M-INT"},
     "800-01736-r02": {"name": "IQ7+ Microinverter", "sku": "IQ7PLUS-72-M-INT"},
     "800-00631-r02": {"name": "IQ7+ Microinverter", "sku": "IQ7PLUS-72-2-INT"},
     "800-01127-r02": {"name": "IQ7A Microinverter", "sku": "IQ7A-72-M-INT"},
@@ -174,24 +174,52 @@ SENSORS = (
         device_class=SensorDeviceClass.TEMPERATURE,
     ),
     SensorEntityDescription(
-        key="batteries",
-        name="Battery",
+        key="batteries_percentFull",
+        name="Percentage Full",
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.BATTERY,
     ),
     SensorEntityDescription(
-        key="total_battery_percentage",
-        name="Total Battery Percentage",
-        native_unit_of_measurement=PERCENTAGE,
+        key="batteries_temperature",
+        name="Temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
-        device_class=SensorDeviceClass.BATTERY,
+        device_class=SensorDeviceClass.TEMPERATURE,
     ),
     SensorEntityDescription(
-        key="current_battery_capacity",
-        name="Current Battery Capacity",
+        key="batteries_encharge_capacity",
+        name="Capacity",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        state_class=SensorStateClass.TOTAL,
+        device_class=SensorDeviceClass.ENERGY,
+    ),
+    SensorEntityDescription(
+        key="batteries_encharge_capacity_current",
+        name="Current Capacity",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        state_class=SensorStateClass.TOTAL,
+        device_class=SensorDeviceClass.ENERGY,
+    ),
+    SensorEntityDescription(
+        key="avg_batteries_percentFull",
+        name="Batteries Percentage Full",
+        native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.BATTERY,
+    ),
+    SensorEntityDescription(
+        key="total_batteries_encharge_capacity",
+        name="Batteries Capacity",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        state_class=SensorStateClass.TOTAL,
+        device_class=SensorDeviceClass.ENERGY,
+    ),
+    SensorEntityDescription(
+        key="total_batteries_encharge_capacity_current",
+        name="Batteries Current Capacity",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        state_class=SensorStateClass.TOTAL,
         device_class=SensorDeviceClass.ENERGY,
     ),
     SensorEntityDescription(
@@ -380,22 +408,18 @@ BINARY_SENSORS = (
         name="Firmware",
         device_class=BinarySensorDeviceClass.UPDATE,
     ),
-)
-
-BATTERY_ENERGY_DISCHARGED_SENSOR = SensorEntityDescription(
-    key="battery_energy_discharged",
-    name="Battery Energy Discharged",
-    native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
-    state_class=SensorStateClass.TOTAL,
-    device_class=SensorDeviceClass.ENERGY,
-)
-
-BATTERY_ENERGY_CHARGED_SENSOR = SensorEntityDescription(
-    key="battery_energy_charged",
-    name="Battery Energy Charged",
-    native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
-    state_class=SensorStateClass.TOTAL,
-    device_class=SensorDeviceClass.ENERGY,
+    BinarySensorEntityDescription(
+        key="batteries_operating",
+        name="Operating",
+        device_class=BinarySensorDeviceClass.POWER,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    BinarySensorEntityDescription(
+        key="batteries_communicating",
+        name="Communicating",
+        device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
 )
 
 PRODUCION_POWER_SWITCH = SwitchEntityDescription(
