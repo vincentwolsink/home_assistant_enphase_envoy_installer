@@ -149,6 +149,23 @@ class EnvoyError(EnvoyReaderError):
     pass
 
 
+class TestData:
+    def __init__(self, file):
+        with open(url) as json_file:
+            self.json_data = json.load(json_file)
+
+    @property
+    def status_code(self):
+        return 200
+
+    @property
+    def headers(self):
+        return {"content-type": "application/json"}
+
+    def json(self):
+        return self.json_data
+
+
 class StreamData:
     class PhaseData:
         def __init__(self, phase_data):
@@ -530,6 +547,15 @@ class EnvoyStandard(EnvoyData):
         if isinstance(battery_data, list) and len(battery_data) > 0:
             battery_dict = {}
             for item in battery_data:
+                if "last_rpt_date" in item:
+                    item["report_date"] = time.strftime(
+                        "%Y-%m-%d %H:%M:%S", time.localtime(item["last_rpt_date"])
+                    )
+                if "encharge_capacity" in item and "percentFull" in item:
+                    item["encharge_capacity_current"] = item["encharge_capacity"] * (
+                        item["percentFull"] / 100
+                    )
+
                 battery_dict[item["serial_num"]] = item
 
             return battery_dict
@@ -750,12 +776,16 @@ class EnvoyReader:
 
     async def _update_endpoint(self, attr, url, only_on_success=False):
         """Update a property from an endpoint."""
-        formatted_url = url.format(self.host)
-        response = await self._async_fetch_with_retry(
-            formatted_url, follow_redirects=False
-        )
-        if not only_on_success or response.status_code == 200:
-            setattr(self, attr, response)
+        if url.startswith("https://"):
+            formatted_url = url.format(self.host)
+            response = await self._async_fetch_with_retry(
+                formatted_url, follow_redirects=False
+            )
+            if not only_on_success or response.status_code == 200:
+                setattr(self, attr, response)
+        else:
+            data = TestData(url)
+            setattr(self, attr, data)
 
     async def _async_fetch_with_retry(self, url, **kwargs):
         """Retry 3 times to fetch the url if there is a transport error."""
