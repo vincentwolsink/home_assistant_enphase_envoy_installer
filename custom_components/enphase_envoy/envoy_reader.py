@@ -23,19 +23,28 @@ from urllib import parse
 
 from json.decoder import JSONDecodeError
 
-ENDPOINT_URL_INVENTORY = "https://{}/inventory.json"
+# Generic endpoints
+ENDPOINT_URL_HOME_JSON = "https://{}/home.json"
+ENDPOINT_URL_INFO_XML = "https://{}/info.xml"
+ENDPOINT_URL_CHECK_JWT = "https://{}/auth/check_jwt"
+
+# Production/consumption endpoints
 ENDPOINT_URL_PRODUCTION_JSON = "https://{}/production.json?details=1"
 ENDPOINT_URL_PRODUCTION_V1 = "https://{}/api/v1/production"
 ENDPOINT_URL_PRODUCTION_INVERTERS = "https://{}/api/v1/production/inverters"
-ENDPOINT_URL_CHECK_JWT = "https://{}/auth/check_jwt"
-ENDPOINT_URL_ENSEMBLE_INVENTORY = "https://{}/ivp/ensemble/inventory"
-ENDPOINT_URL_HOME_JSON = "https://{}/home.json"
-ENDPOINT_URL_DEVSTATUS = "https://{}/ivp/peb/devstatus"
-ENDPOINT_URL_PRODUCTION_POWER = "https://{}/ivp/mod/603980032/mode/power"
-ENDPOINT_URL_INFO_XML = "https://{}/info.xml"
-ENDPOINT_URL_STREAM = "https://{}/stream/meter"
 ENDPOINT_URL_PRODUCTION_REPORT = "https://{}/ivp/meters/reports/production"
+ENDPOINT_URL_PRODUCTION_POWER = "https://{}/ivp/mod/603980032/mode/power"
 ENDPOINT_URL_PDM_ENERGY = "https://{}/ivp/pdm/energy"
+ENDPOINT_URL_STREAM = "https://{}/stream/meter"
+
+# Battery endpoints
+ENDPOINT_URL_ENSEMBLE_INVENTORY = "https://{}/ivp/ensemble/inventory"
+
+# Inverter endpoints
+ENDPOINT_URL_INVENTORY = "https://{}/inventory.json"
+ENDPOINT_URL_DEVSTATUS = "https://{}/ivp/peb/devstatus"
+
+# Netprofile endpoints
 ENDPOINT_URL_INSTALLER_AGF = "https://{}/installer/agf/index.json"
 ENDPOINT_URL_INSTALLER_AGF_SET_PROFILE = "https://{}/installer/agf/set_profile.json"
 ENDPOINT_URL_INSTALLER_AGF_UPLOAD_PROFILE = (
@@ -52,8 +61,6 @@ ENLIGHTEN_TOKEN_URL = "https://entrez.enphaseenergy.com/tokens"
 # paths used for fetching enlighten token through envoy
 ENLIGHTEN_LOGIN_URL = "https://entrez.enphaseenergy.com/login"
 ENDPOINT_URL_GET_JWT = "https://{}/auth/get_jwt"
-
-TEST_DATA_FOLDER = os.path.join(os.path.dirname(__file__), "../../test_data")
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -121,22 +128,6 @@ def parse_devstatus(data):
     return new_data
 
 
-def load_test_data(full_fname):
-    """Load test data from test_data directory"""
-    _LOGGER.debug("Reading test data from %s", full_fname)
-    with open(full_fname, "r") as fh:
-        if full_fname.endswith(".json"):
-            data = json.load(fh)
-            if "endpoint_devstatus" in full_fname:
-                data = parse_devstatus(data)
-            return data
-
-        elif full_fname.endswith(".xml"):
-            return xmltodict.parse(fh.read())
-
-        return fh.read()
-
-
 class EnvoyReaderError(Exception):
     pass
 
@@ -149,9 +140,9 @@ class EnvoyError(EnvoyReaderError):
     pass
 
 
-class TestData:
+class FileData:
     def __init__(self, file):
-        with open(url) as json_file:
+        with open(file) as json_file:
             self.json_data = json.load(json_file)
 
     @property
@@ -270,20 +261,6 @@ class EnvoyData(object):
         self._required_endpoints = None
         super(object, self).__init__()
 
-    def _read_test_data(self, test_data_folder=None):
-        path = TEST_DATA_FOLDER
-        if test_data_folder:
-            path = os.path.join(TEST_DATA_FOLDER, test_data_folder)
-
-        for path, _, filenames in os.walk(path):
-            for filename in filenames:
-                datakey = filename.split(".", 1)[0]
-                self.data.update(
-                    {
-                        datakey: load_test_data(os.path.join(path, filename)),
-                    }
-                )
-
     def set_endpoint_data(self, endpoint, response):
         """Called by EnvoyReader.update_endpoints when a response is successfull"""
         if response.status_code > 400:
@@ -396,14 +373,14 @@ class EnvoyData(object):
 class EnvoyStandard(EnvoyData):
     """This entity should only hold jsonpath queries on how to fetch the data"""
 
-    envoy_pn_value = "endpoint_info_results.envoy_info.device.pn"
+    envoy_pn_value = "endpoint_info.envoy_info.device.pn"
     has_integrated_meter_value = (
-        "endpoint_info_results.envoy_info.device.imeter"  # true/false value
+        "endpoint_info.envoy_info.device.imeter"  # true/false value
     )
-    envoy_software_value = "endpoint_info_results.envoy_info.device.software"
-    envoy_software_build_epoch_value = "endpoint_home_json_results.software_build_epoch"
-    envoy_update_status_value = "endpoint_home_json_results.update_status"
-    serial_number_value = "endpoint_info_results.envoy_info.device.sn"
+    envoy_software_value = "endpoint_info.envoy_info.device.software"
+    envoy_software_build_epoch_value = "endpoint_home_json.software_build_epoch"
+    envoy_update_status_value = "endpoint_home_json.update_status"
+    serial_number_value = "endpoint_info.envoy_info.device.sn"
     grid_profile_value = "endpoint_installer_agf.selected_profile"
     grid_profiles_available_value = "endpoint_installer_agf.profiles"
 
@@ -418,15 +395,15 @@ class EnvoyStandard(EnvoyData):
         }
 
     production_value = path_by_token(
-        owner="endpoint_production_v1_results.wattsNow",
+        owner="endpoint_production_v1.wattsNow",
         installer="endpoint_pdm_energy.production.pcu.wattsNow",
     )
     daily_production_value = path_by_token(
-        owner="endpoint_production_v1_results.wattHoursToday",
+        owner="endpoint_production_v1.wattHoursToday",
         installer="endpoint_pdm_energy.production.pcu.wattHoursToday",
     )
     lifetime_production_value = path_by_token(
-        owner="endpoint_production_v1_results.wattHoursLifetime",
+        owner="endpoint_production_v1.wattHoursLifetime",
         installer="endpoint_pdm_energy.production.pcu.wattHoursLifetime",
     )
 
@@ -442,16 +419,14 @@ class EnvoyStandard(EnvoyData):
     # to be as up-to-date, since it pretty stale information anyway for
     # non-battery setups.
     # how to prevent from continuesly fetching home.json when no batteries
-    @envoy_property(required_endpoint="endpoint_home_json_results")
+    @envoy_property(required_endpoint="endpoint_home_json")
     def grid_status(self):
-        grid_status = self._resolve_path(
-            "endpoint_home_json_results.enpower.grid_status"
-        )
+        grid_status = self._resolve_path("endpoint_home_json.enpower.grid_status")
         if grid_status == None:
             # This is the only property we use that actually should be refreshed often.
             # So if the value is None (e.g. not found),
             # then we ought to cache the result more often.
-            self.reader.uri_registry["endpoint_home_json_results"]["cache_time"] = 86400
+            self.reader.uri_registry["endpoint_home_json"]["cache_time"] = 86400
 
         return grid_status
 
@@ -487,17 +462,17 @@ class EnvoyStandard(EnvoyData):
 
         return dict(iter())
 
-    @envoy_property(required_endpoint="endpoint_inventory_results")
+    @envoy_property(required_endpoint="endpoint_inventory")
     def inverters_info(self):
         return self._path_to_dict(
-            "endpoint_inventory_results.[?(@.type=='PCU')].devices[?(@.dev_type==1)]",
+            "endpoint_inventory.[?(@.type=='PCU')].devices[?(@.dev_type==1)]",
             "serial_num",
         )
 
-    @envoy_property(required_endpoint="endpoint_inventory_results")
+    @envoy_property(required_endpoint="endpoint_inventory")
     def relay_info(self):
         return self._path_to_dict(
-            "endpoint_inventory_results.[?(@.type=='NSRB')].devices[?(@.dev_type==12)]",
+            "endpoint_inventory.[?(@.type=='NSRB')].devices[?(@.dev_type==12)]",
             "serial_num",
         )
 
@@ -522,28 +497,10 @@ class EnvoyStandard(EnvoyData):
             status = self.get("relay_info")
         return status
 
-    @envoy_property(required_endpoint="endpoint_ensemble_json_results")
-    def battery_storage(self):
-        """Return battery data from Envoys that support and have batteries installed"""
-        storage = self._resolve_path("endpoint_production_json_results.storage[0]", {})
-        if storage.get("percentFull", False):
-            """For Envoys that support batteries but do not have them installed the
-            percentFull will not be available in the JSON results. The API will
-            only return battery data if batteries are installed."""
-
-            # Update endpoint requirement to use endpoint_production_json_results
-            self._envoy_properties.update(
-                battery_storage="endpoint_production_json_results"
-            )
-            return storage
-
-        # "ENCHARGE" batteries are part of the "ENSEMBLE" api instead
-        # Check to see if it's there. Enphase has too much fun with these names
-        return self._resolve_path("endpoint_ensemble_json_results[0].devices")
-
-    @envoy_property()
+    @envoy_property(required_endpoint="endpoint_ensemble_inventory")
     def batteries(self):
-        battery_data = self.battery_storage
+        battery_data = self._resolve_path("endpoint_ensemble_inventory[0].devices")
+
         if isinstance(battery_data, list) and len(battery_data) > 0:
             battery_dict = {}
             for item in battery_data:
@@ -584,7 +541,7 @@ class EnvoyMetered(EnvoyStandard):
 
         return EnvoyStandard.__new__(cls)
 
-    _production = "endpoint_production_json_results.production[?(@.type=='inverters')]"
+    _production = "endpoint_production_json.production[?(@.type=='inverters')]"
     production_value = _production + ".wNow"
     lifetime_production_value = path_by_token(
         owner=_production + ".whLifetime",
@@ -592,8 +549,10 @@ class EnvoyMetered(EnvoyStandard):
     )
     daily_production_value = "endpoint_pdm_energy.production.pcu.wattHoursToday"
 
-    _production_ct = "endpoint_production_json_results.production[?(@.type=='eim' && @.activeCount > 0)]"
-    _consumption_ct = "endpoint_production_json_results.consumption[?(@.measurementType == 'total-consumption' && @.activeCount > 0)]"
+    _production_ct = (
+        "endpoint_production_json.production[?(@.type=='eim' && @.activeCount > 0)]"
+    )
+    _consumption_ct = "endpoint_production_json.consumption[?(@.measurementType == 'total-consumption' && @.activeCount > 0)]"
     voltage_value = _production_ct + ".rmsVoltage"
 
 
@@ -626,18 +585,18 @@ class EnvoyMeteredWithCT(EnvoyMetered):
         setattr(
             cls,
             "daily_production_value",
-            "endpoint_production_json_results.production[?(@.type=='eim')].whToday",
+            "endpoint_production_json.production[?(@.type=='eim')].whToday",
         )
         for i, phase in enumerate(["l1", "l2", "l3"]):
             setattr(
                 cls,
                 f"daily_production_{phase}_value",
-                f"endpoint_production_json_results.production[?(@.type=='eim')].lines[{i}].whToday",
+                f"endpoint_production_json.production[?(@.type=='eim')].lines[{i}].whToday",
             )
 
         # When we're using the endpoint_production_report primarily, then the following
         # endpoint can be used way less frequently
-        reader.uri_registry["endpoint_production_json_results"]["cache_time"] = 50
+        reader.uri_registry["endpoint_production_json"]["cache_time"] = 50
         reader.uri_registry["endpoint_production_inverters"]["cache_time"] = 290
 
         return EnvoyMetered.__new__(cls)
@@ -705,16 +664,16 @@ class EnvoyReader:
         iurl = partial(url, installer_required="installer")
 
         self.uri_registry = {}
-        url("production_json_results", ENDPOINT_URL_PRODUCTION_JSON, cache=0)
-        url("production_v1_results", ENDPOINT_URL_PRODUCTION_V1, cache=20)
+        url("production_json", ENDPOINT_URL_PRODUCTION_JSON, cache=0)
+        url("production_v1", ENDPOINT_URL_PRODUCTION_V1, cache=20)
         url("production_inverters", ENDPOINT_URL_PRODUCTION_INVERTERS, cache=20)
-        url("ensemble_json_results", ENDPOINT_URL_ENSEMBLE_INVENTORY)
+        url("ensemble_inventory", ENDPOINT_URL_ENSEMBLE_INVENTORY)
         # cache for home_json will be set based on grid_status availability
-        url("home_json_results", ENDPOINT_URL_HOME_JSON)
+        url("home_json", ENDPOINT_URL_HOME_JSON)
         iurl("devstatus", ENDPOINT_URL_DEVSTATUS, cache=20)
         iurl("production_power", ENDPOINT_URL_PRODUCTION_POWER, cache=20)
-        url("info_results", ENDPOINT_URL_INFO_XML, cache=86400)
-        url("inventory_results", ENDPOINT_URL_INVENTORY, cache=300)
+        url("info", ENDPOINT_URL_INFO_XML, cache=86400)
+        url("inventory", ENDPOINT_URL_INVENTORY, cache=300)
         url("production_report", ENDPOINT_URL_PRODUCTION_REPORT, cache=0)
         iurl("pdm_energy", ENDPOINT_URL_PDM_ENERGY)
         iurl("installer_agf", ENDPOINT_URL_INSTALLER_AGF)
@@ -784,7 +743,7 @@ class EnvoyReader:
             if not only_on_success or response.status_code == 200:
                 setattr(self, attr, response)
         else:
-            data = TestData(url)
+            data = FileData(url)
             setattr(self, attr, data)
 
     async def _async_fetch_with_retry(self, url, **kwargs):
@@ -1211,8 +1170,8 @@ class EnvoyReader:
         # endpoints to be polled.
         self.data.initial_update_finished = True
 
-        if self.endpoint_production_json_results.status_code == 401:
-            self.endpoint_production_json_results.raise_for_status()
+        if self.endpoint_production_json.status_code == 401:
+            self.endpoint_production_json.raise_for_status()
 
     @property
     def all_values(self):
@@ -1232,13 +1191,13 @@ class EnvoyReader:
     async def detect_model(self):
         """Method to determine if the Envoy supports consumption values or only production."""
         # Fetch required endpoints for model detection
-        await self.update_endpoints(["endpoint_production_json_results"])
+        await self.update_endpoints(["endpoint_production_json"])
 
-        # If self.endpoint_production_json_results.status_code is set with
+        # If self.endpoint_production_json.status_code is set with
         # 401 then we will give an error
         if (
-            self.endpoint_production_json_results
-            and self.endpoint_production_json_results.status_code == 401
+            self.endpoint_production_json
+            and self.endpoint_production_json.status_code == 401
         ):
             raise RuntimeError(
                 "Could not connect to Envoy model. "
@@ -1247,19 +1206,17 @@ class EnvoyReader:
             )
 
         if (
-            self.endpoint_production_json_results
-            and self.endpoint_production_json_results.status_code == 200
-            and has_production_and_consumption(
-                self.endpoint_production_json_results.json()
-            )
+            self.endpoint_production_json
+            and self.endpoint_production_json.status_code == 200
+            and has_production_and_consumption(self.endpoint_production_json.json())
         ):
             self.endpoint_type = ENVOY_MODEL_M
 
         else:
-            await self.update_endpoints(["endpoint_production_v1_results"])
+            await self.update_endpoints(["endpoint_production_v1"])
             if (
-                self.endpoint_production_v1_results
-                and self.endpoint_production_v1_results.status_code == 200
+                self.endpoint_production_v1
+                and self.endpoint_production_v1.status_code == 200
             ):
                 self.endpoint_type = ENVOY_MODEL_S
 
@@ -1273,7 +1230,7 @@ class EnvoyReader:
 
         # Configure the correct self.data
         self.data = get_envoydataclass(
-            self.endpoint_type, self.endpoint_production_json_results.json()
+            self.endpoint_type, self.endpoint_production_json.json()
         )(self)
 
     async def get_full_serial_number(self):
@@ -1330,41 +1287,6 @@ class EnvoyReader:
 
     async def production_l3(self):
         return self.process_production_value(self.data.get("production_l3"))
-
-    ## Below methods are only for backward compatibility.
-    battery_storage = _async_get_property("battery_storage")
-    consumption = _async_get_property("consumption")
-    daily_consumption = _async_get_property("daily_consumption")
-    daily_production = _async_get_property("daily_production")
-    envoy_info = _async_get_property("envoy_info")
-    grid_status = _async_get_property("grid_status")
-    inverters_info = _async_get_property("inverters_info")
-    inverters_production = _async_get_property("inverters_production")
-    inverters_status = _async_get_property("inverters_status")
-    lifetime_consumption = _async_get_property("lifetime_consumption")
-    lifetime_production = _async_get_property("lifetime_production")
-    production_power = _async_get_property("production_power")
-    relays = _async_get_property("relays")
-    relay_info = _async_get_property("relay_info")
-    relay_status = _async_get_property("relays")
-    voltage = _async_get_property("voltage")
-
-    ## Below *_phase methods are for backward compatibility
-    async def _async_getattr(self, key):
-        return self.data.get(key)
-
-    production_phase = _async_getattr
-    consumption_phase = _async_getattr
-    daily_production_phase = _async_getattr
-    daily_consumption_phase = _async_getattr
-    lifetime_production_phase = _async_getattr
-    lifetime_consumption_phase = _async_getattr
-    voltage_phase = _async_getattr
-    frequency_phase = _async_getattr
-    ampere_phase = _async_getattr
-    apparent_power_phase = _async_getattr
-    power_factor_phase = _async_getattr
-    reactive_power_phase = _async_getattr
 
     async def set_production_power(self, power_on):
         if self.endpoint_production_power is not None:
@@ -1426,187 +1348,3 @@ class EnvoyReader:
         print("Second get_data cycle completed, waiting 10 secs for final cycle.")
         await asyncio.sleep(10)
         await self.get_data()
-
-    def run_in_console(
-        self,
-        test_data_folder=None,
-        data_parser="EnvoyMeteredWithCT",
-        no_url_cache_loop=False,
-        token_type="owner",
-    ):
-        """If running this module directly, print all the values in the console."""
-        import pprint
-
-        print("Reading...")
-
-        if test_data_folder:
-            if token_type:
-                self.token_type = token_type
-
-            _parser_mapping = {
-                "EnvoyStandard": EnvoyStandard,
-                "EnvoyMetered": EnvoyMetered,
-                "EnvoyMeteredWithCT": EnvoyMeteredWithCT,
-            }
-            print("- Using test data")
-            self.data = _parser_mapping.get(data_parser)(self)
-            self.data._read_test_data(test_data_folder)
-            # pprint.pprint(self.data.all_values)
-        else:
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(
-                asyncio.gather(
-                    self.get_data_loop(no_url_cache_loop),
-                    return_exceptions=False,
-                )
-            )
-
-        loop = asyncio.get_event_loop()
-        results = loop.run_until_complete(
-            asyncio.gather(
-                self.production(),
-                self.consumption(),
-                self.daily_production(),
-                self.daily_production_phase("daily_production_l1"),
-                self.daily_consumption(),
-                self.lifetime_production(),
-                self.lifetime_consumption(),
-                self.inverters_production(),
-                self.battery_storage(),
-                self.production_power(),
-                self.inverters_status(),
-                self.relay_status(),
-                self.envoy_info(),
-                self.inverters_info(),
-                self.relay_info(),
-                self.grid_status(),
-                self.production_phase("production_l1"),
-                self.production_phase("production_l2"),
-                self.production_phase("production_l3"),
-                self.frequency_phase("frequency_l1"),
-                self.frequency_phase("frequency_l2"),
-                self.frequency_phase("frequency_l3"),
-                return_exceptions=False,
-            )
-        )
-        fields = [
-            "production",
-            "consumption",
-            "daily_production",
-            "daily_production_l1",
-            "daily_consumption",
-            "lifetime_production",
-            "lifetime_consumption",
-            "inverters_production",
-            "battery_storage",
-            "production_power",
-            "inverters_status",
-            "relay_status",
-            "envoy_info",
-            "inverters_info",
-            "relay_info",
-            "grid_status",
-            "production_phase(l1)",
-            "production_phase(l2)",
-            "production_phase(l3)",
-            "frequency(l1)",
-            "frequency(l2)",
-            "frequency(l3)",
-        ]
-        pprint.pprint(dict(zip(fields, results)))
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Retrieve energy information from the Enphase Envoy device."
-    )
-    parser.add_argument(
-        "-u", "--user", dest="enlighten_user", help="Enlighten Username", required=True
-    )
-    parser.add_argument(
-        "-p", "--pass", dest="enlighten_pass", help="Enlighten Password", required=True
-    )
-    parser.add_argument(
-        "-s",
-        "--serialnum",
-        dest="enlighten_serial_num",
-        help="Enlighten Envoy Serial Number. Only used when Commissioned=True.",
-        required=True,
-    )
-    parser.add_argument(
-        "-d", "--debug", dest="debug", help="Enable debug logging", action="store_true"
-    )
-    parser.add_argument(
-        dest="host",
-        help="Envoy IP address or host name",
-    )
-    parser.add_argument(
-        "--test-stream",
-        dest="test_stream",
-        help="test /stream/meter endpoint",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--test-data",
-        dest="test_data",
-        help="Use test data, instead of pulling it directly from envoy (arg = test folder)",
-    )
-    parser.add_argument(
-        "--data-parser",
-        dest="data_parser",
-        help="When using test data, then use this class as dataclass",
-        choices=["EnvoyStandard", "EnvoyMetered", "EnvoyMeteredWithCT"],
-        default="EnvoyMeteredWithCT",
-    )
-    parser.add_argument(
-        "--token-type",
-        dest="token_type",
-        help="When using test data, then use this token type for parsing the endpoints",
-        choices=["owner", "installer"],
-        default="installer",
-    )
-
-    parser.add_argument(
-        "--disable-negative-production",
-        dest="disable_negative_production",
-        help="Disable negative production values",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--disable-installer-account",
-        dest="disable_installer_account_use",
-        help="Disable installer account use",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--no-url-cache-loop",
-        dest="no_url_cache_loop",
-        help="Do not run multiple url fetch loops, just once is fine.",
-        action="store_true",
-    )
-    args = parser.parse_args()
-
-    logging.basicConfig(level=logging.INFO)
-    if args.debug:
-        logging.getLogger().setLevel(level=logging.DEBUG)
-        logging.getLogger("httpcore").setLevel(logging.INFO)
-        logging.getLogger("httpx").setLevel(logging.INFO)
-
-    TESTREADER = EnvoyReader(
-        host=args.host,
-        inverters=True,
-        enlighten_user=args.enlighten_user,
-        enlighten_pass=args.enlighten_pass,
-        enlighten_serial_num=args.enlighten_serial_num,
-        disable_negative_production=args.disable_negative_production,
-        disable_installer_account_use=args.disable_installer_account_use,
-    )
-    if args.test_stream:
-        TESTREADER.run_stream()
-    else:
-        TESTREADER.run_in_console(
-            test_data_folder=args.test_data,
-            data_parser=args.data_parser,
-            no_url_cache_loop=args.no_url_cache_loop,
-            token_type=args.token_type,
-        )
