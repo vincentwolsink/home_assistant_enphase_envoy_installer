@@ -39,6 +39,8 @@ ENDPOINT_URL_STREAM = "https://{}/stream/meter"
 
 # Battery endpoints
 ENDPOINT_URL_ENSEMBLE_INVENTORY = "https://{}/ivp/ensemble/inventory"
+ENDPOINT_URL_ENSEMBLE_SECCTRL = "https://{}/ivp/ensemble/secctrl"
+ENDPOINT_URL_ENSEMBLE_POWER = "https://{}/ivp/ensemble/power"
 
 # Inverter endpoints
 ENDPOINT_URL_INVENTORY = "https://{}/inventory.json"
@@ -509,13 +511,30 @@ class EnvoyStandard(EnvoyData):
                         "%Y-%m-%d %H:%M:%S", time.localtime(item["last_rpt_date"])
                     )
                 if "encharge_capacity" in item and "percentFull" in item:
-                    item["encharge_capacity_current"] = item["encharge_capacity"] * (
+                    item["encharge_available_energy"] = item["encharge_capacity"] * (
                         item["percentFull"] / 100
                     )
-
                 battery_dict[item["serial_num"]] = item
 
             return battery_dict
+
+    @envoy_property(required_endpoint="endpoint_ensemble_power")
+    def batteries_power(self):
+        return self._path_to_dict("endpoint_ensemble_power.devices:", "serial_num")
+
+    @envoy_property(required_endpoint="endpoint_ensemble_power")
+    def agg_batteries_power(self):
+        batteries_data = self._resolve_path("endpoint_ensemble_power.devices:")
+        if batteries_data:
+            return int(sum(batt["real_power_mw"] for batt in batteries_data) / 1000)
+
+    agg_batteries_capacity_value = (
+        "endpoint_ensemble_secctrl.Enc_max_available_capacity"
+    )
+    agg_batteries_soc_value = "endpoint_ensemble_secctrl.ENC_agg_soc"
+    agg_batteries_available_energy_value = (
+        "endpoint_ensemble_secctrl.ENC_agg_avail_energy"
+    )
 
 
 class EnvoyMetered(EnvoyStandard):
@@ -667,7 +686,9 @@ class EnvoyReader:
         url("production_json", ENDPOINT_URL_PRODUCTION_JSON, cache=0)
         url("production_v1", ENDPOINT_URL_PRODUCTION_V1, cache=20)
         url("production_inverters", ENDPOINT_URL_PRODUCTION_INVERTERS, cache=20)
-        url("ensemble_inventory", ENDPOINT_URL_ENSEMBLE_INVENTORY)
+        url("ensemble_inventory", ENDPOINT_URL_ENSEMBLE_INVENTORY, cache=20)
+        url("ensemble_secctrl", ENDPOINT_URL_ENSEMBLE_SECCTRL, cache=20)
+        url("ensemble_power", ENDPOINT_URL_ENSEMBLE_POWER, cache=20)
         # cache for home_json will be set based on grid_status availability
         url("home_json", ENDPOINT_URL_HOME_JSON)
         iurl("devstatus", ENDPOINT_URL_DEVSTATUS, cache=20)
