@@ -96,26 +96,11 @@ async def async_setup_entry(
                         )
                     )
 
-        elif sensor_description.key.startswith("total_batteries_"):
+        elif sensor_description.key.startswith("agg_batteries_"):
             if coordinator.data.get("batteries") is not None:
                 entity_name = f"{name} {sensor_description.name}"
                 entities.append(
-                    TotalBatteriesEntity(
-                        sensor_description,
-                        entity_name,
-                        name,
-                        config_entry.unique_id,
-                        None,
-                        coordinator,
-                        config_entry.data[CONF_HOST],
-                    )
-                )
-
-        elif sensor_description.key.startswith("avg_batteries_"):
-            if coordinator.data.get("batteries") is not None:
-                entity_name = f"{name} {sensor_description.name}"
-                entities.append(
-                    AvgBatteriesEntity(
+                    CoordinatedEnvoyEntity(
                         sensor_description,
                         entity_name,
                         name,
@@ -395,11 +380,19 @@ class EnvoyBatteryEntity(CoordinatorEntity, SensorEntity):
     def native_value(self):
         """Return the state of the sensor."""
         if self.coordinator.data.get("batteries") is not None:
-            return (
-                self.coordinator.data.get("batteries")
-                .get(self._device_serial_number)
-                .get(self.entity_description.key[10:])
-            )
+            if self.entity_description.key == "batteries_power":
+                return int(
+                    self.coordinator.data.get("batteries_power")
+                    .get(self._device_serial_number)
+                    .get("real_power_mw")
+                    / 1000
+                )
+            else:
+                return (
+                    self.coordinator.data.get("batteries")
+                    .get(self._device_serial_number)
+                    .get(self.entity_description.key[10:])
+                )
 
         return None
 
@@ -445,39 +438,3 @@ class EnvoyBatteryEntity(CoordinatorEntity, SensorEntity):
             sw_version=sw_version,
             hw_version=resolve_hardware_id(hw_version),
         )
-
-
-class AvgBatteriesEntity(CoordinatedEnvoyEntity):
-    @property
-    def native_value(self):
-        """Return the state of the sensor."""
-        if self.coordinator.data.get("batteries") is not None:
-            avg_value = 0
-            for battery in self.coordinator.data.get("batteries").keys():
-                avg_value += (
-                    self.coordinator.data.get("batteries")
-                    .get(battery)
-                    .get(self.entity_description.key[14:])
-                )
-
-            return avg_value / len(self.coordinator.data.get("batteries"))
-
-        return None
-
-
-class TotalBatteriesEntity(CoordinatedEnvoyEntity):
-    @property
-    def native_value(self):
-        """Return the state of the sensor."""
-        if self.coordinator.data.get("batteries") is not None:
-            total_value = 0
-            for battery in self.coordinator.data.get("batteries").keys():
-                total_value += (
-                    self.coordinator.data.get("batteries")
-                    .get(battery)
-                    .get(self.entity_description.key[16:])
-                )
-
-            return total_value
-
-        return None
