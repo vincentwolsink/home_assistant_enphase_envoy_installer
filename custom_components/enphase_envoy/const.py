@@ -56,6 +56,13 @@ PRODUCT_ID_MAPPING = {
     "800-01127-r02": {"name": "IQ7A Microinverter", "sku": "IQ7A-72-M-INT"},
 }
 
+BATTERY_STATE_MAPPING = {
+    12: "Charging",
+    13: "Discharging",
+    14: "Idle. Fully charged.",
+    17: "Idle. Low charge.",
+}
+
 
 def resolve_product_mapping(product_id):
     if PRODUCT_ID_MAPPING.get(product_id, None) != None:
@@ -182,7 +189,7 @@ SENSORS = (
     ),
     SensorEntityDescription(
         key="batteries_percentFull",
-        name="Charged",
+        name="Charge",
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.BATTERY,
@@ -210,8 +217,13 @@ SENSORS = (
         device_class=SensorDeviceClass.ENERGY,
     ),
     SensorEntityDescription(
+        key="batteries_led_status",
+        name="Status",
+        icon="mdi:battery-sync",
+    ),
+    SensorEntityDescription(
         key="agg_batteries_soc",
-        name="Batteries Charged",
+        name="Batteries Charge",
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.BATTERY,
