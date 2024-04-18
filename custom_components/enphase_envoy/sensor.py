@@ -20,6 +20,7 @@ from .const import (
     LIVE_UPDATEABLE_ENTITIES,
     ENABLE_ADDITIONAL_METRICS,
     ADDITIONAL_METRICS,
+    BATTERY_STATE_MAPPING,
     resolve_hardware_id,
     get_model_name,
 )
@@ -386,6 +387,12 @@ class EnvoyBatteryEntity(CoordinatorEntity, SensorEntity):
                     .get(self._device_serial_number)
                     .get("real_power_mw")
                     / 1000
+                )
+            elif self.entity_description.key == "batteries_led_status":
+                return BATTERY_STATE_MAPPING.get(
+                    self.coordinator.data.get("batteries")
+                    .get(self._device_serial_number)
+                    .get("led_status")
                 )
             else:
                 return (
