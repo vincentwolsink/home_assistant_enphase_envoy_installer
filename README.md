@@ -12,6 +12,7 @@ If you want to use the integration with a Home Owner account (with less function
 Features:
 - Individual device per inverter with all information available.
 - Individual device per Q-relay with relay status.
+- Individual device per battery with information available.
 - Production switch to turn on/off solar power production. :one:
 - Firmware update sensor.
 - 3 Phase CT readings.
