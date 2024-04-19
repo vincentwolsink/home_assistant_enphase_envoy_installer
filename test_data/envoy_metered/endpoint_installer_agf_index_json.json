@@ -1,0 +1,77 @@
+{
+    "selected_profile": "EN 50549-1:2019 RfG E02 Netherlands:1.3.2",
+    "selected_profile_id": "65e6901caeee1200f07caeee",
+    "last_package_profile_md5sum": "00beeb6d88ac522947b15c97d630b48c",
+    "profile_auto_selected": false,
+    "mm_version": "01.03.06",
+    "bt_version": "1.3.6",
+    "migration_in_progress": false,
+    "profiles": [
+      {
+        "uuid": "65e6901caeee1200f07caeee",
+        "profile_id": "EN 50549-1:2019 RfG E02 Netherlands:1.3.2",
+        "profile_name": "EN 50549-1:2019 RfG E02 Netherlands",
+        "profile_version": "1.3.2",
+        "profile_description": "Profile for The Netherlands based on requirements drawn from EN 50549-1:2019 + Amendment 1 and Netbeheer E-02 - Netcode elektriciteit (2022-12-18) (the Dutch Grid Code).",
+        "policy": {
+          "min_base_template_version": "1.3.1",
+          "min_master_model_version": "1.3.1",
+          "min_envoy_version": "7.6",
+          "max_envoy_version": "",
+          "model_mismatch": false,
+          "logical_device_mismatch": false,
+          "attribute_mismatch": false,
+          "id_mismatch": false
+        },
+        "envoy_type": "europe",
+        "countries": [
+          "NL"
+        ],
+        "states": [
+  
+        ],
+        "unpacked": true,
+        "profile_source": [
+          "enlighten"
+        ],
+        "dynamic": true,
+        "mm_version": "1.3.7",
+        "bt_version": "1.3.7"
+      }
+    ],
+    "profile_groups": {
+      "NL": [
+        {
+          "uuid": "65e6901caeee1200f07caeee",
+          "profile_id": "EN 50549-1:2019 RfG E02 Netherlands:1.3.2",
+          "profile_name": "EN 50549-1:2019 RfG E02 Netherlands",
+          "profile_version": "1.3.2",
+          "profile_description": "Profile for The Netherlands based on requirements drawn from EN 50549-1:2019 + Amendment 1 and Netbeheer E-02 - Netcode elektriciteit (2022-12-18) (the Dutch Grid Code).",
+          "policy": {
+            "min_base_template_version": "1.3.1",
+            "min_master_model_version": "1.3.1",
+            "min_envoy_version": "7.6",
+            "max_envoy_version": "",
+            "model_mismatch": false,
+            "logical_device_mismatch": false,
+            "attribute_mismatch": false,
+            "id_mismatch": false
+          },
+          "envoy_type": "europe",
+          "countries": [
+            "NL"
+          ],
+          "states": [
+  
+          ],
+          "unpacked": true,
+          "profile_source": [
+            "enlighten"
+          ],
+          "dynamic": true,
+          "mm_version": "1.3.7",
+          "bt_version": "1.3.7"
+        }
+      ]
+    }
+  }
