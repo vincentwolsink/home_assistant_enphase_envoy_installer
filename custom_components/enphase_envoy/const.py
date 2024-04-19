@@ -439,8 +439,8 @@ BINARY_SENSORS = (
     BinarySensorEntityDescription(
         key="batteries_operating",
         name="Operating",
-        device_class=BinarySensorDeviceClass.POWER,
         entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:power",
     ),
     BinarySensorEntityDescription(
         key="batteries_communicating",
@@ -453,6 +453,13 @@ BINARY_SENSORS = (
         name="DC Switch",
         device_class=BinarySensorDeviceClass.PROBLEM,
         entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:power-plug-battery",
+    ),
+    BinarySensorEntityDescription(
+        key="batteries_sleep_enabled",
+        name="Sleep",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:power-sleep",
     ),
 )
 
