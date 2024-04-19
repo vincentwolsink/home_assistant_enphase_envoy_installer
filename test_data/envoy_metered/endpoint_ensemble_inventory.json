@@ -5,7 +5,7 @@
             {
                 "part_num": "830-01760-r46",
                 "installed": 1712942814,
-                "serial_num": "122323085065",
+                "serial_num": "999999995065",
                 "device_status": [
                     "envoy.global.ok",
                     "prop.done"
@@ -34,7 +34,7 @@
             {
                 "part_num": "830-01760-r46",
                 "installed": 1712942814,
-                "serial_num": "122323085067",
+                "serial_num": "999999995067",
                 "device_status": [
                     "envoy.global.ok",
                     "prop.done"
@@ -63,7 +63,7 @@
             {
                 "part_num": "830-01760-r46",
                 "installed": 1712942449,
-                "serial_num": "122323085069",
+                "serial_num": "999999995069",
                 "device_status": [
                     "envoy.global.ok",
                     "prop.done"

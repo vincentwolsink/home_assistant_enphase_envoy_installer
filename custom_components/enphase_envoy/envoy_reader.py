@@ -1,6 +1,5 @@
 """Module to read production and consumption values from an Enphase Envoy on the local network."""
 
-import argparse
 import asyncio
 import datetime
 import time
@@ -10,47 +9,34 @@ import xmltodict
 import httpx
 import ipaddress
 import json
-import os
-
-from jsonpath import jsonpath
-from functools import partial
-
 import hashlib
 import base64
 import secrets
 import string
-from urllib import parse
 
+from jsonpath import jsonpath
+from functools import partial
+from urllib import parse
 from json.decoder import JSONDecodeError
 
-# Generic endpoints
-ENDPOINT_URL_HOME_JSON = "https://{}/home.json"
-ENDPOINT_URL_INFO_XML = "https://{}/info.xml"
-ENDPOINT_URL_CHECK_JWT = "https://{}/auth/check_jwt"
-
-# Production/consumption endpoints
-ENDPOINT_URL_PRODUCTION_JSON = "https://{}/production.json?details=1"
-ENDPOINT_URL_PRODUCTION_V1 = "https://{}/api/v1/production"
-ENDPOINT_URL_PRODUCTION_INVERTERS = "https://{}/api/v1/production/inverters"
-ENDPOINT_URL_PRODUCTION_REPORT = "https://{}/ivp/meters/reports/production"
-ENDPOINT_URL_PRODUCTION_POWER = "https://{}/ivp/mod/603980032/mode/power"
-ENDPOINT_URL_PDM_ENERGY = "https://{}/ivp/pdm/energy"
-ENDPOINT_URL_STREAM = "https://{}/stream/meter"
-
-# Battery endpoints
-ENDPOINT_URL_ENSEMBLE_INVENTORY = "https://{}/ivp/ensemble/inventory"
-ENDPOINT_URL_ENSEMBLE_SECCTRL = "https://{}/ivp/ensemble/secctrl"
-ENDPOINT_URL_ENSEMBLE_POWER = "https://{}/ivp/ensemble/power"
-
-# Inverter endpoints
-ENDPOINT_URL_INVENTORY = "https://{}/inventory.json"
-ENDPOINT_URL_DEVSTATUS = "https://{}/ivp/peb/devstatus"
-
-# Netprofile endpoints
-ENDPOINT_URL_INSTALLER_AGF = "https://{}/installer/agf/index.json"
-ENDPOINT_URL_INSTALLER_AGF_SET_PROFILE = "https://{}/installer/agf/set_profile.json"
-ENDPOINT_URL_INSTALLER_AGF_UPLOAD_PROFILE = (
-    "https://{}/installer/agf/upload_profile_package"
+from .envoy_endpoints import (
+    ENDPOINT_URL_HOME_JSON,
+    ENDPOINT_URL_INFO_XML,
+    ENDPOINT_URL_PRODUCTION_JSON,
+    ENDPOINT_URL_PRODUCTION_V1,
+    ENDPOINT_URL_PRODUCTION_INVERTERS,
+    ENDPOINT_URL_PRODUCTION_REPORT,
+    ENDPOINT_URL_PRODUCTION_POWER,
+    ENDPOINT_URL_PDM_ENERGY,
+    ENDPOINT_URL_STREAM,
+    ENDPOINT_URL_ENSEMBLE_INVENTORY,
+    ENDPOINT_URL_ENSEMBLE_SECCTRL,
+    ENDPOINT_URL_ENSEMBLE_POWER,
+    ENDPOINT_URL_INVENTORY,
+    ENDPOINT_URL_DEVSTATUS,
+    ENDPOINT_URL_INSTALLER_AGF,
+    ENDPOINT_URL_INSTALLER_AGF_SET_PROFILE,
+    ENDPOINT_URL_INSTALLER_AGF_UPLOAD_PROFILE,
 )
 
 ENVOY_MODEL_M = "Metered"
@@ -63,6 +49,7 @@ ENLIGHTEN_TOKEN_URL = "https://entrez.enphaseenergy.com/tokens"
 # paths used for fetching enlighten token through envoy
 ENLIGHTEN_LOGIN_URL = "https://entrez.enphaseenergy.com/login"
 ENDPOINT_URL_GET_JWT = "https://{}/auth/get_jwt"
+ENDPOINT_URL_CHECK_JWT = "https://{}/auth/check_jwt"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -144,8 +131,14 @@ class EnvoyError(EnvoyReaderError):
 
 class FileData:
     def __init__(self, file):
-        with open(file) as json_file:
-            self.json_data = json.load(json_file)
+        if file.endswith(".json"):
+            self.content_type = "application/json"
+            with open(file) as json_file:
+                self.json_data = json.load(json_file)
+        elif file.endswith(".xml"):
+            self.content_type = "application/xml"
+            with open(file) as xml_file:
+                self.text = xml_file.read()
 
     @property
     def status_code(self):
@@ -153,7 +146,7 @@ class FileData:
 
     @property
     def headers(self):
-        return {"content-type": "application/json"}
+        return {"content-type": self.content_type}
 
     def json(self):
         return self.json_data
