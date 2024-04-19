@@ -44,16 +44,16 @@ ENABLE_ADDITIONAL_METRICS = "enable_additional_metrics"
 ADDITIONAL_METRICS = []
 
 PRODUCT_ID_MAPPING = {
-    "800-00598-r04": {"name": "IQ Relay 1-phase", "sku": "Q-RELAY-1P-INT"},
-    "800-00597-r02": {"name": "IQ Relay 3-phase", "sku": "Q-RELAY-3P-INT"},
-    "800-00654-r08": {"name": "Envoy-S-Metered-EU", "sku": "ENV-S-WM-230"},
-    "800-00656-r06": {"name": "Envoy-S-Standard-EU", "sku": "ENV-S-WB-230"},
-    "800-00656-r07": {"name": "Envoy-S-Standard-EU", "sku": "ENV-S-WB-230"},
-    "800-01359-r02": {"name": "IQ8+ Microinverter", "sku": "IQ8PLUS-72-M-INT"},
-    "800-01391-r03": {"name": "IQ8HC Microinverter", "sku": "IQ8HC-72-M-INT"},
-    "800-01736-r02": {"name": "IQ7+ Microinverter", "sku": "IQ7PLUS-72-M-INT"},
-    "800-00631-r02": {"name": "IQ7+ Microinverter", "sku": "IQ7PLUS-72-2-INT"},
-    "800-01127-r02": {"name": "IQ7A Microinverter", "sku": "IQ7A-72-M-INT"},
+    "800-00598": {"name": "IQ Relay 1-phase", "sku": "Q-RELAY-1P-INT"},
+    "800-00597": {"name": "IQ Relay 3-phase", "sku": "Q-RELAY-3P-INT"},
+    "800-00654": {"name": "Envoy-S-Metered-EU", "sku": "ENV-S-WM-230"},
+    "800-00656": {"name": "Envoy-S-Standard-EU", "sku": "ENV-S-WB-230"},
+    "800-01359": {"name": "IQ8+ Microinverter", "sku": "IQ8PLUS-72-M-INT"},
+    "800-01391": {"name": "IQ8HC Microinverter", "sku": "IQ8HC-72-M-INT"},
+    "800-01736": {"name": "IQ7+ Microinverter", "sku": "IQ7PLUS-72-M-INT"},
+    "800-00631": {"name": "IQ7+ Microinverter", "sku": "IQ7PLUS-72-2-INT"},
+    "800-01127": {"name": "IQ7A Microinverter", "sku": "IQ7A-72-M-INT"},
+    "830-01760": {"name": "IQ Battery 3T", "sku": "B03-T01-INT00-1-2"},
 }
 
 BATTERY_STATE_MAPPING = {
@@ -65,19 +65,7 @@ BATTERY_STATE_MAPPING = {
 
 
 def resolve_product_mapping(product_id):
-    if PRODUCT_ID_MAPPING.get(product_id, None) != None:
-        return PRODUCT_ID_MAPPING[product_id]
-
-    def id_iter():
-        yield product_id.rsplit("-", 1)[0]
-        yield product_id.split("-")[1]
-
-    for match in id_iter():
-        for key, product in PRODUCT_ID_MAPPING.items():
-            if key == match or match in key:
-                # Create alias for consecutive calls.
-                PRODUCT_ID_MAPPING[match] = product
-                return product
+    return PRODUCT_ID_MAPPING.get(product_id.rsplit("-", 1)[0])
 
 
 def resolve_hardware_id(hardware_id):
