@@ -7,6 +7,7 @@ from contextlib import suppress
 from datetime import timedelta
 import logging
 import time
+from typing import Optional
 
 import async_timeout
 from .envoy_reader import EnvoyReader, StreamData
@@ -62,7 +63,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Enphase Envoy from a config entry."""
 
-    task = None
+    task: Optional[asyncio.Future] = None
     config = entry.data
     options = entry.options
     name = config[CONF_NAME]
@@ -251,7 +252,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def _cancel_realtime_task(task) -> None:
+async def _cancel_realtime_task(task: Optional[asyncio.Future]) -> None:
+    if not task:
+        _LOGGER.debug("No task to cancel")
+        return
+
     task.cancel()
     try:
         await task
@@ -266,7 +271,7 @@ async def _cancel_realtime_task(task) -> None:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
 
-    if task := hass.data[DOMAIN][entry.entry_id].get("realtime_loop", False):
+    if task := hass.data[DOMAIN][entry.entry_id].get("realtime_loop"):
         _LOGGER.debug("Stopping loop for /stream/meter")
         await _cancel_realtime_task(task)
 
