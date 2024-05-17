@@ -1,0 +1,159 @@
+{
+   "tariff": {
+     "currency": {
+       "code": "EUR"
+     },
+     "logger": "mylogger",
+     "date": "1683540858",
+     "storage_settings": {
+       "mode": "self-consumption",
+       "operation_mode_sub_type": "",
+       "reserved_soc": 0,
+       "very_low_soc": 5,
+       "charge_from_grid": false,
+       "date": "1683540858"
+     },
+     "single_rate": {
+       "rate": 0.3,
+       "sell": 0
+     },
+     "seasons": [],
+     "seasons_sell": []
+   },
+   "schedule": {
+     "source": "Tariff",
+     "date": "2024-05-08 14:25:16 UTC",
+     "version": "00.00.02",
+     "reserved_soc": 0,
+     "operation_mode_sub_type": "",
+     "very_low_soc": 5,
+     "charge_from_grid": false,
+     "battery_mode": "self-consumption",
+     "schedule": {
+       "Disable": [
+         {
+           "Sun": [
+             {
+               "start": 0,
+               "duration": 1440,
+               "setting": "ID"
+             }
+           ]
+         },
+         {
+           "Mon": [
+             {
+               "start": 0,
+               "duration": 1440,
+               "setting": "ID"
+             }
+           ]
+         },
+         {
+           "Tue": [
+             {
+               "start": 0,
+               "duration": 1440,
+               "setting": "ID"
+             }
+           ]
+         },
+         {
+           "Wed": [
+             {
+               "start": 0,
+               "duration": 1440,
+               "setting": "ID"
+             }
+           ]
+         },
+         {
+           "Thu": [
+             {
+               "start": 0,
+               "duration": 1440,
+               "setting": "ID"
+             }
+           ]
+         },
+         {
+           "Fri": [
+             {
+               "start": 0,
+               "duration": 1440,
+               "setting": "ID"
+             }
+           ]
+         },
+         {
+           "Sat": [
+             {
+               "start": 0,
+               "duration": 1440,
+               "setting": "ID"
+             }
+           ]
+         }
+       ],
+       "tariff": [
+         {
+           "start": "1/1",
+           "end": "1/1",
+           "Sun": [
+             {
+               "start": 0,
+               "duration": 1440,
+               "setting": "ZN"
+             }
+           ],
+           "Mon": [
+             {
+               "start": 0,
+               "duration": 1440,
+               "setting": "ZN"
+             }
+           ],
+           "Tue": [
+             {
+               "start": 0,
+               "duration": 1440,
+               "setting": "ZN"
+             }
+           ],
+           "Wed": [
+             {
+               "start": 0,
+               "duration": 1440,
+               "setting": "ZN"
+             }
+           ],
+           "Thu": [
+             {
+               "start": 0,
+               "duration": 1440,
+               "setting": "ZN"
+             }
+           ],
+           "Fri": [
+             {
+               "start": 0,
+               "duration": 1440,
+               "setting": "ZN"
+             }
+           ],
+           "Sat": [
+             {
+               "start": 0,
+               "duration": 1440,
+               "setting": "ZN"
+             }
+           ]
+         }
+       ]
+     },
+     "override": false,
+     "override_backup_soc": 30,
+     "override_chg_dischg_rate": 0,
+     "override_tou_mode": "StorageTouMode_DEFAULT_TOU_MODE"
+   }
+ }

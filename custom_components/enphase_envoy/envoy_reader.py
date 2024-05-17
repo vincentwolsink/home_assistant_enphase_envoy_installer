@@ -37,6 +37,7 @@ from .envoy_endpoints import (
     ENDPOINT_URL_INSTALLER_AGF,
     ENDPOINT_URL_INSTALLER_AGF_SET_PROFILE,
     ENDPOINT_URL_INSTALLER_AGF_UPLOAD_PROFILE,
+    ENDPOINT_URL_ADMIN_TARIFF,
 )
 
 ENVOY_MODEL_M = "Metered"
@@ -135,10 +136,12 @@ class FileData:
             self.content_type = "application/json"
             with open(file) as json_file:
                 self.json_data = json.load(json_file)
+                _LOGGER.debug(f"File '{file}' JSON data: {self.json_data}")
         elif file.endswith(".xml"):
             self.content_type = "application/xml"
             with open(file) as xml_file:
                 self.text = xml_file.read()
+                _LOGGER.debug(f"File '{file}' text: {self.text}")
 
     @property
     def status_code(self):
@@ -529,6 +532,18 @@ class EnvoyStandard(EnvoyData):
         "endpoint_ensemble_secctrl.ENC_agg_avail_energy"
     )
 
+    tariff_value = "endpoint_admin_tariff.tariff"
+    storage_mode_value = "endpoint_admin_tariff.tariff.storage_settings.mode"
+    storage_reserved_soc_value = (
+        "endpoint_admin_tariff.tariff.storage_settings.reserved_soc"
+    )
+    storage_very_low_soc_value = (
+        "endpoint_admin_tariff.tariff.storage_settings.very_low_soc"
+    )
+    storage_charge_from_grid_value = (
+        "endpoint_admin_tariff.tariff.storage_settings.charge_from_grid"
+    )
+
 
 class EnvoyMetered(EnvoyStandard):
     """
@@ -691,6 +706,7 @@ class EnvoyReader:
         url("production_report", ENDPOINT_URL_PRODUCTION_REPORT, cache=0)
         iurl("pdm_energy", ENDPOINT_URL_PDM_ENERGY)
         iurl("installer_agf", ENDPOINT_URL_INSTALLER_AGF)
+        url("admin_tariff", ENDPOINT_URL_ADMIN_TARIFF, cache=20)
 
         # If IPv6 address then enclose host in brackets
         try:
@@ -1339,6 +1355,16 @@ class EnvoyReader:
 
         self._clear_endpoint_cache("endpoint_installer_agf")
         return resp
+
+    async def set_storage(self, storage_key, storage_value):
+        if self.endpoint_admin_tariff is not None:
+            formatted_url = ENDPOINT_URL_ADMIN_TARIFF.format(self.host)
+            tariff = self.data.get("tariff")
+            tariff["storage_settings"][storage_key] = storage_value
+
+            await self._async_put(formatted_url, data={"tariff": tariff})
+            # Make sure the next poll will update the endpoint.
+            self._clear_endpoint_cache("endpoint_admin_tariff")
 
     def run_stream(self):
         print("Reading stream...")

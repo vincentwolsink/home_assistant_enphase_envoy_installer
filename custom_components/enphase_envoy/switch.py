@@ -5,7 +5,13 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.helpers.entity import DeviceInfo
 
-from .const import COORDINATOR, DOMAIN, NAME, PRODUCION_POWER_SWITCH, READER
+from .const import (
+    COORDINATOR,
+    DOMAIN,
+    NAME,
+    READER,
+    SWITCHES,
+)
 
 
 async def async_setup_entry(
@@ -19,23 +25,40 @@ async def async_setup_entry(
     reader = data[READER]
 
     entities = []
-    if coordinator.data.get("production_power") is not None:
-        entities.append(
-            EnvoyProductionSwitchEntity(
-                PRODUCION_POWER_SWITCH,
-                PRODUCION_POWER_SWITCH.name,
-                name,
-                config_entry.unique_id,
-                None,
-                coordinator,
-                reader,
-            )
-        )
-
+    for switch_description in SWITCHES:
+        if switch_description.key.startswith("storage_"):
+            if (
+                coordinator.data.get("batteries") is not None
+                and coordinator.data.get(switch_description.key) is not None
+            ):
+                entities.append(
+                    EnvoyStorageSwitchEntity(
+                        switch_description,
+                        switch_description.name,
+                        name,
+                        config_entry.unique_id,
+                        None,
+                        coordinator,
+                        reader,
+                    )
+                )
+        else:
+            if coordinator.data.get(switch_description.key) is not None:
+                entities.append(
+                    EnvoySwitchEntity(
+                        switch_description,
+                        switch_description.name,
+                        name,
+                        config_entry.unique_id,
+                        None,
+                        coordinator,
+                        reader,
+                    )
+                )
     async_add_entities(entities)
 
 
-class EnvoyProductionSwitchEntity(CoordinatorEntity, SwitchEntity):
+class EnvoySwitchEntity(CoordinatorEntity, SwitchEntity):
     def __init__(
         self,
         description,
@@ -86,14 +109,28 @@ class EnvoyProductionSwitchEntity(CoordinatorEntity, SwitchEntity):
     @property
     def is_on(self) -> bool:
         """Return the status of the requested attribute."""
-        return self.coordinator.data.get("production_power")
+        return self.coordinator.data.get(self.entity_description.key)
 
     async def async_turn_on(self, **kwargs):
         """Turn the entity on."""
-        await self.reader.set_production_power(True)
+        set_func = getattr(self.reader, f"set_{self.entity_description.key}")
+        await set_func(True)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs):
         """Turn the entity off."""
-        await self.reader.set_production_power(False)
+        set_func = getattr(self.reader, f"set_{self.entity_description.key}")
+        await set_func(False)
+        await self.coordinator.async_request_refresh()
+
+
+class EnvoyStorageSwitchEntity(EnvoySwitchEntity):
+    async def async_turn_on(self, **kwargs):
+        """Turn the entity on."""
+        await self.reader.set_storage(self.entity_description.key[8:], True)
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs):
+        """Turn the entity off."""
+        await self.reader.set_storage(self.entity_description.key[8:], False)
         await self.coordinator.async_request_refresh()
