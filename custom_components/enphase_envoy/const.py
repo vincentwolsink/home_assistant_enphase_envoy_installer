@@ -10,6 +10,8 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.components.switch import SwitchDeviceClass, SwitchEntityDescription
+from homeassistant.components.select import SelectEntityDescription
+from homeassistant.components.number import NumberDeviceClass, NumberEntityDescription
 from homeassistant.const import (
     Platform,
     PERCENTAGE,
@@ -26,7 +28,13 @@ from homeassistant.const import (
 
 DOMAIN = "enphase_envoy"
 
-PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SWITCH]
+PLATFORMS = [
+    Platform.SENSOR,
+    Platform.BINARY_SENSOR,
+    Platform.SWITCH,
+    Platform.SELECT,
+    Platform.NUMBER,
+]
 
 COORDINATOR = "coordinator"
 NAME = "name"
@@ -62,6 +70,8 @@ BATTERY_STATE_MAPPING = {
     14: "Idle. Fully charged.",
     17: "Idle. Low charge.",
 }
+
+STORAGE_MODES = ["backup", "self-consumption", "savings-mode", "economy"]
 
 
 def resolve_product_mapping(product_id):
@@ -451,9 +461,34 @@ BINARY_SENSORS = (
     ),
 )
 
-PRODUCION_POWER_SWITCH = SwitchEntityDescription(
-    key="production_power",
-    name="Production",
-    icon="mdi:solar-power",
-    device_class=SwitchDeviceClass.SWITCH,
+SWITCHES = (
+    SwitchEntityDescription(
+        key="production_power",
+        name="Production",
+        icon="mdi:solar-power",
+        device_class=SwitchDeviceClass.SWITCH,
+    ),
+    SwitchEntityDescription(
+        key="storage_charge_from_grid",
+        name="Batteries Charge From Grid",
+        icon="mdi:power-plug-battery",
+        device_class=SwitchDeviceClass.SWITCH,
+    ),
+)
+
+STORAGE_MODE_SELECT = SelectEntityDescription(
+    key="storage_mode",
+    name="Batteries Mode",
+    icon="mdi:battery-sync",
+)
+
+STORAGE_RESERVE_SOC_NUMBER = NumberEntityDescription(
+    key="storage_reserved_soc",
+    name="Batteries Reserve Charge",
+    mode="box",
+    native_min_value=5,
+    native_step=1,
+    native_unit_of_measurement="%",
+    icon="mdi:battery-charging-30",
+    device_class=NumberDeviceClass.BATTERY,
 )

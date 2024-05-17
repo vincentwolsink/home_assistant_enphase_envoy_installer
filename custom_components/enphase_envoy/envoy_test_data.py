@@ -26,3 +26,6 @@ ENDPOINT_URL_DEVSTATUS = TEST_DATA + "endpoint_devstatus.json"
 ENDPOINT_URL_INSTALLER_AGF = TEST_DATA + "endpoint_installer_agf_index_json.json"
 ENDPOINT_URL_INSTALLER_AGF_SET_PROFILE = None
 ENDPOINT_URL_INSTALLER_AGF_UPLOAD_PROFILE = None
+
+# Tariff endpoints
+ENDPOINT_URL_ADMIN_TARIFF = TEST_DATA + "endpoint_admin_lib_tariff.json"

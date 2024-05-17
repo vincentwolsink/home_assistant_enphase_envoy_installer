@@ -26,3 +26,6 @@ ENDPOINT_URL_INSTALLER_AGF_SET_PROFILE = "https://{}/installer/agf/set_profile.j
 ENDPOINT_URL_INSTALLER_AGF_UPLOAD_PROFILE = (
     "https://{}/installer/agf/upload_profile_package"
 )
+
+# Tariff endpoints
+ENDPOINT_URL_ADMIN_TARIFF = "https://{}/admin/lib/tariff"
