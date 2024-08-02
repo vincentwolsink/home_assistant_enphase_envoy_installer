@@ -9,6 +9,7 @@ from .const import (
     COORDINATOR,
     DOMAIN,
     NAME,
+    READER,
     BINARY_SENSORS,
     resolve_hardware_id,
     get_model_name,
@@ -23,6 +24,7 @@ async def async_setup_entry(
     data = hass.data[DOMAIN][config_entry.entry_id]
     coordinator = data[COORDINATOR]
     name = data[NAME]
+    reader = data[READER]
 
     entities = []
     for sensor_description in BINARY_SENSORS:
@@ -41,18 +43,6 @@ async def async_setup_entry(
                             coordinator,
                         )
                     )
-        elif sensor_description.key == "grid_status":
-            if coordinator.data.get("grid_status") is not None:
-                entities.append(
-                    EnvoyGridStatusEntity(
-                        sensor_description,
-                        sensor_description.name,
-                        name,
-                        config_entry.unique_id,
-                        None,
-                        coordinator,
-                    )
-                )
 
         elif sensor_description.key == "relays":
             if coordinator.data.get("relays") is not None:
@@ -113,73 +103,25 @@ async def async_setup_entry(
                         )
                     )
 
-        elif sensor_description.key == "firmware":
-            if coordinator.data.get("envoy_info", {}).get("update_status") is not None:
-                entity_name = f"{name} {sensor_description.name}"
-                serial_number = name.split(None, 1)[-1]
-                entities.append(
-                    EnvoyFirmwareEntity(
-                        sensor_description,
-                        entity_name,
-                        name,
-                        config_entry.unique_id,
-                        serial_number,
-                        coordinator,
-                    )
+        else:
+            data = coordinator.data.get(sensor_description.key)
+            if data is None:
+                continue
+
+            entity_name = f"{name} {sensor_description.name}"
+            entities.append(
+                EnvoyBinaryEntity(
+                    sensor_description,
+                    entity_name,
+                    name,
+                    config_entry.unique_id,
+                    None,
+                    coordinator,
+                    reader,
                 )
+            )
 
     async_add_entities(entities)
-
-
-class EnvoyGridStatusEntity(CoordinatorEntity, BinarySensorEntity):
-    def __init__(
-        self,
-        description,
-        name,
-        device_name,
-        device_serial_number,
-        serial_number,
-        coordinator,
-    ):
-        self.entity_description = description
-        self._name = name
-        self._serial_number = serial_number
-        self._device_name = device_name
-        self._device_serial_number = device_serial_number
-        CoordinatorEntity.__init__(self, coordinator)
-
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self._name
-
-    @property
-    def unique_id(self):
-        """Return the unique id of the sensor."""
-        if self._serial_number:
-            return self._serial_number
-        if self._device_serial_number:
-            return f"{self._device_serial_number}_{self.entity_description.key}"
-
-    @property
-    def device_info(self) -> DeviceInfo or None:
-        """Return the device_info of the device."""
-        if not self._device_serial_number:
-            return None
-
-        model = self.coordinator.data.get("envoy_info", {}).get("model", "Standard")
-
-        return DeviceInfo(
-            identifiers={(DOMAIN, str(self._device_serial_number))},
-            manufacturer="Enphase",
-            model=f"Envoy-S {model}",
-            name=self._device_name,
-        )
-
-    @property
-    def is_on(self) -> bool:
-        """Return the status of the requested attribute."""
-        return self.coordinator.data.get("grid_status") == "closed"
 
 
 class EnvoyInverterEntity(CoordinatorEntity, BinarySensorEntity):
@@ -356,19 +298,9 @@ class EnvoyBinaryEntity(EnvoyBaseEntity, BinarySensorEntity):
             parent_device=parent_device,
         )
 
-
-class EnvoyFirmwareEntity(EnvoyBinaryEntity):
     @property
     def is_on(self) -> bool | None:
-        """Return true if the binary sensor is on."""
-        if self.coordinator.data.get("envoy_info"):
-            update_status = self.coordinator.data.get("envoy_info").get("update_status")
-            return update_status != "satisfied"
-        return False
-
-    @property
-    def extra_state_attributes(self) -> None:
-        return None
+        return self.coordinator.data.get(self.entity_description.key)
 
 
 class EnvoyRelayEntity(EnvoyBinaryEntity):

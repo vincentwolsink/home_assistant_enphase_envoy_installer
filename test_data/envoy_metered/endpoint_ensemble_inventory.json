@@ -90,5 +90,43 @@
                 "encharge_capacity": 3500
             }
         ]
-    }
+    },
+    {
+        "type":"ENPOWER",
+        "devices":[
+           {
+              "part_num":"860-00276-r28",
+              "installed":1621354111,
+              "serial_num":"xxx",
+              "device_status":[
+                 "envoy.global.ok",
+                 "prop.done"
+              ],
+              "last_rpt_date":1621464851,
+              "admin_state":24,
+              "admin_state_str":"ENPWR_STATE_OPER_CLOSED",
+              "created_date":1621354111,
+              "img_load_date":1621354111,
+              "img_pnum_running":"1.2.2064_release/20.34",
+              "zigbee_dongle_fw_version":"0x1009",
+              "operating":true,
+              "communicating":true,
+              "temperature":79,
+              "comm_level_sub_ghz":5,
+              "comm_level_2_4_ghz":5,
+              "mains_admin_state":"closed",
+              "mains_oper_state":"closed",
+              "Enpwr_grid_mode":"multimode-ongrid",
+              "Enchg_grid_mode":"multimode-ongrid",
+              "Enpwr_relay_state_bm":496,
+              "Enpwr_curr_state_id":16
+           }
+        ]
+     },
+     {
+        "grid_profile_name":"IEEE 1547 default 2015",
+        "id":"91937832-159a-410a-9594-0a964372e096:0",
+        "grid_profile_version":"1.0.11",
+        "item_count":2997
+     }
 ]
