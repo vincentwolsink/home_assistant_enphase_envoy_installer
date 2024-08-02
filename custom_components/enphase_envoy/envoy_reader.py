@@ -20,7 +20,6 @@ from urllib import parse
 from json.decoder import JSONDecodeError
 
 from .envoy_endpoints import (
-    ENDPOINT_URL_HOME_JSON,
     ENDPOINT_URL_INFO_XML,
     ENDPOINT_URL_PRODUCTION_JSON,
     ENDPOINT_URL_PRODUCTION_V1,
@@ -376,8 +375,6 @@ class EnvoyStandard(EnvoyData):
         "endpoint_info.envoy_info.device.imeter"  # true/false value
     )
     envoy_software_value = "endpoint_info.envoy_info.device.software"
-    envoy_software_build_epoch_value = "endpoint_home_json.software_build_epoch"
-    envoy_update_status_value = "endpoint_home_json.update_status"
     serial_number_value = "endpoint_info.envoy_info.device.sn"
     grid_profile_value = "endpoint_installer_agf.selected_profile"
     grid_profiles_available_value = "endpoint_installer_agf.profiles"
@@ -387,8 +384,6 @@ class EnvoyStandard(EnvoyData):
         return {
             "pn": self.get("envoy_pn"),
             "software": self.get("envoy_software"),
-            "software_build_epoch": self.get("envoy_software_build_epoch"),
-            "update_status": self.get("envoy_update_status_value"),
             "model": getattr(self, "ALIAS", self.__class__.__name__[5:]),
         }
 
@@ -412,21 +407,13 @@ class EnvoyStandard(EnvoyData):
         if force_off != None:
             return not force_off
 
-    # This is a enpower / battery value, if the value is None it will increase
-    # the cache time of the endpoint, as the information is not required
-    # to be as up-to-date, since it pretty stale information anyway for
-    # non-battery setups.
-    # how to prevent from continuesly fetching home.json when no batteries
-    @envoy_property(required_endpoint="endpoint_home_json")
+    @envoy_property(required_endpoint="endpoint_ensemble_inventory")
     def grid_status(self):
-        grid_status = self._resolve_path("endpoint_home_json.enpower.grid_status")
-        if grid_status == None:
-            # This is the only property we use that actually should be refreshed often.
-            # So if the value is None (e.g. not found),
-            # then we ought to cache the result more often.
-            self.reader.uri_registry["endpoint_home_json"]["cache_time"] = 86400
-
-        return grid_status
+        grid_status = self._resolve_path(
+            "endpoint_ensemble_inventory.[?(@.type=='ENPOWER')].devices[0].mains_oper_state"
+        )
+        if grid_status != None:
+            return grid_status == "closed"
 
     inverters_data_value = path_by_token(
         owner="endpoint_production_inverters.[?(@.devType==1)]",
@@ -697,8 +684,6 @@ class EnvoyReader:
         url("ensemble_inventory", ENDPOINT_URL_ENSEMBLE_INVENTORY, cache=20)
         url("ensemble_secctrl", ENDPOINT_URL_ENSEMBLE_SECCTRL, cache=20)
         url("ensemble_power", ENDPOINT_URL_ENSEMBLE_POWER, cache=20)
-        # cache for home_json will be set based on grid_status availability
-        url("home_json", ENDPOINT_URL_HOME_JSON)
         iurl("devstatus", ENDPOINT_URL_DEVSTATUS, cache=20)
         iurl("production_power", ENDPOINT_URL_PRODUCTION_POWER, cache=20)
         url("info", ENDPOINT_URL_INFO_XML, cache=86400)
