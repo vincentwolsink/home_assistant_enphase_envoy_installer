@@ -60,6 +60,42 @@ async def async_setup_entry(
                             config_entry.unique_id,
                         )
                     )
+
+        elif sensor_description.key == "inverters_communication_level":
+            if coordinator.data.get("pcu_availability") is not None:
+                for serial_number in coordinator.data["inverters_production"]:
+                    device_name = f"Inverter {serial_number}"
+                    entities.append(
+                        EnvoyInverterSignalEntity(
+                            description=sensor_description,
+                            name=f"{device_name} {sensor_description.name}",
+                            device_name=device_name,
+                            device_serial_number=serial_number,
+                            serial_number=None,
+                            coordinator=coordinator,
+                            parent_device=config_entry.unique_id,
+                        )
+                    )
+
+        elif sensor_description.key == "relays_communication_level":
+            if (
+                coordinator.data.get("relays") != None
+                and coordinator.data.get("pcu_availability") is not None
+            ):
+                for serial_number in coordinator.data["relays"].keys():
+                    device_name = f"Relay {serial_number}"
+                    entities.append(
+                        EnvoyRelaySignalEntity(
+                            description=sensor_description,
+                            name=f"{device_name} {sensor_description.name}",
+                            device_name=device_name,
+                            device_serial_number=serial_number,
+                            serial_number=None,
+                            coordinator=coordinator,
+                            parent_device=config_entry.unique_id,
+                        )
+                    )
+
         elif sensor_description.key.startswith("inverters_"):
             if coordinator.data.get("inverters_status") is not None:
                 for inverter in coordinator.data["inverters_status"].keys():
@@ -238,6 +274,8 @@ class CoordinatedEnvoyEntity(EnvoyEntity, CoordinatorEntity):
 class EnvoyInverterEntity(CoordinatorEntity, SensorEntity):
     """Envoy inverter entity."""
 
+    MODEL = "Inverter"
+
     def __init__(
         self,
         description,
@@ -314,32 +352,80 @@ class EnvoyInverterEntity(CoordinatorEntity, SensorEntity):
         """Return the device_info of the device."""
         if not self._device_serial_number:
             return None
+        device_info_kw = {}
+        if self._parent_device:
+            device_info_kw["via_device"] = (DOMAIN, self._parent_device)
 
-        sw_version = None
-        hw_version = None
-        if self.coordinator.data.get("inverters_info") and self.coordinator.data.get(
-            "inverters_info"
-        ).get(self._device_serial_number):
-            sw_version = (
-                self.coordinator.data.get("inverters_info")
-                .get(self._device_serial_number)
-                .get("img_pnum_running")
+        model_name = self.MODEL
+        if self.MODEL == "Envoy":
+            model = self.coordinator.data.get("envoy_info", {}).get("model", "Standard")
+            model_name = f"Envoy-S {model}"
+
+        elif self.MODEL == "Inverter":
+            if self.coordinator.data.get(
+                "inverters_info"
+            ) and self.coordinator.data.get("inverters_info").get(
+                self._device_serial_number
+            ):
+                device_info_kw["sw_version"] = (
+                    self.coordinator.data.get("inverters_info")
+                    .get(self._device_serial_number)
+                    .get("img_pnum_running")
+                )
+                device_info_kw["hw_version"] = (
+                    self.coordinator.data.get("inverters_info")
+                    .get(self._device_serial_number)
+                    .get("part_num")
+                )
+            model_name = (get_model_name("Inverter", device_info_kw["hw_version"]),)
+
+        elif self.MODEL == "Relay":
+            info = self.coordinator.data.get("relay_info", {}).get(
+                self._device_serial_number, {}
             )
-            hw_version = (
-                self.coordinator.data.get("inverters_info")
-                .get(self._device_serial_number)
-                .get("part_num")
+            device_info_kw["sw_version"] = info.get("img_pnum_running", None)
+            device_info_kw["hw_version"] = resolve_hardware_id(
+                info.get("part_num", None)
             )
+            model_name = get_model_name(model_name, info.get("part_num", None))
 
         return DeviceInfo(
             identifiers={(DOMAIN, str(self._device_serial_number))},
             manufacturer="Enphase",
-            model=get_model_name("Inverter", hw_version),
+            model=model_name,
             name=self._device_name,
-            via_device=(DOMAIN, self._parent_device),
-            sw_version=sw_version,
-            hw_version=resolve_hardware_id(hw_version),
+            **device_info_kw,
         )
+
+
+class EnvoyInverterSignalEntity(EnvoyInverterEntity):
+
+    @property
+    def icon(self):
+        return {
+            5: "mdi:wifi-strength-4",
+            4: "mdi:wifi-strength-3",
+            3: "mdi:wifi-strength-2",
+            2: "mdi:wifi-strength-1",
+            1: "mdi:wifi-strength-outline",
+            0: "mdi:wifi-strength-off-outline",
+        }.get(self.native_value)
+
+    @property
+    def extra_state_attributes(self):
+        return None
+
+    @property
+    def native_value(self) -> int:
+        """Return the status of the requested attribute."""
+        data = self.coordinator.data.get("pcu_availability")
+        if data is None:
+            return 0
+        return int(data.get(self._device_serial_number, 0))
+
+
+class EnvoyRelaySignalEntity(EnvoyInverterSignalEntity):
+    MODEL = "Relay"
 
 
 class EnvoyBatteryEntity(CoordinatorEntity, SensorEntity):

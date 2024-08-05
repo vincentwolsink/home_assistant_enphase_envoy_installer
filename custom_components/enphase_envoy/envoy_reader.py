@@ -32,6 +32,7 @@ from .envoy_endpoints import (
     ENDPOINT_URL_ENSEMBLE_SECCTRL,
     ENDPOINT_URL_ENSEMBLE_POWER,
     ENDPOINT_URL_INVENTORY,
+    ENDPOINT_URL_COMM_STATUS,
     ENDPOINT_URL_DEVSTATUS,
     ENDPOINT_URL_INSTALLER_AGF,
     ENDPOINT_URL_INSTALLER_AGF_SET_PROFILE,
@@ -420,6 +421,8 @@ class EnvoyStandard(EnvoyData):
         installer="endpoint_devstatus.pcu[?(@.devType==1)]",
     )
 
+    pcu_availability_value = "endpoint_pcu_comm_status"
+
     @envoy_property
     def inverters_production(self):
         # We will use the endpoint based on the token_type, which is automatically resolved by the inverters_data property
@@ -684,6 +687,7 @@ class EnvoyReader:
         url("ensemble_inventory", ENDPOINT_URL_ENSEMBLE_INVENTORY, cache=20)
         url("ensemble_secctrl", ENDPOINT_URL_ENSEMBLE_SECCTRL, cache=20)
         url("ensemble_power", ENDPOINT_URL_ENSEMBLE_POWER, cache=20)
+        iurl("pcu_comm_status", ENDPOINT_URL_COMM_STATUS, cache=90)
         iurl("devstatus", ENDPOINT_URL_DEVSTATUS, cache=20)
         iurl("production_power", ENDPOINT_URL_PRODUCTION_POWER, cache=20)
         url("info", ENDPOINT_URL_INFO_XML, cache=86400)
