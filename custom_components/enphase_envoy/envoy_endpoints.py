@@ -19,6 +19,7 @@ ENDPOINT_URL_ENSEMBLE_POWER = "https://{}/ivp/ensemble/power"
 # Inverter endpoints
 ENDPOINT_URL_INVENTORY = "https://{}/inventory.json"
 ENDPOINT_URL_DEVSTATUS = "https://{}/ivp/peb/devstatus"
+ENDPOINT_URL_COMM_STATUS = "https://{}/installer/pcu_comm_check"
 
 # Netprofile endpoints
 ENDPOINT_URL_INSTALLER_AGF = "https://{}/installer/agf/index.json"
