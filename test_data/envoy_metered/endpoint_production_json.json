@@ -51,7 +51,7 @@
     "consumption": [
         {
             "type": "eim",
-            "activeCount": 0,
+            "activeCount": 1,
             "measurementType": "total-consumption",
             "readingTime": 1689258508,
             "wNow": 3441.236,
