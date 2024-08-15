@@ -21,6 +21,7 @@ ENDPOINT_URL_ENSEMBLE_POWER = TEST_DATA + "endpoint_ensemble_power.json"
 # Inverter endpoints
 ENDPOINT_URL_INVENTORY = TEST_DATA + "endpoint_inventory.json"
 ENDPOINT_URL_DEVSTATUS = TEST_DATA + "endpoint_devstatus.json"
+ENDPOINT_URL_COMM_STATUS = TEST_DATA + "endpoint_pcu_comm_check.json"
 
 # Netprofile endpoints
 ENDPOINT_URL_INSTALLER_AGF = TEST_DATA + "endpoint_installer_agf_index_json.json"
