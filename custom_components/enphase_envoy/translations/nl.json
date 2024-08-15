@@ -16,10 +16,9 @@
                   "host": "Host",
                   "password": "Enlighten Wachtwoord",
                   "username": "Enlighten Gebruikersnaam",
-                  "serial": "Envoy Serienummer",
-                  "disable_installer_account_use": "Ik heb geen installer of DHZ enphase account, alleen Home owner"
+                  "serial": "Envoy Serienummer"
               },
-              "description": "Voer de hostname/ip en serienummer van je Envoy in. Gebruik je Enlighten installer account gegevens."
+              "description": "Voer de hostname/ip en serienummer van je Envoy in. Gebruik je Enlighten (installer) account gegevens."
           }
       }
   },

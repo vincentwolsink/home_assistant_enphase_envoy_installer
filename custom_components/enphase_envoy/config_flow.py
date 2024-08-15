@@ -28,7 +28,6 @@ from .const import (
     CONF_SERIAL,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_REALTIME_UPDATE_THROTTLE,
-    DISABLE_INSTALLER_ACCOUNT_USE,
     ENABLE_ADDITIONAL_METRICS,
     DEFAULT_GETDATA_TIMEOUT,
 )
@@ -46,7 +45,6 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> EnvoyRead
         enlighten_pass=data[CONF_PASSWORD],
         inverters=False,
         enlighten_serial_num=data[CONF_SERIAL],
-        disable_installer_account_use=data[DISABLE_INSTALLER_ACCOUNT_USE],
     )
 
     try:
@@ -85,7 +83,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         schema[vol.Required(CONF_SERIAL, default=self.unique_id)] = str
         schema[vol.Required(CONF_USERNAME, default=self.username)] = str
         schema[vol.Required(CONF_PASSWORD, default="")] = str
-        schema[vol.Required(DISABLE_INSTALLER_ACCOUNT_USE, default=False)] = bool
 
         return vol.Schema(schema)
 
@@ -254,17 +251,6 @@ class EnvoyOptionsFlowHandler(config_entries.OptionsFlow):
                     "getdata_timeout", DEFAULT_GETDATA_TIMEOUT
                 ),
             ): vol.All(vol.Coerce(int), vol.Range(min=30)),
-            vol.Optional(
-                DISABLE_INSTALLER_ACCOUNT_USE,
-                default=(
-                    self.config_entry.options.get(
-                        DISABLE_INSTALLER_ACCOUNT_USE,
-                        self.config_entry.data.get(
-                            DISABLE_INSTALLER_ACCOUNT_USE, False
-                        ),
-                    )
-                ),
-            ): bool,
             vol.Optional(
                 "disable_negative_production",
                 default=self.config_entry.options.get(

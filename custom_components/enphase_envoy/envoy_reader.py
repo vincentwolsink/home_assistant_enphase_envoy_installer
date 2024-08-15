@@ -649,7 +649,6 @@ class EnvoyReader:
         token_refresh_buffer_seconds=0,
         store=None,
         disable_negative_production=False,
-        disable_installer_account_use=False,
     ):
         """Init the EnvoyReader."""
         self.host = host.lower()
@@ -705,7 +704,7 @@ class EnvoyReader:
             pass
 
         self.disable_negative_production = disable_negative_production
-        self.disable_installer_account_use = disable_installer_account_use
+        self.disable_installer_account_use = False
 
         self.is_receiving_realtime_data = False
 
@@ -920,56 +919,20 @@ class EnvoyReader:
 
             return resp.json()["access_token"]
 
-    async def _fetch_owner_token_json(self):
-        """
-        Try to fetch the owner token json from Enlighten API
-        :return:
-        """
-        _LOGGER.debug("Fetching owner token")
-        async with self.async_client as client:
-            # login to Enlighten
-            payload_login = {
-                "user[email]": self.enlighten_user,
-                "user[password]": self.enlighten_pass,
-            }
-            resp = await client.post(ENLIGHTEN_AUTH_URL, data=payload_login, timeout=30)
-            if resp.status_code >= 400:
-                raise EnlightenError("Could not Authenticate via Enlighten")
-
-            # now that we're in a logged in session, we can request the installer token
-            login_data = resp.json()
-            payload_token = {
-                "session_id": login_data["session_id"],
-                "serial_num": self.enlighten_serial_num,
-                "username": self.enlighten_user,
-            }
-            resp = await client.post(
-                ENLIGHTEN_TOKEN_URL, json=payload_token, timeout=30
-            )
-            if resp.status_code != 200:
-                raise EnlightenError("Could not get installer token")
-            return resp.text
-
     async def _get_enphase_token(self):
-        # First attempt should be to auth using envoy token, as this could result in a installer token
-        if not self.disable_installer_account_use:
-            self._token = await self._fetch_envoy_token_json()
-            self.envoy_token_fetch_attempted = True
+        self._token = await self._fetch_envoy_token_json()
+        self.envoy_token_fetch_attempted = True
 
-            _LOGGER.debug("Envoy Token")
-            if self._is_enphase_token_expired(self._token):
-                raise EnlightenError("Just received token already expired")
+        _LOGGER.debug("Envoy Token")
+        if self._is_enphase_token_expired(self._token):
+            raise EnlightenError("Just received token already expired")
 
-            if self.token_type != "installer":
-                _LOGGER.warning(
-                    "Received token is of type %s, disabling installer account usage",
-                    self.token_type,
-                )
-                self.disable_installer_account_use = True
-
-        else:
-            self._token = await self._fetch_owner_token_json()
-            _LOGGER.debug("Commissioned Token")
+        if self.token_type != "installer":
+            _LOGGER.warning(
+                "Received token is of type %s, disabling installer account usage",
+                self.token_type,
+            )
+            self.disable_installer_account_use = True
 
         if self._is_enphase_token_expired(self._token):
             raise EnlightenError("Just received token already expired")
