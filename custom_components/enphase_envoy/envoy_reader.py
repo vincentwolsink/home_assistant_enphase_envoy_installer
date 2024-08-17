@@ -43,10 +43,6 @@ from .envoy_endpoints import (
 ENVOY_MODEL_M = "Metered"
 ENVOY_MODEL_S = "Standard"
 
-# paths for the enlighten installer token
-ENLIGHTEN_AUTH_URL = "https://enlighten.enphaseenergy.com/login/login.json"
-ENLIGHTEN_TOKEN_URL = "https://entrez.enphaseenergy.com/tokens"
-
 # paths used for fetching enlighten token through envoy
 ENLIGHTEN_LOGIN_URL = "https://entrez.enphaseenergy.com/login"
 ENDPOINT_URL_GET_JWT = "https://{}/auth/get_jwt"
