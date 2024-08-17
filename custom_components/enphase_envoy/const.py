@@ -47,7 +47,6 @@ DEFAULT_GETDATA_TIMEOUT = 60
 CONF_SERIAL = "serial"
 
 LIVE_UPDATEABLE_ENTITIES = "live-update-entities"
-DISABLE_INSTALLER_ACCOUNT_USE = "disable_installer_account_use"
 ENABLE_ADDITIONAL_METRICS = "enable_additional_metrics"
 ADDITIONAL_METRICS = []
 
