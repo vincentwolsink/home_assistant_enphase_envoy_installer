@@ -7,13 +7,13 @@
 This is a HACS custom integration for enphase envoys with firmware version 7 and up.
 
 Especially made to provide extra functionality with your installer or DIY account.
-If you want to use the integration with a Home Owner account (with less functionality), select the option during configuration.
+You can also use the integration with a Home Owner account, without the extra functionality.
 
 Features:
 - Individual device per inverter with all information available.
 - Individual device per Q-relay with relay status.
 - Individual device per battery with information available.
-- Production switch to turn on/off solar power production. :one:
+- Production switch to turn on/off solar power production. *
 - Firmware update sensor.
 - 3 Phase CT readings.
 - "Realtime" updates of CT readings.
@@ -21,7 +21,7 @@ Features:
 - Optional negative production reading correction.
 - Service call to retrieve and set grid profile.
 
-:one: Some Enphase installations suffer from an [issue](https://support.enphase.com/s/question/0D53m00009JkKntCAF/when-i-disable-and-later-enable-power-production-through-the-envoy-installer-web-interface-the-microinverters-only-start-producing-power-the-next-morning-instead-of-right-away-why-is-that-and-is-there-any-way-to-make-them-immediately-produce-power) where production only restarts the next morning. This is not an issue with this integration.
+* Some Enphase installations suffer from an [issue](https://support.enphase.com/s/question/0D53m00009JkKntCAF/when-i-disable-and-later-enable-power-production-through-the-envoy-installer-web-interface-the-microinverters-only-start-producing-power-the-next-morning-instead-of-right-away-why-is-that-and-is-there-any-way-to-make-them-immediately-produce-power) where production only restarts the next morning. This is not an issue with this integration.
 
 ## Screenshots
 
