@@ -34,10 +34,10 @@ Available entities differ per Envoy type and configuration.
 ### Envoy
 |Entity name|Entity ID|Unit|
 |-----------|---------|----|
-|Envoy xxx Apparent Power|sensor.envoy_xxx_apparent_power|VA|
-|Envoy xxx Apparent Power L1|sensor.envoy_xxx_apparent_power_l1|VA|
-|Envoy xxx Apparent Power L2|sensor.envoy_xxx_apparent_power_l2|VA|
-|Envoy xxx Apparent Power L3|sensor.envoy_xxx_apparent_power_l3|VA|
+|Envoy xxx Apparent Power ¹|sensor.envoy_xxx_apparent_power|VA|
+|Envoy xxx Apparent Power L1 ¹|sensor.envoy_xxx_apparent_power_l1|VA|
+|Envoy xxx Apparent Power L2 ¹|sensor.envoy_xxx_apparent_power_l2|VA|
+|Envoy xxx Apparent Power L3 ¹|sensor.envoy_xxx_apparent_power_l3|VA|
 |Envoy xxx Batteries Available Energy|sensor.envoy_xxx_batteries_available_energy|Wh|
 |Envoy xxx Batteries Capacity|sensor.envoy_xxx_batteries_capacity|Wh|
 |Envoy xxx Batteries Charge|sensor.envoy_xxx_batteries_charge|%|
@@ -45,10 +45,10 @@ Available entities differ per Envoy type and configuration.
 |Envoy xxx Batteries Mode|select.envoy_xxx_batteries_mode||
 |Envoy xxx Batteries Power|sensor.envoy_xxx_batteries_power|W|
 |Envoy xxx Batteries Reserve Charge|number.envoy_xxx_batteries_reserve_charge|%|
-|Envoy xxx Current Amps|sensor.envoy_xxx_current_amps|A|
-|Envoy xxx Current Amps L1|sensor.envoy_xxx_current_amps_l1|A|
-|Envoy xxx Current Amps L2|sensor.envoy_xxx_current_amps_l2|A|
-|Envoy xxx Current Amps L3|sensor.envoy_xxx_current_amps_l3|A|
+|Envoy xxx Current Amps ¹|sensor.envoy_xxx_current_amps|A|
+|Envoy xxx Current Amps L1 ¹|sensor.envoy_xxx_current_amps_l1|A|
+|Envoy xxx Current Amps L2 ¹|sensor.envoy_xxx_current_amps_l2|A|
+|Envoy xxx Current Amps L3 ¹|sensor.envoy_xxx_current_amps_l3|A|
 |Envoy xxx Current Power Consumption|sensor.envoy_xxx_current_power_consumption|W|
 |Envoy xxx Current Power Consumption L1|sensor.envoy_xxx_current_power_consumption_l1|W|
 |Envoy xxx Current Power Consumption L2|sensor.envoy_xxx_current_power_consumption_l2|W|
@@ -61,9 +61,9 @@ Available entities differ per Envoy type and configuration.
 |Envoy xxx Current Voltage L1|sensor.envoy_xxx_current_voltage_l1|V|
 |Envoy xxx Current Voltage L2|sensor.envoy_xxx_current_voltage_l2|V|
 |Envoy xxx Current Voltage L3|sensor.envoy_xxx_current_voltage_l3|V|
-|Envoy xxx Frequency L1|sensor.envoy_xxx_frequency_l1|Hz|
-|Envoy xxx Frequency L2|sensor.envoy_xxx_frequency_l2|Hz|
-|Envoy xxx Frequency L3|sensor.envoy_xxx_frequency_l3|Hz|
+|Envoy xxx Frequency L1 ¹|sensor.envoy_xxx_frequency_l1|Hz|
+|Envoy xxx Frequency L2 ¹|sensor.envoy_xxx_frequency_l2|Hz|
+|Envoy xxx Frequency L3 ¹|sensor.envoy_xxx_frequency_l3|Hz|
 |Envoy xxx Grid Profile|sensor.envoy_xxx_grid_profile||
 |Envoy xxx Grid Status|binary_sensor.envoy_xxx_grid_status||
 |Envoy xxx Lifetime Energy Consumption|sensor.envoy_xxx_lifetime_energy_consumption|Wh|
@@ -74,13 +74,13 @@ Available entities differ per Envoy type and configuration.
 |Envoy xxx Lifetime Energy Production L1|sensor.envoy_xxx_lifetime_energy_production_l1|Wh|
 |Envoy xxx Lifetime Energy Production L2|sensor.envoy_xxx_lifetime_energy_production_l2|Wh|
 |Envoy xxx Lifetime Energy Production L3|sensor.envoy_xxx_lifetime_energy_production_l3|Wh|
-|Envoy xxx Power Factor L1|sensor.envoy_xxx_power_factor_l1||
-|Envoy xxx Power Factor L2|sensor.envoy_xxx_power_factor_l2||
-|Envoy xxx Power Factor L3|sensor.envoy_xxx_power_factor_l3||
+|Envoy xxx Power Factor L1 ¹|sensor.envoy_xxx_power_factor_l1||
+|Envoy xxx Power Factor L2 ¹|sensor.envoy_xxx_power_factor_l2||
+|Envoy xxx Power Factor L3 ¹|sensor.envoy_xxx_power_factor_l3||
 |Envoy xxx Production|switch.envoy_xxx_production||
-|Envoy xxx Reactive Power L1|sensor.envoy_xxx_reactive_power_l1|var|
-|Envoy xxx Reactive Power L2|sensor.envoy_xxx_reactive_power_l2|var|
-|Envoy xxx Reactive Power L3|sensor.envoy_xxx_reactive_power_l3|var|
+|Envoy xxx Reactive Power L1 ¹|sensor.envoy_xxx_reactive_power_l1|var|
+|Envoy xxx Reactive Power L2 ¹|sensor.envoy_xxx_reactive_power_l2|var|
+|Envoy xxx Reactive Power L3 ¹|sensor.envoy_xxx_reactive_power_l3|var|
 |Envoy xxx Today's Energy Consumption|sensor.envoy_xxx_today_s_energy_consumption|Wh|
 |Envoy xxx Today's Energy Consumption L1|sensor.envoy_xxx_today_s_energy_consumption_l1|Wh|
 |Envoy xxx Today's Energy Consumption L2|sensor.envoy_xxx_today_s_energy_consumption_l2|Wh|
@@ -89,6 +89,8 @@ Available entities differ per Envoy type and configuration.
 |Envoy xxx Today's Energy Production L1|sensor.envoy_xxx_today_s_energy_production_l1|Wh|
 |Envoy xxx Today's Energy Production L2|sensor.envoy_xxx_today_s_energy_production_l2|Wh|
 |Envoy xxx Today's Energy Production L3|sensor.envoy_xxx_today_s_energy_production_l3|Wh|
+
+¹ Optional. Enable via integration configuration.
 
 ### Inverter
 |Entity name|Entity ID|Unit|
