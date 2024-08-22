@@ -29,10 +29,11 @@ async def async_setup_entry(
         coordinator.data.get("batteries") is not None
         and coordinator.data.get("storage_charge_from_grid") is not None
     ):
+        entity_name = f"{name} {STORAGE_RESERVE_SOC_NUMBER.name}"
         entities.append(
             EnvoyStorageReservedSocEntity(
                 STORAGE_RESERVE_SOC_NUMBER,
-                STORAGE_RESERVE_SOC_NUMBER.name,
+                entity_name,
                 name,
                 config_entry.unique_id,
                 None,

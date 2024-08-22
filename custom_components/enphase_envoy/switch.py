@@ -31,10 +31,11 @@ async def async_setup_entry(
                 coordinator.data.get("batteries") is not None
                 and coordinator.data.get(switch_description.key) is not None
             ):
+                entity_name = f"{name} {switch_description.name}"
                 entities.append(
                     EnvoyStorageSwitchEntity(
                         switch_description,
-                        switch_description.name,
+                        entity_name,
                         name,
                         config_entry.unique_id,
                         None,
@@ -44,10 +45,11 @@ async def async_setup_entry(
                 )
         else:
             if coordinator.data.get(switch_description.key) is not None:
+                entity_name = f"{name} {switch_description.name}"
                 entities.append(
                     EnvoySwitchEntity(
                         switch_description,
-                        switch_description.name,
+                        entity_name,
                         name,
                         config_entry.unique_id,
                         None,

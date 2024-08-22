@@ -23,10 +23,11 @@ async def async_setup_entry(
         coordinator.data.get("batteries") is not None
         and coordinator.data.get("storage_mode") is not None
     ):
+        entity_name = f"{name} {STORAGE_MODE_SELECT.name}"
         entities.append(
             EnvoyStorageModeSelectEntity(
                 STORAGE_MODE_SELECT,
-                STORAGE_MODE_SELECT.name,
+                entity_name,
                 name,
                 config_entry.unique_id,
                 None,
