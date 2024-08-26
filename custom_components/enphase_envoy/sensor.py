@@ -6,6 +6,7 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -256,7 +257,15 @@ class CoordinatedEnvoyEntity(EnvoyEntity, CoordinatorEntity):
 
         sw_version = self.coordinator.data.get("envoy_info", {}).get("software", None)
         hw_version = self.coordinator.data.get("envoy_info", {}).get("pn", None)
+        ethernet_mac_address = self.coordinator.data.get("envoy_info", {}).get("ethernet_mac_address", None)
+        wifi_mac_address = self.coordinator.data.get("envoy_info", {}).get("wifi_mac_address", None)
         model = self.coordinator.data.get("envoy_info", {}).get("model", "Standard")
+
+        connections = set()
+        if ethernet_mac_address:
+            connections.add((CONNECTION_NETWORK_MAC, ethernet_mac_address))
+        if wifi_mac_address:
+            connections.add((CONNECTION_NETWORK_MAC, wifi_mac_address))
 
         return DeviceInfo(
             identifiers={(DOMAIN, str(self._device_serial_number))},
@@ -265,6 +274,7 @@ class CoordinatedEnvoyEntity(EnvoyEntity, CoordinatorEntity):
             name=self._device_name,
             sw_version=sw_version,
             hw_version=resolve_hardware_id(hw_version),
+            connections=connections,
             configuration_url=(
                 f"https://{self.device_host}/" if self.device_host else None
             ),

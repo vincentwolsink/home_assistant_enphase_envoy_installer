@@ -21,6 +21,7 @@ from json.decoder import JSONDecodeError
 
 from .envoy_endpoints import (
     ENDPOINT_URL_INFO_XML,
+    ENDPOINT_URL_HOME_JSON,
     ENDPOINT_URL_PRODUCTION_JSON,
     ENDPOINT_URL_PRODUCTION_V1,
     ENDPOINT_URL_PRODUCTION_INVERTERS,
@@ -375,12 +376,16 @@ class EnvoyStandard(EnvoyData):
     serial_number_value = "endpoint_info.envoy_info.device.sn"
     grid_profile_value = "endpoint_installer_agf.selected_profile"
     grid_profiles_available_value = "endpoint_installer_agf.profiles"
+    ethernet_mac_address_value = "endpoint_home_json.network.interfaces[?(@.type==\"ethernet\")].mac"
+    wifi_mac_address_value = "endpoint_home_json.network.interfaces[?(@.type==\"wifi\")].mac"
 
     @envoy_property()
     def envoy_info(self):
         return {
             "pn": self.get("envoy_pn"),
             "software": self.get("envoy_software"),
+            "ethernet_mac_address": self.get("ethernet_mac_address"),
+            "wifi_mac_address": self.get("wifi_mac_address"),
             "model": getattr(self, "ALIAS", self.__class__.__name__[5:]),
         }
 
@@ -676,6 +681,7 @@ class EnvoyReader:
         iurl = partial(url, installer_required="installer")
 
         self.uri_registry = {}
+        url("home_json", ENDPOINT_URL_HOME_JSON, cache=86400)
         url("production_json", ENDPOINT_URL_PRODUCTION_JSON, cache=0)
         url("production_v1", ENDPOINT_URL_PRODUCTION_V1, cache=20)
         url("production_inverters", ENDPOINT_URL_PRODUCTION_INVERTERS, cache=20)
