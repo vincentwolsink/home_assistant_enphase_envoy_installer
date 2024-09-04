@@ -78,6 +78,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         enlighten_serial_num=config[CONF_SERIAL],
         store=store,
         disable_negative_production=options.get("disable_negative_production", False),
+        disabled_endpoints=options.get("disabled_endpoints", []),
     )
     await envoy_reader._sync_store(load=True)
 
