@@ -20,6 +20,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers import config_validation as cv
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util.network import is_ipv4_address, is_ipv6_address
 
@@ -31,6 +32,8 @@ from .const import (
     ENABLE_ADDITIONAL_METRICS,
     DEFAULT_GETDATA_TIMEOUT,
 )
+from .envoy_endpoints import ENVOY_ENDPOINTS
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -271,6 +274,20 @@ class EnvoyOptionsFlowHandler(config_entries.OptionsFlow):
                 ENABLE_ADDITIONAL_METRICS,
                 default=self.config_entry.options.get(ENABLE_ADDITIONAL_METRICS, False),
             ): bool,
+            vol.Optional(
+                "disabled_endpoints",
+                description={
+                    "suggested_value": self.config_entry.options.get(
+                        "disabled_endpoints"
+                    )
+                },
+            ): cv.multi_select(
+                {
+                    f"endpoint_{key}": key
+                    for key, endpoint in ENVOY_ENDPOINTS.items()
+                    if endpoint["optional"]
+                }
+            ),
         }
         return self.async_show_form(step_id="user", data_schema=vol.Schema(schema))
 

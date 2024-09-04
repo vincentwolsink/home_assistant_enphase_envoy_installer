@@ -33,7 +33,8 @@
           "time_between_update": "Minimum tijd tussen entity updates [s]",
           "getdata_timeout": "Maximum tijd voor het ophalen van data vanaf envoy [s]",
           "enable_additional_metrics": "[Envoy-S Metered] Extra metrics inschakelen, zoals total amps, frequency, apparent en reactive power en power factor.",
-          "disable_installer_account_use": "Haal geen data op die een installateur of DHZ enphase account vereisen"
+          "disable_installer_account_use": "Haal geen data op die een installateur of DHZ enphase account vereisen",
+          "disabled_endpoints": "[Geavanceerd] Uitgeschakelde Envoy endpoints"
         },
         "data_description": {
           "realtime_update_throttle": "Dit interval is van toepassing op real-time updates (om eventuele overload met updates te voorkomen)",

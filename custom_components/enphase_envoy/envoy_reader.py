@@ -20,24 +20,10 @@ from urllib import parse
 from json.decoder import JSONDecodeError
 
 from .envoy_endpoints import (
-    ENDPOINT_URL_INFO_XML,
-    ENDPOINT_URL_PRODUCTION_JSON,
-    ENDPOINT_URL_PRODUCTION_V1,
-    ENDPOINT_URL_PRODUCTION_INVERTERS,
-    ENDPOINT_URL_PRODUCTION_REPORT,
-    ENDPOINT_URL_PRODUCTION_POWER,
-    ENDPOINT_URL_PDM_ENERGY,
+    ENVOY_ENDPOINTS,
     ENDPOINT_URL_STREAM,
-    ENDPOINT_URL_ENSEMBLE_INVENTORY,
-    ENDPOINT_URL_ENSEMBLE_SECCTRL,
-    ENDPOINT_URL_ENSEMBLE_POWER,
-    ENDPOINT_URL_INVENTORY,
-    ENDPOINT_URL_COMM_STATUS,
-    ENDPOINT_URL_DEVSTATUS,
-    ENDPOINT_URL_INSTALLER_AGF,
     ENDPOINT_URL_INSTALLER_AGF_SET_PROFILE,
     ENDPOINT_URL_INSTALLER_AGF_UPLOAD_PROFILE,
-    ENDPOINT_URL_ADMIN_TARIFF,
 )
 
 ENVOY_MODEL_M = "Metered"
@@ -645,6 +631,7 @@ class EnvoyReader:
         token_refresh_buffer_seconds=0,
         store=None,
         disable_negative_production=False,
+        disabled_endpoints=[],
     ):
         """Init the EnvoyReader."""
         self.host = host.lower()
@@ -668,29 +655,11 @@ class EnvoyReader:
 
         self.data: EnvoyData = EnvoyStandard(self)
         self.required_endpoints = set()  # in case we would need it..
-
-        def url(endpoint, *a, **kw):
-            return self.register_url(f"endpoint_{endpoint}", *a, **kw)
-
-        # iurl is for registering endpoints that require a installer token
-        iurl = partial(url, installer_required="installer")
+        self.disabled_endpoints = disabled_endpoints
 
         self.uri_registry = {}
-        url("production_json", ENDPOINT_URL_PRODUCTION_JSON, cache=0)
-        url("production_v1", ENDPOINT_URL_PRODUCTION_V1, cache=20)
-        url("production_inverters", ENDPOINT_URL_PRODUCTION_INVERTERS, cache=20)
-        url("ensemble_inventory", ENDPOINT_URL_ENSEMBLE_INVENTORY, cache=20)
-        url("ensemble_secctrl", ENDPOINT_URL_ENSEMBLE_SECCTRL, cache=20)
-        url("ensemble_power", ENDPOINT_URL_ENSEMBLE_POWER, cache=20)
-        iurl("pcu_comm_status", ENDPOINT_URL_COMM_STATUS, cache=90)
-        iurl("devstatus", ENDPOINT_URL_DEVSTATUS, cache=20)
-        iurl("production_power", ENDPOINT_URL_PRODUCTION_POWER, cache=20)
-        url("info", ENDPOINT_URL_INFO_XML, cache=86400)
-        url("inventory", ENDPOINT_URL_INVENTORY, cache=300)
-        url("production_report", ENDPOINT_URL_PRODUCTION_REPORT, cache=0)
-        iurl("pdm_energy", ENDPOINT_URL_PDM_ENERGY)
-        iurl("installer_agf", ENDPOINT_URL_INSTALLER_AGF)
-        url("admin_tariff", ENDPOINT_URL_ADMIN_TARIFF, cache=20)
+        for key, endpoint in ENVOY_ENDPOINTS.items():
+            self.register_url(f"endpoint_{key}", **endpoint)
 
         # If IPv6 address then enclose host in brackets
         try:
@@ -708,12 +677,15 @@ class EnvoyReader:
         self._store_data = {}
         self._store_update_pending = False
 
-    def register_url(self, attr, uri, cache=10, installer_required=False):
+    def register_url(
+        self, attr, url, cache=10, installer_required=False, optional=False
+    ):
         self.uri_registry[attr] = {
-            "url": uri,
+            "url": url,
             "cache_time": cache,
             "last_fetch": 0,
             "installer_required": installer_required,
+            "optional": optional,
         }
         setattr(self, attr, None)
         return self.uri_registry[attr]
@@ -1090,6 +1062,15 @@ class EnvoyReader:
         _LOGGER.info("Updating endpoints %s", endpoints)
         for endpoint in endpoints:
             endpoint_settings = self.uri_registry.get(endpoint)
+
+            if endpoint_settings["optional"] and endpoint in self.disabled_endpoints:
+                _LOGGER.info(
+                    "Skipping update of disabled %s: %s",
+                    endpoint,
+                    endpoint_settings["url"],
+                )
+                continue
+
             if endpoint_settings == None:
                 _LOGGER.error(f"No settings found for uri {endpoint}")
                 continue

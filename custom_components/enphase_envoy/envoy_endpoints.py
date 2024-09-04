@@ -1,32 +1,104 @@
-# Generic endpoints
-ENDPOINT_URL_HOME_JSON = "https://{}/home.json"
-ENDPOINT_URL_INFO_XML = "https://{}/info.xml"
+ENVOY_ENDPOINTS = {
+    # Generic endpoints
+    "info": {
+        "url": "https://{}/info.xml",
+        "cache": 20,
+        "installer_required": False,
+        "optional": False,
+    },
+    # Production/consumption endpoints
+    "production_json": {
+        "url": "https://{}/production.json?details=1",
+        "cache": 0,
+        "installer_required": False,
+        "optional": False,
+    },
+    "production_v1": {
+        "url": "https://{}/api/v1/production",
+        "cache": 20,
+        "installer_required": False,
+        "optional": False,
+    },
+    "production_inverters": {
+        "url": "https://{}/api/v1/production/inverters",
+        "cache": 20,
+        "installer_required": False,
+        "optional": False,
+    },
+    "production_report": {
+        "url": "https://{}/ivp/meters/reports/production",
+        "cache": 0,
+        "installer_required": False,
+        "optional": False,
+    },
+    "production_power": {
+        "url": "https://{}/ivp/mod/603980032/mode/power",
+        "cache": 20,
+        "installer_required": False,
+        "optional": True,
+    },
+    "pdm_energy": {
+        "url": "https://{}/ivp/pdm/energy",
+        "cache": 20,
+        "installer_required": True,
+        "optional": False,
+    },
+    # Battery endpoints
+    "ensemble_inventory": {
+        "url": "https://{}/ivp/ensemble/inventory",
+        "cache": 20,
+        "installer_required": False,
+        "optional": True,
+    },
+    "ensemble_secctrl": {
+        "url": "https://{}/ivp/ensemble/secctrl",
+        "cache": 20,
+        "installer_required": False,
+        "optional": True,
+    },
+    "ensemble_power": {
+        "url": "https://{}/ivp/ensemble/power",
+        "cache": 20,
+        "installer_required": False,
+        "optional": True,
+    },
+    # Inverter endpoints
+    "inventory": {
+        "url": "https://{}/inventory.json",
+        "cache": 300,
+        "installer_required": False,
+        "optional": False,
+    },
+    "devstatus": {
+        "url": "https://{}/ivp/peb/devstatus",
+        "cache": 20,
+        "installer_required": True,
+        "optional": False,
+    },
+    "pcu_comm_status": {
+        "url": "https://{}/installer/pcu_comm_check",
+        "cache": 90,
+        "installer_required": True,
+        "optional": True,
+    },
+    # Netprofile endpoints
+    "installer_agf": {
+        "url": "https://{}/installer/agf/index.json",
+        "cache": 10,
+        "installer_required": True,
+        "optional": True,
+    },
+    # Tariff endpoints
+    "admin_tariff": {
+        "url": "https://{}/admin/lib/tariff",
+        "cache": 10,
+        "installer_required": False,
+        "optional": True,
+    },
+}
 
-# Production/consumption endpoints
-ENDPOINT_URL_PRODUCTION_JSON = "https://{}/production.json?details=1"
-ENDPOINT_URL_PRODUCTION_V1 = "https://{}/api/v1/production"
-ENDPOINT_URL_PRODUCTION_INVERTERS = "https://{}/api/v1/production/inverters"
-ENDPOINT_URL_PRODUCTION_REPORT = "https://{}/ivp/meters/reports/production"
-ENDPOINT_URL_PRODUCTION_POWER = "https://{}/ivp/mod/603980032/mode/power"
-ENDPOINT_URL_PDM_ENERGY = "https://{}/ivp/pdm/energy"
 ENDPOINT_URL_STREAM = "https://{}/stream/meter"
-
-# Battery endpoints
-ENDPOINT_URL_ENSEMBLE_INVENTORY = "https://{}/ivp/ensemble/inventory"
-ENDPOINT_URL_ENSEMBLE_SECCTRL = "https://{}/ivp/ensemble/secctrl"
-ENDPOINT_URL_ENSEMBLE_POWER = "https://{}/ivp/ensemble/power"
-
-# Inverter endpoints
-ENDPOINT_URL_INVENTORY = "https://{}/inventory.json"
-ENDPOINT_URL_DEVSTATUS = "https://{}/ivp/peb/devstatus"
-ENDPOINT_URL_COMM_STATUS = "https://{}/installer/pcu_comm_check"
-
-# Netprofile endpoints
-ENDPOINT_URL_INSTALLER_AGF = "https://{}/installer/agf/index.json"
 ENDPOINT_URL_INSTALLER_AGF_SET_PROFILE = "https://{}/installer/agf/set_profile.json"
 ENDPOINT_URL_INSTALLER_AGF_UPLOAD_PROFILE = (
     "https://{}/installer/agf/upload_profile_package"
 )
-
-# Tariff endpoints
-ENDPOINT_URL_ADMIN_TARIFF = "https://{}/admin/lib/tariff"
