@@ -1249,7 +1249,7 @@ class EnvoyReader:
 
     async def set_production_power(self, power_on):
         if self.endpoint_production_power is not None:
-            formatted_url = ENDPOINT_URL_PRODUCTION_POWER.format(self.host)
+            formatted_url = ENVOY_ENDPOINTS["production_power"]["url"].format(self.host)
             power_forced_off = 0 if power_on else 1
             await self._async_put(
                 formatted_url, data={"length": 1, "arr": [power_forced_off]}
@@ -1287,7 +1287,7 @@ class EnvoyReader:
 
     async def set_storage(self, storage_key, storage_value):
         if self.endpoint_admin_tariff is not None:
-            formatted_url = ENDPOINT_URL_ADMIN_TARIFF.format(self.host)
+            formatted_url = ENVOY_ENDPOINTS["admin_tariff"]["url"].format(self.host)
             tariff = self.data.get("tariff")
             tariff["storage_settings"][storage_key] = storage_value
 
