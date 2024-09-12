@@ -22,7 +22,7 @@ from homeassistant.const import (
     UnitOfElectricPotential,
     UnitOfElectricCurrent,
     UnitOfTemperature,
-    POWER_VOLT_AMPERE_REACTIVE,
+    UnitOfReactivePower,
     EntityCategory,
 )
 
@@ -350,7 +350,7 @@ for phase in ["l1", "l2", "l3"]:
             SensorEntityDescription(
                 key=f"reactive_power_{phase}",
                 name=f"Reactive Power {phase.upper()}",
-                native_unit_of_measurement=POWER_VOLT_AMPERE_REACTIVE,
+                native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
                 state_class=SensorStateClass.MEASUREMENT,
                 device_class=SensorDeviceClass.REACTIVE_POWER,
             ),
