@@ -770,7 +770,7 @@ class EnvoyReader:
                         received_401 += 1
                         continue
                     _LOGGER.debug("Fetched from %s: %s: %s", url, resp, resp.text)
-                    if resp.status_code == 404:
+                    if resp.status_code != 200:
                         return None
                     return resp
             except httpx.TransportError as e:
