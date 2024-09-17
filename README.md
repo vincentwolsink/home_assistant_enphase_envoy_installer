@@ -13,15 +13,13 @@ Features:
 - Individual device per inverter with all information available.
 - Individual device per Q-relay with relay status.
 - Individual device per battery with information available.
-- Production switch to turn on/off solar power production. *
-- Firmware update sensor.
+- Production switch to turn on/off solar power production.
+- Communication level sensors.
 - 3 Phase CT readings.
 - "Realtime" updates of CT readings.
 - Configurable polling interval.
 - Optional negative production reading correction.
-- Service call to retrieve and set grid profile.
-
-* Some Enphase installations suffer from an [issue](https://support.enphase.com/s/question/0D53m00009JkKntCAF/when-i-disable-and-later-enable-power-production-through-the-envoy-installer-web-interface-the-microinverters-only-start-producing-power-the-next-morning-instead-of-right-away-why-is-that-and-is-there-any-way-to-make-them-immediately-produce-power) where production only restarts the next morning. This is not an issue with this integration.
+- Service call to retrieve and set and upload grid profile.
 
 ## Screenshots
 
