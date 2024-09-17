@@ -101,6 +101,7 @@ Available entities differ per Envoy type and configuration.
 |Inverter xxx Producing|binary_sensor.inverter_xxx_producing||
 |Inverter xxx Production|sensor.inverter_xxx_production|W|
 |Inverter xxx Temperature|sensor.inverter_xxx_temperature|°C|
+|Inverter xxx Communication Level|sensor.inverter_xxx_communication_level||
 
 ### Battery
 |Entity name|Entity ID|Unit|
@@ -123,6 +124,7 @@ Available entities differ per Envoy type and configuration.
 |Relay xxx Communication Level|sensor.relay_xxx_communication_level||
 |Relay xxx Contact|binary_sensor.relay_xxx_contact||
 |Relay xxx Forced|binary_sensor.relay_xxx_forced||
+|Relay xxx Communication Level|sensor.relay_xxx_communication_level||
 
 ## Installation
 
