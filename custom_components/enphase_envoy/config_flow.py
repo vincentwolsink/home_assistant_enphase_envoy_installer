@@ -241,6 +241,17 @@ class EnvoyOptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
+        optional_endpoints = {
+            f"endpoint_{key}": key
+            for key, endpoint in ENVOY_ENDPOINTS.items()
+            if endpoint["optional"]
+        }
+        disabled_endpoints = [
+            ep
+            for ep in self.config_entry.options.get("disabled_endpoints")
+            if ep in optional_endpoints.keys()
+        ]
+
         schema = {
             vol.Optional(
                 "time_between_update",
@@ -275,19 +286,13 @@ class EnvoyOptionsFlowHandler(config_entries.OptionsFlow):
                 default=self.config_entry.options.get(ENABLE_ADDITIONAL_METRICS, False),
             ): bool,
             vol.Optional(
+                "enable_pcu_comm_check",
+                default=self.config_entry.options.get("enable_pcu_comm_check", False),
+            ): bool,
+            vol.Optional(
                 "disabled_endpoints",
-                description={
-                    "suggested_value": self.config_entry.options.get(
-                        "disabled_endpoints"
-                    )
-                },
-            ): cv.multi_select(
-                {
-                    f"endpoint_{key}": key
-                    for key, endpoint in ENVOY_ENDPOINTS.items()
-                    if endpoint["optional"]
-                }
-            ),
+                description={"suggested_value": disabled_endpoints},
+            ): cv.multi_select(optional_endpoints),
         }
         return self.async_show_form(step_id="user", data_schema=vol.Schema(schema))
 

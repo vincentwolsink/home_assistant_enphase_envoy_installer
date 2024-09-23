@@ -8,6 +8,7 @@ from datetime import timedelta
 import logging
 import time
 from typing import Optional
+import copy
 
 import async_timeout
 from .envoy_reader import EnvoyReader, StreamData
@@ -70,6 +71,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Setup persistent storage, to save tokens between home assistant restarts
     store = Store(hass, STORAGE_VERSION, ".".join([STORAGE_KEY, entry.entry_id]))
 
+    disabled_endpoints = options.get("disabled_endpoints", [])
+    if (
+        not options.get("enable_pcu_comm_check")
+        and "endpoint_pcu_comm_check" not in disabled_endpoints
+    ):
+        disabled_endpoints = copy.copy(disabled_endpoints)
+        disabled_endpoints.append("endpoint_pcu_comm_check")
+
     envoy_reader = EnvoyReader(
         config[CONF_HOST],
         enlighten_user=config[CONF_USERNAME],
@@ -78,7 +87,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         enlighten_serial_num=config[CONF_SERIAL],
         store=store,
         disable_negative_production=options.get("disable_negative_production", False),
-        disabled_endpoints=options.get("disabled_endpoints", []),
+        disabled_endpoints=disabled_endpoints,
     )
     await envoy_reader._sync_store(load=True)
 

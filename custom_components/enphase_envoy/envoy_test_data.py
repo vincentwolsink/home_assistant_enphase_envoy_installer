@@ -76,7 +76,7 @@ ENVOY_ENDPOINTS = {
         "installer_required": True,
         "optional": False,
     },
-    "pcu_comm_status": {
+    "pcu_comm_check": {
         "url": TEST_DATA + "endpoint_pcu_comm_check.json",
         "cache": 90,
         "installer_required": True,
