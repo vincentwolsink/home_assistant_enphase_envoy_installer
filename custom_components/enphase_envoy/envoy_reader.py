@@ -403,7 +403,7 @@ class EnvoyStandard(EnvoyData):
         installer="endpoint_devstatus.pcu[?(@.devType==1)]",
     )
 
-    pcu_availability_value = "endpoint_pcu_comm_status"
+    pcu_availability_value = "endpoint_pcu_comm_check"
 
     @envoy_property
     def inverters_production(self):
