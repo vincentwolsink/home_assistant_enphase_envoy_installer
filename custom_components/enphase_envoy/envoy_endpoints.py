@@ -2,7 +2,7 @@ ENVOY_ENDPOINTS = {
     # Generic endpoints
     "info": {
         "url": "https://{}/info.xml",
-        "cache": 20,
+        "cache": 86400,
         "installer_required": False,
         "optional": False,
     },
@@ -15,13 +15,13 @@ ENVOY_ENDPOINTS = {
     },
     "production_v1": {
         "url": "https://{}/api/v1/production",
-        "cache": 20,
+        "cache": 0,
         "installer_required": False,
         "optional": False,
     },
     "production_inverters": {
         "url": "https://{}/api/v1/production/inverters",
-        "cache": 20,
+        "cache": 0,
         "installer_required": False,
         "optional": False,
     },
@@ -33,32 +33,32 @@ ENVOY_ENDPOINTS = {
     },
     "production_power": {
         "url": "https://{}/ivp/mod/603980032/mode/power",
-        "cache": 20,
+        "cache": 300,
         "installer_required": False,
         "optional": True,
     },
     "pdm_energy": {
         "url": "https://{}/ivp/pdm/energy",
-        "cache": 20,
+        "cache": 0,
         "installer_required": True,
         "optional": False,
     },
     # Battery endpoints
     "ensemble_inventory": {
         "url": "https://{}/ivp/ensemble/inventory",
-        "cache": 20,
+        "cache": 0,
         "installer_required": False,
         "optional": True,
     },
     "ensemble_secctrl": {
         "url": "https://{}/ivp/ensemble/secctrl",
-        "cache": 20,
+        "cache": 0,
         "installer_required": False,
         "optional": True,
     },
     "ensemble_power": {
         "url": "https://{}/ivp/ensemble/power",
-        "cache": 20,
+        "cache": 0,
         "installer_required": False,
         "optional": True,
     },
@@ -71,27 +71,27 @@ ENVOY_ENDPOINTS = {
     },
     "devstatus": {
         "url": "https://{}/ivp/peb/devstatus",
-        "cache": 20,
+        "cache": 0,
         "installer_required": True,
         "optional": False,
     },
     "pcu_comm_status": {
         "url": "https://{}/installer/pcu_comm_check",
-        "cache": 90,
+        "cache": 3600,
         "installer_required": True,
         "optional": True,
     },
     # Netprofile endpoints
     "installer_agf": {
         "url": "https://{}/installer/agf/index.json",
-        "cache": 10,
+        "cache": 3600,
         "installer_required": True,
         "optional": True,
     },
     # Tariff endpoints
     "admin_tariff": {
         "url": "https://{}/admin/lib/tariff",
-        "cache": 10,
+        "cache": 300,
         "installer_required": False,
         "optional": True,
     },
