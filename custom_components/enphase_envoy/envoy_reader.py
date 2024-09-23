@@ -243,7 +243,7 @@ class EnvoyData(object):
 
     def set_endpoint_data(self, endpoint, response):
         """Called by EnvoyReader.update_endpoints when a response is successfull"""
-        if response.status_code > 400:
+        if response.status_code != 200:
             # It is a server error, do not store endpoint_data
             return
 
@@ -770,8 +770,6 @@ class EnvoyReader:
                         received_401 += 1
                         continue
                     _LOGGER.debug("Fetched from %s: %s: %s", url, resp, resp.text)
-                    if resp.status_code != 200:
-                        return None
                     return resp
             except httpx.TransportError as e:
                 _LOGGER.debug("TransportError: %s", e)
@@ -1105,8 +1103,8 @@ class EnvoyReader:
                     time.time() - endpoint_settings["last_fetch"],
                 )
 
-            if self.data:
-                self.data.set_endpoint_data(endpoint, getattr(self, endpoint))
+                if self.data:
+                    self.data.set_endpoint_data(endpoint, getattr(self, endpoint))
 
     async def get_data(self, get_inverters=True):
         """
