@@ -248,7 +248,7 @@ class EnvoyOptionsFlowHandler(config_entries.OptionsFlow):
         }
         disabled_endpoints = [
             ep
-            for ep in self.config_entry.options.get("disabled_endpoints")
+            for ep in self.config_entry.options.get("disabled_endpoints", [])
             if ep in optional_endpoints.keys()
         ]
 
