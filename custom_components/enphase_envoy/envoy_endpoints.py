@@ -34,7 +34,7 @@ ENVOY_ENDPOINTS = {
     "production_power": {
         "url": "https://{}/ivp/mod/603980032/mode/power",
         "cache": 300,
-        "installer_required": False,
+        "installer_required": True,
         "optional": True,
     },
     "pdm_energy": {
