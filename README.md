@@ -14,7 +14,7 @@ Features:
 - Individual device per Q-relay with relay status.
 - Individual device per battery with information available.
 - Production switch to turn on/off solar power production.
-- Communication level sensors.
+- Communication level sensors (optional).
 - 3 Phase CT readings.
 - "Realtime" updates of CT readings.
 - Configurable polling interval.
@@ -95,7 +95,7 @@ Available entities differ per Envoy type and configuration.
 |-----------|---------|----|
 |Inverter xxx AC Voltage|sensor.inverter_xxx_ac_voltage|V|
 |Inverter xxx Communicating|binary_sensor.inverter_xxx_communicating|
-|Inverter xxx Communication Level|sensor.inverter_xxx_communication_level|
+|Inverter xxx Communication Level ¹|sensor.inverter_xxx_communication_level|
 |Inverter xxx DC Current|sensor.inverter_xxx_dc_current|A|
 |Inverter xxx DC Voltage|sensor.inverter_xxx_dc_voltage|V|
 |Inverter xxx Producing|binary_sensor.inverter_xxx_producing||
@@ -120,7 +120,7 @@ Available entities differ per Envoy type and configuration.
 |Entity name|Entity ID|Unit|
 |-----------|---------|----|
 |Relay xxx Communicating|binary_sensor.relay_xxx_communicating||
-|Relay xxx Communication Level|sensor.relay_xxx_communication_level||
+|Relay xxx Communication Level ¹|sensor.relay_xxx_communication_level||
 |Relay xxx Contact|binary_sensor.relay_xxx_contact||
 |Relay xxx Forced|binary_sensor.relay_xxx_forced||
 
