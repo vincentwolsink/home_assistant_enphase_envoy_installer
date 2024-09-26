@@ -648,7 +648,6 @@ class EnvoyReader:
         self.enlighten_user = enlighten_user
         self.enlighten_pass = enlighten_pass
         self.commissioned = commissioned
-        self.envoy_token_fetch_attempted = False
         self.enlighten_serial_num = enlighten_serial_num
         self.token_refresh_buffer_seconds = token_refresh_buffer_seconds
         self.token_type = None
@@ -887,7 +886,6 @@ class EnvoyReader:
 
     async def _get_enphase_token(self):
         self._token = await self._fetch_envoy_token_json()
-        self.envoy_token_fetch_attempted = True
 
         _LOGGER.debug("Envoy Token")
         if self._is_enphase_token_expired(self._token):
@@ -947,6 +945,7 @@ class EnvoyReader:
 
         if decode.get("enphaseUser", None) != None:
             self.token_type = decode["enphaseUser"]  # owner or installer
+            _LOGGER.debug("TOKEN TYPE: %s", self.token_type)
 
         exp_epoch = decode["exp"]
         # allow a buffer so we can try and grab it sooner
@@ -1073,9 +1072,8 @@ class EnvoyReader:
                 _LOGGER.error(f"No settings found for uri {endpoint}")
                 continue
 
-            if endpoint_settings.get("installer_required", False) and (
-                (self.token_type != "installer" and self.envoy_token_fetch_attempted)
-                or self.disable_installer_account_use
+            if endpoint_settings["installer_required"] and (
+                self.token_type != "installer" or self.disable_installer_account_use
             ):
                 _LOGGER.info(
                     "Skipping installer endpoint %s (got token %s and "
@@ -1103,8 +1101,8 @@ class EnvoyReader:
                     time.time() - endpoint_settings["last_fetch"],
                 )
 
-                if self.data:
-                    self.data.set_endpoint_data(endpoint, getattr(self, endpoint))
+            if self.data:
+                self.data.set_endpoint_data(endpoint, getattr(self, endpoint))
 
     async def get_data(self, get_inverters=True):
         """
