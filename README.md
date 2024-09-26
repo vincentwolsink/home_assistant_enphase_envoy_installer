@@ -18,7 +18,7 @@ Features:
 - 3 Phase CT readings.
 - "Realtime" updates of CT readings.
 - Configurable polling interval.
-- Optional negative production reading correction.
+- Negative production reading correction (optional).
 - Service call to retrieve and set and upload grid profile.
 
 ## Screenshots
@@ -88,8 +88,6 @@ Available entities differ per Envoy type and configuration.
 |Envoy xxx Today's Energy Production L2|sensor.envoy_xxx_today_s_energy_production_l2|Wh|
 |Envoy xxx Today's Energy Production L3|sensor.envoy_xxx_today_s_energy_production_l3|Wh|
 
-¹ Optional. Enable via integration configuration.
-
 ### Inverter
 |Entity name|Entity ID|Unit|
 |-----------|---------|----|
@@ -123,6 +121,8 @@ Available entities differ per Envoy type and configuration.
 |Relay xxx Communication Level ¹|sensor.relay_xxx_communication_level||
 |Relay xxx Contact|binary_sensor.relay_xxx_contact||
 |Relay xxx Forced|binary_sensor.relay_xxx_forced||
+
+¹ Optional. Enable via integration configuration.
 
 ## Installation
 
