@@ -2,5 +2,5 @@
   "name": "Enphase Envoy (Installer)",
   "render_readme": true,
   "content_in_root": false,
-  "homeassistant": "2023.7.0" 
+  "homeassistant": "2024.9.0" 
 }
