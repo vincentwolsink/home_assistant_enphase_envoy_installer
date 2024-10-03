@@ -378,10 +378,17 @@ class EnvoyStandard(EnvoyData):
         owner="endpoint_production_v1.wattHoursToday",
         installer="endpoint_pdm_energy.production.pcu.wattHoursToday",
     )
-    lifetime_production_value = path_by_token(
+
+    _lifetime_production_path = path_by_token(
         owner="endpoint_production_v1.wattHoursLifetime",
         installer="endpoint_pdm_energy.production.pcu.wattHoursLifetime",
     )
+
+    @envoy_property(required_endpoint="endpoint_production_v1")
+    def lifetime_production(self):
+        lifetime_production = self._resolve_path(self._lifetime_production_path)
+        if lifetime_production is not None:
+            return lifetime_production + self.reader.lifetime_production_correction
 
     @envoy_property(required_endpoint="endpoint_production_power")
     def production_power(self):
@@ -542,10 +549,18 @@ class EnvoyMetered(EnvoyStandard):
 
     _production = "endpoint_production_json.production[?(@.type=='inverters')]"
     production_value = _production + ".wNow"
-    lifetime_production_value = path_by_token(
+
+    _lifetime_production_path = path_by_token(
         owner=_production + ".whLifetime",
         installer="endpoint_pdm_energy.production.pcu.wattHoursLifetime",
     )
+
+    @envoy_property(required_endpoint="endpoint_production_json")
+    def lifetime_production(self):
+        lifetime_production = self._resolve_path(self._lifetime_production_path)
+        if lifetime_production is not None:
+            return lifetime_production + self.reader.lifetime_production_correction
+
     daily_production_value = "endpoint_pdm_energy.production.pcu.wattHoursToday"
 
     _production_ct = (
@@ -632,6 +647,7 @@ class EnvoyReader:
         store=None,
         disable_negative_production=False,
         disabled_endpoints=[],
+        lifetime_production_correction=0,
     ):
         """Init the EnvoyReader."""
         self.host = host.lower()
@@ -655,6 +671,7 @@ class EnvoyReader:
         self.data: EnvoyData = EnvoyStandard(self)
         self.required_endpoints = set()  # in case we would need it..
         self.disabled_endpoints = disabled_endpoints
+        self.lifetime_production_correction = lifetime_production_correction
 
         self.uri_registry = {}
         for key, endpoint in ENVOY_ENDPOINTS.items():
