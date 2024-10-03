@@ -290,6 +290,12 @@ class EnvoyOptionsFlowHandler(config_entries.OptionsFlow):
                 default=self.config_entry.options.get("enable_pcu_comm_check", False),
             ): bool,
             vol.Optional(
+                "lifetime_production_correction",
+                default=self.config_entry.options.get(
+                    "lifetime_production_correction", 0
+                ),
+            ): vol.All(vol.Coerce(int)),
+            vol.Optional(
                 "disabled_endpoints",
                 description={"suggested_value": disabled_endpoints},
             ): cv.multi_select(optional_endpoints),
