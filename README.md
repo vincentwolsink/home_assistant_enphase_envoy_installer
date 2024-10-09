@@ -20,6 +20,7 @@ Features:
 - Configurable polling interval.
 - Negative production reading correction (optional).
 - Service call to retrieve and set and upload grid profile.
+- Lifetime production correction (optional).
 
 ## Screenshots
 
