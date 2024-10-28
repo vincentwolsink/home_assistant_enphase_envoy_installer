@@ -47,17 +47,16 @@ async def async_setup_entry(
             if coordinator.data.get("inverters_production") is not None:
                 for inverter in coordinator.data["inverters_production"]:
                     device_name = f"Inverter {inverter}"
-                    entity_name = f"{device_name} {sensor_description.name}"
                     serial_number = inverter
                     entities.append(
                         EnvoyInverterEntity(
-                            sensor_description,
-                            entity_name,
-                            device_name,
-                            serial_number,
-                            serial_number,
-                            coordinator,
-                            config_entry.unique_id,
+                            description=sensor_description,
+                            name=f"{device_name} {sensor_description.name}",
+                            device_name=device_name,
+                            device_serial_number=serial_number,
+                            serial_number=serial_number,
+                            coordinator=coordinator,
+                            parent_device=config_entry.unique_id,
                         )
                     )
 
@@ -132,17 +131,16 @@ async def async_setup_entry(
             if coordinator.data.get("inverters_status") is not None:
                 for inverter in coordinator.data["inverters_status"].keys():
                     device_name = f"Inverter {inverter}"
-                    entity_name = f"{device_name} {sensor_description.name}"
                     serial_number = inverter
                     entities.append(
                         EnvoyInverterEntity(
-                            sensor_description,
-                            entity_name,
-                            device_name,
-                            serial_number,
-                            None,
-                            coordinator,
-                            config_entry.unique_id,
+                            description=sensor_description,
+                            name=f"{device_name} {sensor_description.name}",
+                            device_name=device_name,
+                            device_serial_number=serial_number,
+                            serial_number=None,
+                            coordinator=coordinator,
+                            parent_device=config_entry.unique_id,
                         )
                     )
 
@@ -150,7 +148,6 @@ async def async_setup_entry(
             if coordinator.data.get("batteries") is not None:
                 for battery in coordinator.data["batteries"].keys():
                     device_name = f"Battery {battery}"
-                    entity_name = f"{device_name} {sensor_description.name}"
                     serial_number = battery
                     entities.append(
                         EnvoyBatteryFirmwareEntity(
@@ -168,32 +165,30 @@ async def async_setup_entry(
             if coordinator.data.get("batteries") is not None:
                 for battery in coordinator.data["batteries"].keys():
                     device_name = f"Battery {battery}"
-                    entity_name = f"{device_name} {sensor_description.name}"
                     serial_number = battery
                     entities.append(
                         EnvoyBatteryEntity(
-                            sensor_description,
-                            entity_name,
-                            device_name,
-                            serial_number,
-                            None,
-                            coordinator,
-                            config_entry.unique_id,
+                            description=sensor_description,
+                            name=f"{device_name} {sensor_description.name}",
+                            device_name=device_name,
+                            device_serial_number=serial_number,
+                            serial_number=None,
+                            coordinator=coordinator,
+                            parent_device=config_entry.unique_id,
                         )
                     )
 
         elif sensor_description.key.startswith("agg_batteries_"):
             if coordinator.data.get("batteries") is not None:
-                entity_name = f"{name} {sensor_description.name}"
                 entities.append(
                     CoordinatedEnvoyEntity(
-                        sensor_description,
-                        entity_name,
-                        name,
-                        config_entry.unique_id,
-                        None,
-                        coordinator,
-                        config_entry.data[CONF_HOST],
+                        description=sensor_description,
+                        name=f"{name} {sensor_description.name}",
+                        device_name=name,
+                        device_serial_number=config_entry.unique_id,
+                        serial_number=None,
+                        coordinator=coordinator,
+                        device_host=config_entry.data[CONF_HOST],
                     )
                 )
 
@@ -202,16 +197,15 @@ async def async_setup_entry(
             if data is None:
                 continue
 
-            entity_name = f"{name} {sensor_description.name}"
             entities.append(
                 CoordinatedEnvoyEntity(
-                    sensor_description,
-                    entity_name,
-                    name,
-                    config_entry.unique_id,
-                    None,
-                    coordinator,
-                    config_entry.data[CONF_HOST],
+                    description=sensor_description,
+                    name=f"{name} {sensor_description.name}",
+                    device_name=name,
+                    device_serial_number=config_entry.unique_id,
+                    serial_number=None,
+                    coordinator=coordinator,
+                    device_host=config_entry.data[CONF_HOST],
                 )
             )
 
@@ -224,15 +218,14 @@ async def async_setup_entry(
         if data is None:
             continue
 
-        entity_name = f"{name} {sensor_description.name}"
         live_entities[sensor_description.key] = CoordinatedEnvoyEntity(
-            sensor_description,
-            entity_name,
-            name,
-            config_entry.unique_id,
-            None,
-            coordinator,
-            config_entry.data[CONF_HOST],
+            description=sensor_description,
+            name=f"{name} {sensor_description.name}",
+            device_name=name,
+            device_serial_number=config_entry.unique_id,
+            serial_number=None,
+            coordinator=coordinator,
+            device_host=config_entry.data[CONF_HOST],
         )
         entities.append(live_entities[sensor_description.key])
 
