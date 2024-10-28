@@ -2,7 +2,7 @@ ENVOY_ENDPOINTS = {
     # Generic endpoints
     "info": {
         "url": "https://{}/info.xml",
-        "cache": 86400,
+        "cache": 3600,
         "installer_required": False,
         "optional": False,
     },
