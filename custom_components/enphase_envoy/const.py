@@ -290,6 +290,30 @@ SENSORS = (
         suggested_display_precision=0,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
+    SensorEntityDescription(
+        key="envoy_software",
+        name="Firmware Version",
+        icon="mdi:memory",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SensorEntityDescription(
+        key="inverters_software",
+        name="Firmware Version",
+        icon="mdi:memory",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SensorEntityDescription(
+        key="relays_software",
+        name="Firmware Version",
+        icon="mdi:memory",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SensorEntityDescription(
+        key="batteries_software",
+        name="Firmware Version",
+        icon="mdi:memory",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
 )
 ADDITIONAL_METRICS.extend(
     [
