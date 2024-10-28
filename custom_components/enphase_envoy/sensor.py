@@ -77,7 +77,7 @@ async def async_setup_entry(
                     )
 
         elif sensor_description.key == "relays_software":
-            if coordinator.data.get("relays") != None:
+            if coordinator.data.get("relays") is not None:
                 for serial_number in coordinator.data["relays"].keys():
                     device_name = f"Relay {serial_number}"
                     entities.append(
@@ -110,7 +110,7 @@ async def async_setup_entry(
 
         elif sensor_description.key == "relays_communication_level":
             if (
-                coordinator.data.get("relays") != None
+                coordinator.data.get("relays") is not None
                 and coordinator.data.get("pcu_availability") is not None
             ):
                 for serial_number in coordinator.data["relays"].keys():
