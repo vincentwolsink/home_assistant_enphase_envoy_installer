@@ -33,7 +33,7 @@ ENVOY_ENDPOINTS = {
     },
     "production_power": {
         "url": "https://{}/ivp/mod/603980032/mode/power",
-        "cache": 300,
+        "cache": 0,
         "installer_required": True,
         "optional": True,
     },
@@ -65,7 +65,7 @@ ENVOY_ENDPOINTS = {
     # Inverter endpoints
     "inventory": {
         "url": "https://{}/inventory.json",
-        "cache": 300,
+        "cache": 0,
         "installer_required": False,
         "optional": False,
     },
