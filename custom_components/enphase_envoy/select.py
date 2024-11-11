@@ -20,7 +20,7 @@ async def async_setup_entry(
 
     entities = []
     if (
-        coordinator.data.get("batteries") is not None
+        coordinator.data.get("batteries")
         and coordinator.data.get("storage_mode") is not None
     ):
         entity_name = f"{name} {STORAGE_MODE_SELECT.name}"

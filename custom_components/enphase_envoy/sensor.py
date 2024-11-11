@@ -44,7 +44,7 @@ async def async_setup_entry(
                 continue
 
         if sensor_description.key == "inverters":
-            if coordinator.data.get("inverters_production") is not None:
+            if coordinator.data.get("inverters_production"):
                 for inverter in coordinator.data["inverters_production"]:
                     device_name = f"Inverter {inverter}"
                     serial_number = inverter
@@ -61,7 +61,7 @@ async def async_setup_entry(
                     )
 
         elif sensor_description.key == "inverters_software":
-            if coordinator.data.get("inverters_info") is not None:
+            if coordinator.data.get("inverters_info"):
                 for serial_number in coordinator.data["inverters_production"]:
                     device_name = f"Inverter {serial_number}"
                     entities.append(
@@ -77,7 +77,7 @@ async def async_setup_entry(
                     )
 
         elif sensor_description.key == "relays_software":
-            if coordinator.data.get("relays") is not None:
+            if coordinator.data.get("relays"):
                 for serial_number in coordinator.data["relays"].keys():
                     device_name = f"Relay {serial_number}"
                     entities.append(
@@ -93,7 +93,7 @@ async def async_setup_entry(
                     )
 
         elif sensor_description.key == "inverters_communication_level":
-            if coordinator.data.get("pcu_availability") is not None:
+            if coordinator.data.get("pcu_availability"):
                 for serial_number in coordinator.data["inverters_production"]:
                     device_name = f"Inverter {serial_number}"
                     entities.append(
@@ -109,9 +109,8 @@ async def async_setup_entry(
                     )
 
         elif sensor_description.key == "relays_communication_level":
-            if (
-                coordinator.data.get("relays") is not None
-                and coordinator.data.get("pcu_availability") is not None
+            if coordinator.data.get("relays") and coordinator.data.get(
+                "pcu_availability"
             ):
                 for serial_number in coordinator.data["relays"].keys():
                     device_name = f"Relay {serial_number}"
@@ -128,7 +127,7 @@ async def async_setup_entry(
                     )
 
         elif sensor_description.key.startswith("inverters_"):
-            if coordinator.data.get("inverters_status") is not None:
+            if coordinator.data.get("inverters_status"):
                 for inverter in coordinator.data["inverters_status"].keys():
                     device_name = f"Inverter {inverter}"
                     serial_number = inverter
@@ -145,7 +144,7 @@ async def async_setup_entry(
                     )
 
         elif sensor_description.key == "batteries_software":
-            if coordinator.data.get("batteries") is not None:
+            if coordinator.data.get("batteries"):
                 for battery in coordinator.data["batteries"].keys():
                     device_name = f"Battery {battery}"
                     serial_number = battery
@@ -162,7 +161,7 @@ async def async_setup_entry(
                     )
 
         elif sensor_description.key.startswith("batteries_"):
-            if coordinator.data.get("batteries") is not None:
+            if coordinator.data.get("batteries"):
                 for battery in coordinator.data["batteries"].keys():
                     device_name = f"Battery {battery}"
                     serial_number = battery
@@ -179,7 +178,7 @@ async def async_setup_entry(
                     )
 
         elif sensor_description.key.startswith("agg_batteries_"):
-            if coordinator.data.get("batteries") is not None:
+            if coordinator.data.get("batteries"):
                 entities.append(
                     CoordinatedEnvoyEntity(
                         description=sensor_description,
@@ -354,13 +353,13 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
     def native_value(self):
         """Return the state of the sensor."""
         if self.entity_description.key.startswith("inverters_"):
-            if self.coordinator.data.get("inverters_status") is not None:
+            if self.coordinator.data.get("inverters_status"):
                 return (
                     self.coordinator.data.get("inverters_status")
                     .get(self._device_serial_number)
                     .get(self.entity_description.key[10:])
                 )
-        elif self.coordinator.data.get("inverters_production") is not None:
+        elif self.coordinator.data.get("inverters_production"):
             return (
                 self.coordinator.data.get("inverters_production")
                 .get(self._device_serial_number)
@@ -373,14 +372,14 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
     def extra_state_attributes(self):
         """Return the state attributes."""
         if self.entity_description.key.startswith("inverters_"):
-            if self.coordinator.data.get("inverters_status") is not None:
+            if self.coordinator.data.get("inverters_status"):
                 value = (
                     self.coordinator.data.get("inverters_status")
                     .get(self._device_serial_number)
                     .get("report_date")
                 )
                 return {"last_reported": value}
-        elif self.coordinator.data.get("inverters_production") is not None:
+        elif self.coordinator.data.get("inverters_production"):
             value = (
                 self.coordinator.data.get("inverters_production")
                 .get(self._serial_number)
@@ -512,7 +511,7 @@ class EnvoyBatteryEntity(EnvoyDeviceEntity):
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        if self.coordinator.data.get("batteries") is not None:
+        if self.coordinator.data.get("batteries"):
             if self.entity_description.key == "batteries_power":
                 return int(
                     self.coordinator.data.get("batteries_power")
@@ -538,7 +537,7 @@ class EnvoyBatteryEntity(EnvoyDeviceEntity):
     @property
     def extra_state_attributes(self):
         """Return the state attributes."""
-        if self.coordinator.data.get("batteries") is not None:
+        if self.coordinator.data.get("batteries"):
             battery = self.coordinator.data.get("batteries").get(
                 self._device_serial_number
             )

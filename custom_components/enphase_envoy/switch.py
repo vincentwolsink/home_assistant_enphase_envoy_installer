@@ -28,7 +28,7 @@ async def async_setup_entry(
     for switch_description in SWITCHES:
         if switch_description.key.startswith("storage_"):
             if (
-                coordinator.data.get("batteries") is not None
+                coordinator.data.get("batteries")
                 and coordinator.data.get(switch_description.key) is not None
             ):
                 entity_name = f"{name} {switch_description.name}"
