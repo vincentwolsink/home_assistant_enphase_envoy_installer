@@ -29,7 +29,7 @@ async def async_setup_entry(
     entities = []
     for sensor_description in BINARY_SENSORS:
         if sensor_description.key.startswith("inverters_"):
-            if coordinator.data.get("inverters_status") is not None:
+            if coordinator.data.get("inverters_status"):
                 for inverter in coordinator.data["inverters_status"].keys():
                     device_name = f"Inverter {inverter}"
                     entity_name = f"{device_name} {sensor_description.name}"
@@ -45,7 +45,7 @@ async def async_setup_entry(
                     )
 
         elif sensor_description.key == "relays":
-            if coordinator.data.get("relays") is not None:
+            if coordinator.data.get("relays"):
                 for relay in coordinator.data["relays"]:
                     device_name = f"Relay {relay}"
                     entity_name = f"{device_name} {sensor_description.name}"
@@ -86,7 +86,7 @@ async def async_setup_entry(
                     )
 
         elif sensor_description.key.startswith("batteries_"):
-            if coordinator.data.get("batteries") is not None:
+            if coordinator.data.get("batteries"):
                 for battery in coordinator.data["batteries"].keys():
                     device_name = f"Battery {battery}"
                     entity_name = f"{device_name} {sensor_description.name}"
@@ -157,7 +157,7 @@ class EnvoyInverterEntity(CoordinatorEntity, BinarySensorEntity):
     @property
     def extra_state_attributes(self):
         """Return the state attributes."""
-        if self.coordinator.data.get("inverters_status") is not None:
+        if self.coordinator.data.get("inverters_status"):
             value = (
                 self.coordinator.data.get("inverters_status")
                 .get(self._device_serial_number)
@@ -188,7 +188,7 @@ class EnvoyInverterEntity(CoordinatorEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         """Return the status of the requested attribute."""
-        if self.coordinator.data.get("inverters_status") is not None:
+        if self.coordinator.data.get("inverters_status"):
             return (
                 self.coordinator.data.get("inverters_status")
                 .get(self._device_serial_number)
@@ -409,7 +409,7 @@ class EnvoyBatteryEntity(CoordinatorEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         """Return the status of the requested attribute."""
-        if self.coordinator.data.get("batteries") is not None:
+        if self.coordinator.data.get("batteries"):
             return (
                 self.coordinator.data.get("batteries")
                 .get(self._device_serial_number)
@@ -419,7 +419,7 @@ class EnvoyBatteryEntity(CoordinatorEntity, BinarySensorEntity):
     @property
     def extra_state_attributes(self):
         """Return the state attributes."""
-        if self.coordinator.data.get("batteries") is not None:
+        if self.coordinator.data.get("batteries"):
             battery = self.coordinator.data.get("batteries").get(
                 self._device_serial_number
             )
