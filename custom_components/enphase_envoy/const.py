@@ -60,6 +60,7 @@ PRODUCT_ID_MAPPING = {
     "800-01736": {"name": "IQ7+ Microinverter", "sku": "IQ7PLUS-72-M-INT"},
     "800-00631": {"name": "IQ7+ Microinverter", "sku": "IQ7PLUS-72-2-INT"},
     "800-01127": {"name": "IQ7A Microinverter", "sku": "IQ7A-72-M-INT"},
+    "800-01135": {"name"; "IQ7XS Microinverter", "sku": "IQ7XS-96-ACM-US"},
     "830-01760": {"name": "IQ Battery 3T", "sku": "B03-T01-INT00-1-2"},
 }
 
