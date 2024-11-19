@@ -276,7 +276,7 @@ class EnvoyData(object):
         if endpoint == "endpoint_devstatus":
             # Do extra parsing, to zip the fields and values and make it a proper dict
             self.data[endpoint] = parse_devstatus(response.json())
-        if endpoint == "endpoint_device_data":
+        elif endpoint == "endpoint_device_data":
             # Do extra parsing, to zip the fields and values and make it a proper dict
             self.data[endpoint] = parse_devicedata(response.json())
         elif content_type == "application/json":
