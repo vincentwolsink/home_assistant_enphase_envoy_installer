@@ -126,6 +126,23 @@ async def async_setup_entry(
                         )
                     )
 
+        elif sensor_description.key.startswith("inverters_data_"):
+            if coordinator.data.get("inverter_device_data"):
+                for inverter in coordinator.data["inverters_device_data"].keys():
+                    device_name = f"Inverter {inverter}"
+                    serial_number = inverter
+                    entities.append(
+                        EnvoyInverterEntity(
+                            description=sensor_description,
+                            name=f"{device_name} {sensor_description.name}",
+                            device_name=device_name,
+                            device_serial_number=serial_number,
+                            serial_number=None,
+                            coordinator=coordinator,
+                            parent_device=config_entry.unique_id,
+                        )
+                    )
+
         elif sensor_description.key.startswith("inverters_"):
             if coordinator.data.get("inverters_status"):
                 for inverter in coordinator.data["inverters_status"].keys():
@@ -352,6 +369,13 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
     @property
     def native_value(self):
         """Return the state of the sensor."""
+        if self.entity_description.key.startswith("inverter_data_"):
+            if self.coordinator.data.get("inverter_device_data"):
+                return (
+                    self.coordinator.data.get("inverter_device_data")
+                    .get(self._device_serial_number)
+                    .get(self.entity_description.key[21:])
+                )
         if self.entity_description.key.startswith("inverters_"):
             if self.coordinator.data.get("inverters_status"):
                 return (
