@@ -65,15 +65,19 @@ def has_metering_setup(json):
     return json["production"][1]["activeCount"] > 0
 
 def parse_devicedata(data):
-    idd = []
+    idd = {}
     for key, value in data.items():
         if isinstance(value, dict) and "devName" in value and value["devName"] == "pcu":
-            channel = value["channels"][0] # unclear when their might be a channel > 0
+            channel = value["channels"][0] # unclear when there might be a channel > 0
             lifetime = channel["lifetime"]
             last_reading = channel["lastReading"]
-            idd.append({"sn": value["sn"],
+            idd[value["sn"]] = {"sn": value["sn"],
                         "active": value["active"],
                         "watts": channel["watts"]["now"],
+                        "watts_max": channel["watts"]["max"],
+                        "watt_hours_today": channel["wattHours"]["today"],
+                        "watt_hours_yesterday": channel["wattHours"]["yesterday"],
+                        "watt_hours_week": channel["wattHours"]["week"],
                         "ac_voltage": int(last_reading["acVoltageINmV"]) / 1000,
                         "ac_frequency": int(last_reading["acFrequencyINmHz"]) / 1000,
                         "ac_current": int(last_reading["acCurrentInmA"]) / 1000,
@@ -83,10 +87,11 @@ def parse_devicedata(data):
                         "rssi": last_reading["rssi"],
                         "issi": last_reading["issi"],
                         "lifetime_power": int(lifetime["joulesProduced"]) * 0.000277778,
-                        "convertion_error": last_reading["pwrConvErrSecs"],
-                        "convertion_error_cycles": last_reading["pwrConvMaxErrCycles"],
-                        "gone": value["modGone"]
-            })
+                        "conversion_error": last_reading["pwrConvErrSecs"],
+                        "conversion_error_cycles": last_reading["pwrConvMaxErrCycles"],
+                        "gone": value["modGone"],
+                        "last_reading": last_reading["endDate"]
+            }
     return idd
 
 
@@ -527,10 +532,7 @@ class EnvoyStandard(EnvoyData):
 
     @envoy_property(required_endpoint="endpoint_device_data")
     def inverter_device_data(self):
-       return self._path_to_dict(
-           "endpoint_device_data",
-           "sn",
-       )
+       return self._resolve_path("endpoint_device_data")
         
     @envoy_property(required_endpoint="endpoint_ensemble_power")
     def agg_batteries_power(self):

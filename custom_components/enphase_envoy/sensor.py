@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import datetime
+import logging
+_LOGGER = logging.getLogger(__name__)
+
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST
@@ -38,11 +42,13 @@ async def async_setup_entry(
     options = config_entry.options
 
     entities = []
+    _LOGGER.debug("Setting up Sensors")
     for sensor_description in SENSORS:
+        _LOGGER.debug(f"Evaluating Sensor {sensor_description}")
         if not options.get(ENABLE_ADDITIONAL_METRICS, False):
             if sensor_description.key in ADDITIONAL_METRICS:
                 continue
-
+        _LOGGER.debug(f"Picking how to handle Sensor {sensor_description}")
         if sensor_description.key == "inverters":
             if coordinator.data.get("inverters_production"):
                 for inverter in coordinator.data["inverters_production"]:
@@ -126,9 +132,12 @@ async def async_setup_entry(
                         )
                     )
 
-        elif sensor_description.key.startswith("inverters_data_"):
+        elif sensor_description.key.startswith("inverter_data_"):
+            _LOGGER.debug(f"Inverter Data Sensor {sensor_description}")
             if coordinator.data.get("inverter_device_data"):
-                for inverter in coordinator.data["inverters_device_data"].keys():
+                _LOGGER.debug(f"Inverter Data Sensor DATA {sensor_description}")
+                for inverter in coordinator.data["inverter_device_data"].keys():
+                    _LOGGER.debug(f"Inverter Data Sensor DATA {inverter}")
                     device_name = f"Inverter {inverter}"
                     serial_number = inverter
                     entities.append(
@@ -370,13 +379,21 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
     def native_value(self):
         """Return the state of the sensor."""
         if self.entity_description.key.startswith("inverter_data_"):
+            _LOGGER.debug(f"Getting Key {self.entity_description.key}")
             if self.coordinator.data.get("inverter_device_data"):
+                device_data = self.coordinator.data.get("inverter_device_data")
+                _LOGGER.debug(f"Found Data, getting {self._device_serial_number}")
+                serial = device_data.get(self._device_serial_number)
+                _LOGGER.debug(f"Found Serial {serial}, getting {self.entity_description.key[14:]}")
+                value = serial.get(self.entity_description.key[14:])
+                if self.entity_description.key.endswith("last_reading"):
+                    return datetime.datetime.fromtimestamp(value, tz=datetime.timezone.utc)
+                if serial.get("gone", True):
+                    return None
                 return (
-                    self.coordinator.data.get("inverter_device_data")
-                    .get(self._device_serial_number)
-                    .get(self.entity_description.key[21:])
+                    value
                 )
-        if self.entity_description.key.startswith("inverters_"):
+        elif self.entity_description.key.startswith("inverters_"):
             if self.coordinator.data.get("inverters_status"):
                 return (
                     self.coordinator.data.get("inverters_status")
@@ -403,6 +420,12 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
                     .get("report_date")
                 )
                 return {"last_reported": value}
+        elif self.entity_description.key.startswith("inverter_data_"):
+            if self.coordinator.data.get("inverter_device_data"):
+                device_data = self.coordinator.data.get("inverter_device_data")
+                serial = device_data.get(self._device_serial_number)
+                value = serial.get("last_reading")
+                return {"last_reported": datetime.datetime.fromtimestamp(value, tz=datetime.timezone.utc)}
         elif self.coordinator.data.get("inverters_production"):
             value = (
                 self.coordinator.data.get("inverters_production")
