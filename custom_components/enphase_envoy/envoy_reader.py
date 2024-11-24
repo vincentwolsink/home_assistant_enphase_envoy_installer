@@ -64,6 +64,7 @@ def has_metering_setup(json):
     """Check if Active Count of Production CTs (eim) installed is greater than one."""
     return json["production"][1]["activeCount"] > 0
 
+
 def parse_devicedata(data):
     idd = {}
     for key, value in data.items():
@@ -91,7 +92,7 @@ def parse_devicedata(data):
                 "conversion_error": last_reading["pwrConvErrSecs"],
                 "conversion_error_cycles": last_reading["pwrConvMaxErrCycles"],
                 "gone": value["modGone"],
-                "last_reading": last_reading["endDate"]
+                "last_reading": last_reading["endDate"],
             }
     return idd
 
