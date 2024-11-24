@@ -251,7 +251,7 @@ SENSORS = (
         device_class=SensorDeviceClass.TEMPERATURE,
         suggested_display_precision=1,
     ),
-    #I was hoping for interesting data here, never saw anything useful, just a documentaiton of it existing
+    # I was hoping for interesting data here, never saw anything useful, just a documentaiton of it existing
     # SensorEntityDescription(
     #     key="inverter_data_rssi",
     #     name="Data RSSI",
@@ -261,7 +261,7 @@ SENSORS = (
     #     suggested_display_precision=1,
     #     entity_category=EntityCategory.DIAGNOSTIC,
     # ),
-    #I was hoping for interesting data here, never saw anything useful, just a documentaiton of it existing
+    # I was hoping for interesting data here, never saw anything useful, just a documentaiton of it existing
     # SensorEntityDescription(
     #     key="inverter_data_issi",
     #     name="Data ISSI",
@@ -278,7 +278,7 @@ SENSORS = (
         state_class=SensorStateClass.TOTAL_INCREASING,
         device_class=SensorDeviceClass.ENERGY,
         suggested_display_precision=0,
-    ),    
+    ),
     SensorEntityDescription(
         key="inverter_data_watt_hours_today",
         name="Today's Energy Production",
@@ -286,7 +286,7 @@ SENSORS = (
         state_class=SensorStateClass.TOTAL,
         device_class=SensorDeviceClass.ENERGY,
         suggested_display_precision=1,
-    ),    
+    ),
     SensorEntityDescription(
         key="inverter_data_watt_hours_yesterday",
         name="Yesterday's Energy Production",
@@ -294,7 +294,7 @@ SENSORS = (
         state_class=SensorStateClass.TOTAL,
         device_class=SensorDeviceClass.ENERGY,
         suggested_display_precision=1,
-    ),    
+    ),
     SensorEntityDescription(
         key="inverter_data_watt_hours_week",
         name="This Week's Energy Production",
@@ -302,7 +302,7 @@ SENSORS = (
         state_class=SensorStateClass.TOTAL,
         device_class=SensorDeviceClass.ENERGY,
         suggested_display_precision=1,
-    ),    
+    ),
     # This data is in attributes too, but seemed helpful to be in diagnostics
     SensorEntityDescription(
         key="inverter_data_last_reading",

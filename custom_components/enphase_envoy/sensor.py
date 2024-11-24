@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import logging
+
 _LOGGER = logging.getLogger(__name__)
 
 from homeassistant.components.sensor import SensorEntity
@@ -384,15 +385,17 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
                 device_data = self.coordinator.data.get("inverter_device_data")
                 _LOGGER.debug(f"Found Data, getting {self._device_serial_number}")
                 serial = device_data.get(self._device_serial_number)
-                _LOGGER.debug(f"Found Serial {serial}, getting {self.entity_description.key[14:]}")
+                _LOGGER.debug(
+                    f"Found Serial {serial}, getting {self.entity_description.key[14:]}"
+                )
                 value = serial.get(self.entity_description.key[14:])
                 if self.entity_description.key.endswith("last_reading"):
-                    return datetime.datetime.fromtimestamp(value, tz=datetime.timezone.utc)
+                    return datetime.datetime.fromtimestamp(
+                        value, tz=datetime.timezone.utc
+                    )
                 if serial.get("gone", True):
                     return None
-                return (
-                    value
-                )
+                return value
         elif self.entity_description.key.startswith("inverters_"):
             if self.coordinator.data.get("inverters_status"):
                 return (
@@ -425,7 +428,11 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
                 device_data = self.coordinator.data.get("inverter_device_data")
                 serial = device_data.get(self._device_serial_number)
                 value = serial.get("last_reading")
-                return {"last_reported": datetime.datetime.fromtimestamp(value, tz=datetime.timezone.utc)}
+                return {
+                    "last_reported": datetime.datetime.fromtimestamp(
+                        value, tz=datetime.timezone.utc
+                    )
+                }
         elif self.coordinator.data.get("inverters_production"):
             value = (
                 self.coordinator.data.get("inverters_production")
