@@ -121,10 +121,30 @@ async def async_setup_entry(
                         )
                     )
 
+        elif sensor_description.key.startswith("relay_data_"):
+            _LOGGER.debug(f"Relay Data Sensor {sensor_description}")
+            if coordinator.data.get("relay_device_data"):
+                _LOGGER.debug(f"Relay Data Sensor DATA {sensor_description}")
+                for relay in coordinator.data["relay_device_data"].keys():
+                    _LOGGER.debug(f"Relay Data Sensor DATA {relay}")
+                    device_name = f"Relay {relay}"
+                    serial_number = relay
+                    entities.append(
+                        EnvoyRelayEntity(
+                            description=sensor_description,
+                            name=f"{device_name} {sensor_description.name}",
+                            device_name=device_name,
+                            device_serial_number=serial_number,
+                            serial_number=None,
+                            coordinator=coordinator,
+                            parent_device=config_entry.unique_id,
+                        )
+                    )
+
         elif sensor_description.key.startswith("relay_info_"):
             if coordinator.data.get("relay_info"):
                 for relay in coordinator.data["relay_info"].keys():
-                    device_name = f"Relay {inverter}"
+                    device_name = f"Relay {relay}"
                     serial_number = relay
                     entities.append(
                         EnvoyRelayEntity(
@@ -359,7 +379,7 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
                 value = serial.get(self.entity_description.key[14:])
                 if self.entity_description.key.endswith("last_reading"):
                     return datetime.datetime.fromtimestamp(
-                        value, tz=datetime.timezone.utc
+                        int(value), tz=datetime.timezone.utc
                     )
                 if serial.get("gone", True):
                     return None
@@ -396,7 +416,7 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
                 value = serial.get("last_reading")
                 return {
                     "last_reported": datetime.datetime.fromtimestamp(
-                        value, tz=datetime.timezone.utc
+                        int(value), tz=datetime.timezone.utc
                     )
                 }
 
@@ -436,6 +456,57 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
 
 
 class EnvoyRelayEntity(EnvoyDeviceEntity):
+
+    @property
+    def native_value(self):
+        if self.entity_description.key.startswith("relay_data_"):
+            if self.coordinator.data.get("relay_device_data"):
+                serial = self.coordinator.data.get("relay_device_data").get(
+                    self._device_serial_number
+                )
+                value = serial.get(self.entity_description.key[11:])
+                if self.entity_description.key.endswith("last_reading"):
+                    return datetime.datetime.fromtimestamp(
+                        int(value), tz=datetime.timezone.utc
+                    )
+                if serial.get("gone", True):
+                    return None
+                return value
+        elif self.entity_description.key.startswith("relay_info_"):
+            if self.coordinator.data.get("relay_info"):
+                return (
+                    self.coordinator.data.get("relay_info")
+                    .get(self._device_serial_number)
+                    .get(self.entity_description.key[11:])
+                )
+
+    @property
+    def extra_state_attributes(self):
+        """Return the state attributes."""
+        if self.entity_description.key.startswith("relay_data_"):
+            if self.coordinator.data.get("relay_device_data"):
+                value = (
+                    self.coordinator.data.get("relay_device_data")
+                    .get(self._device_serial_number)
+                    .get("last_reading")
+                )
+                return {
+                    "last_reported": datetime.datetime.fromtimestamp(
+                        int(value), tz=datetime.timezone.utc
+                    )
+                }
+        elif self.entity_description.key.startswith("relay_info_"):
+            if self.coordinator.data.get("relay_info"):
+                value = (
+                    self.coordinator.data.get("relay_info")
+                    .get(self._device_serial_number)
+                    .get("last_rpt_date")
+                )
+                return {
+                    "last_reported": datetime.datetime.fromtimestamp(
+                        int(value), tz=datetime.timezone.utc
+                    )
+                }
 
     @property
     def device_info(self) -> DeviceInfo | None:

@@ -154,7 +154,7 @@ SENSORS = (
     ),
     SensorEntityDescription(
         key="inverter_data_ac_frequency",
-        name="Frequency",
+        name="AC Frequency",
         native_unit_of_measurement=UnitOfFrequency.HERTZ,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.FREQUENCY,
@@ -232,7 +232,6 @@ SENSORS = (
         device_class=SensorDeviceClass.ENERGY,
         suggested_display_precision=0,
     ),
-    # This data is in attributes too, but seemed helpful to be in diagnostics
     SensorEntityDescription(
         key="inverter_data_last_reading",
         name="Last Reading",
@@ -249,6 +248,7 @@ SENSORS = (
         device_class=None,
         suggested_display_precision=0,
         entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:counter",
     ),
     SensorEntityDescription(
         key="inverter_data_conversion_error",
@@ -391,9 +391,56 @@ SENSORS = (
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SensorEntityDescription(
+        key="relay_data_state_change_count",
+        name="State Change Count",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        suggested_display_precision=0,
+        icon="mdi:counter",
+    ),
+    SensorEntityDescription(
+        key="relay_data_temperature",
+        name="Temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        suggested_display_precision=0,
+    ),
+    SensorEntityDescription(
         key="batteries_software",
         name="Firmware Version",
         icon="mdi:memory",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SensorEntityDescription(
+        key="relay_data_voltage_l1",
+        name="Voltage L1",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        suggested_display_precision=3,
+    ),
+    SensorEntityDescription(
+        key="relay_data_voltage_l2",
+        name="Voltage L2",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        suggested_display_precision=3,
+    ),
+    SensorEntityDescription(
+        key="relay_data_voltage_l3",
+        name="Voltage L3",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        suggested_display_precision=3,
+    ),
+    SensorEntityDescription(
+        key="relay_data_last_reading",
+        name="Last Reading",
+        native_unit_of_measurement=None,
+        state_class=None,
+        device_class=SensorDeviceClass.TIMESTAMP,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
