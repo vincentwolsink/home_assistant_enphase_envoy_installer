@@ -436,6 +436,14 @@ SENSORS = (
         suggested_display_precision=3,
     ),
     SensorEntityDescription(
+        key="relay_data_frequency",
+        name="Frequency",
+        native_unit_of_measurement=UnitOfFrequency.HERTZ,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.FREQUENCY,
+        suggested_display_precision=3,
+    ),
+    SensorEntityDescription(
         key="relay_data_last_reading",
         name="Last Reading",
         native_unit_of_measurement=None,

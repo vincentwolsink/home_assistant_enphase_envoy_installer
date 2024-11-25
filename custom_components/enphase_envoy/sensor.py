@@ -129,6 +129,17 @@ async def async_setup_entry(
                     _LOGGER.debug(f"Relay Data Sensor DATA {relay}")
                     device_name = f"Relay {relay}"
                     serial_number = relay
+
+                    if sensor_description.key.endswith(("l1", "l2", "l3")):
+                        line = sensor_description.key[-2:].replace("l", "line")
+                        line_connected = (
+                            coordinator.data.get("relay_info", {})
+                            .get(relay, {})
+                            .get(f"{line}-connected")
+                        )
+                        if line_connected is False:
+                            continue
+
                     entities.append(
                         EnvoyRelayEntity(
                             description=sensor_description,
