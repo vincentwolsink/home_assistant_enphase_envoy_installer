@@ -392,6 +392,8 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
                     return datetime.datetime.fromtimestamp(
                         int(value), tz=datetime.timezone.utc
                     )
+                if self.entity_description.name.endswith("Production"):
+                    return value
                 if serial.get("gone", True):
                     return None
                 return value
