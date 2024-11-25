@@ -73,6 +73,7 @@ def parse_devicedata(data):
             lifetime = channel["lifetime"]
             last_reading = channel["lastReading"]
             idd[value["sn"]] = {
+                "type": value["devName"],
                 "sn": value["sn"],
                 "active": value["active"],
                 "watts": channel["watts"]["now"],
@@ -91,6 +92,25 @@ def parse_devicedata(data):
                 "lifetime_power": int(lifetime["joulesProduced"]) * 0.000277778,
                 "conversion_error": last_reading["pwrConvErrSecs"],
                 "conversion_error_cycles": last_reading["pwrConvMaxErrCycles"],
+                "gone": value["modGone"],
+                "last_reading": last_reading["endDate"],
+            }
+        elif (
+            isinstance(value, dict)
+            and "devName" in value
+            and value["devName"] == "nsrb"
+        ):
+            channel = value["channels"][0]  # unclear when there might be a channel > 0
+            last_reading = channel["lastReading"]
+            idd[value["sn"]] = {
+                "type": value["devName"],
+                "sn": value["sn"],
+                "active": value["active"],
+                "temperature": last_reading["temperature"],
+                "voltage_l1": last_reading["VrmsL1N"] / 1000,
+                "voltage_l2": last_reading["VrmsL2N"] / 1000,
+                "voltage_l3": last_reading["VrmsL3N"] / 1000,
+                "state_change_count": last_reading["stateChngCnt"],
                 "gone": value["modGone"],
                 "last_reading": last_reading["endDate"],
             }
@@ -418,6 +438,14 @@ class EnvoyStandard(EnvoyData):
             "serial_num",
         )
 
+    @envoy_property(required_endpoint="endpoint_device_data")
+    def inverter_device_data(self):
+        return self._path_to_dict("endpoint_device_data.[?(@.type=='pcu')]", "sn")
+
+    @envoy_property(required_endpoint="endpoint_device_data")
+    def relay_device_data(self):
+        return self._path_to_dict("endpoint_device_data.[?(@.type=='nsrb')]", "sn")
+
     @envoy_property(required_endpoint="endpoint_ensemble_inventory")
     def batteries(self):
         battery_data = self._resolve_path("endpoint_ensemble_inventory[0].devices")
@@ -440,10 +468,6 @@ class EnvoyStandard(EnvoyData):
     @envoy_property(required_endpoint="endpoint_ensemble_power")
     def batteries_power(self):
         return self._path_to_dict("endpoint_ensemble_power.devices:", "serial_num")
-
-    @envoy_property(required_endpoint="endpoint_device_data")
-    def inverter_device_data(self):
-        return self._resolve_path("endpoint_device_data")
 
     @envoy_property(required_endpoint="endpoint_ensemble_power")
     def agg_batteries_power(self):
