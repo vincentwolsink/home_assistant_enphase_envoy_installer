@@ -28,7 +28,23 @@ async def async_setup_entry(
 
     entities = []
     for sensor_description in BINARY_SENSORS:
-        if sensor_description.key.startswith("inverters_"):
+        if sensor_description.key.startswith("inverter_data_"):
+            if coordinator.data.get("inverter_device_data"):
+                for inverter in coordinator.data["inverter_device_data"].keys():
+                    device_name = f"Inverter {inverter}"
+                    entity_name = f"{device_name} {sensor_description.name}"
+                    entities.append(
+                        EnvoyInverterEntity(
+                            sensor_description,
+                            entity_name,
+                            device_name,
+                            inverter,
+                            None,
+                            coordinator,
+                        )
+                    )
+
+        elif sensor_description.key.startswith("inverters_"):
             if coordinator.data.get("inverters_status"):
                 for inverter in coordinator.data["inverters_status"].keys():
                     device_name = f"Inverter {inverter}"
@@ -188,6 +204,12 @@ class EnvoyInverterEntity(CoordinatorEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         """Return the status of the requested attribute."""
+        if self.entity_description.key.startswith("inverter_data_"):
+            return (
+                self.coordinator.data.get("inverter_device_data")
+                .get(self._device_serial_number)
+                .get(self.entity_description.key[14:])
+            )
         if self.coordinator.data.get("inverters_status"):
             return (
                 self.coordinator.data.get("inverters_status")

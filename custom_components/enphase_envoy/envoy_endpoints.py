@@ -69,6 +69,12 @@ ENVOY_ENDPOINTS = {
         "installer_required": False,
         "optional": False,
     },
+    "device_data": {
+        "url": "https://{}/ivp/pdm/device_data",
+        "cache": 0,
+        "installer_required": False,
+        "optional": True,
+    },
     "devstatus": {
         "url": "https://{}/ivp/peb/devstatus",
         "cache": 0,
