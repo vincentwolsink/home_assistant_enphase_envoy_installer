@@ -50,58 +50,9 @@ async def async_setup_entry(
             if sensor_description.key in ADDITIONAL_METRICS:
                 continue
         _LOGGER.debug(f"Picking how to handle Sensor {sensor_description}")
-        if sensor_description.key == "inverters":
-            if coordinator.data.get("inverters_production"):
-                for inverter in coordinator.data["inverters_production"]:
-                    device_name = f"Inverter {inverter}"
-                    serial_number = inverter
-                    entities.append(
-                        EnvoyInverterEntity(
-                            description=sensor_description,
-                            name=f"{device_name} {sensor_description.name}",
-                            device_name=device_name,
-                            device_serial_number=serial_number,
-                            serial_number=serial_number,
-                            coordinator=coordinator,
-                            parent_device=config_entry.unique_id,
-                        )
-                    )
-
-        elif sensor_description.key == "inverters_software":
-            if coordinator.data.get("inverters_info"):
-                for serial_number in coordinator.data["inverters_production"]:
-                    device_name = f"Inverter {serial_number}"
-                    entities.append(
-                        EnvoyInverterFirmwareEntity(
-                            description=sensor_description,
-                            name=f"{device_name} {sensor_description.name}",
-                            device_name=device_name,
-                            device_serial_number=serial_number,
-                            serial_number=None,
-                            coordinator=coordinator,
-                            parent_device=config_entry.unique_id,
-                        )
-                    )
-
-        elif sensor_description.key == "relays_software":
-            if coordinator.data.get("relays"):
-                for serial_number in coordinator.data["relays"].keys():
-                    device_name = f"Relay {serial_number}"
-                    entities.append(
-                        EnvoyRelayFirmwareEntity(
-                            description=sensor_description,
-                            name=f"{device_name} {sensor_description.name}",
-                            device_name=device_name,
-                            device_serial_number=serial_number,
-                            serial_number=None,
-                            coordinator=coordinator,
-                            parent_device=config_entry.unique_id,
-                        )
-                    )
-
-        elif sensor_description.key == "inverters_communication_level":
+        if sensor_description.key == "inverter_pcu_communication_level":
             if coordinator.data.get("pcu_availability"):
-                for serial_number in coordinator.data["inverters_production"]:
+                for serial_number in coordinator.data["inverter_device_data"]:
                     device_name = f"Inverter {serial_number}"
                     entities.append(
                         EnvoyInverterSignalEntity(
@@ -115,11 +66,11 @@ async def async_setup_entry(
                         )
                     )
 
-        elif sensor_description.key == "relays_communication_level":
-            if coordinator.data.get("relays") and coordinator.data.get(
+        elif sensor_description.key == "relay_pcu_communication_level":
+            if coordinator.data.get("relay_device_data") and coordinator.data.get(
                 "pcu_availability"
             ):
-                for serial_number in coordinator.data["relays"].keys():
+                for serial_number in coordinator.data["relay_device_data"].keys():
                     device_name = f"Relay {serial_number}"
                     entities.append(
                         EnvoyRelaySignalEntity(
@@ -153,13 +104,30 @@ async def async_setup_entry(
                         )
                     )
 
-        elif sensor_description.key.startswith("inverters_"):
-            if coordinator.data.get("inverters_status"):
-                for inverter in coordinator.data["inverters_status"].keys():
+        elif sensor_description.key.startswith("inverter_info_"):
+            if coordinator.data.get("inverter_info"):
+                for inverter in coordinator.data["inverter_info"].keys():
                     device_name = f"Inverter {inverter}"
                     serial_number = inverter
                     entities.append(
                         EnvoyInverterEntity(
+                            description=sensor_description,
+                            name=f"{device_name} {sensor_description.name}",
+                            device_name=device_name,
+                            device_serial_number=serial_number,
+                            serial_number=None,
+                            coordinator=coordinator,
+                            parent_device=config_entry.unique_id,
+                        )
+                    )
+
+        elif sensor_description.key.startswith("relay_info_"):
+            if coordinator.data.get("relay_info"):
+                for relay in coordinator.data["relay_info"].keys():
+                    device_name = f"Relay {inverter}"
+                    serial_number = relay
+                    entities.append(
+                        EnvoyRelayEntity(
                             description=sensor_description,
                             name=f"{device_name} {sensor_description.name}",
                             device_name=device_name,
@@ -396,33 +364,31 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
                 if serial.get("gone", True):
                     return None
                 return value
-        elif self.entity_description.key.startswith("inverters_"):
-            if self.coordinator.data.get("inverters_status"):
+        elif self.entity_description.key.startswith("inverter_info_"):
+            if self.coordinator.data.get("inverter_info"):
                 return (
-                    self.coordinator.data.get("inverters_status")
+                    self.coordinator.data.get("inverter_info")
                     .get(self._device_serial_number)
-                    .get(self.entity_description.key[10:])
+                    .get(self.entity_description.key[14:])
                 )
-        elif self.coordinator.data.get("inverters_production"):
-            return (
-                self.coordinator.data.get("inverters_production")
-                .get(self._device_serial_number)
-                .get("watt")
-            )
 
         return None
 
     @property
     def extra_state_attributes(self):
         """Return the state attributes."""
-        if self.entity_description.key.startswith("inverters_"):
-            if self.coordinator.data.get("inverters_status"):
+        if self.entity_description.key.startswith("inverter_info_"):
+            if self.coordinator.data.get("inverter_info"):
                 value = (
-                    self.coordinator.data.get("inverters_status")
+                    self.coordinator.data.get("inverter_info")
                     .get(self._device_serial_number)
-                    .get("report_date")
+                    .get("last_rpt_date")
                 )
-                return {"last_reported": value}
+                return {
+                    "last_reported": datetime.datetime.fromtimestamp(
+                        int(value), tz=datetime.timezone.utc
+                    )
+                }
         elif self.entity_description.key.startswith("inverter_data_"):
             if self.coordinator.data.get("inverter_device_data"):
                 device_data = self.coordinator.data.get("inverter_device_data")
@@ -433,13 +399,6 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
                         value, tz=datetime.timezone.utc
                     )
                 }
-        elif self.coordinator.data.get("inverters_production"):
-            value = (
-                self.coordinator.data.get("inverters_production")
-                .get(self._serial_number)
-                .get("report_date")
-            )
-            return {"last_reported": value}
 
         return None
 
@@ -452,16 +411,16 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
         if self._parent_device:
             device_info_kw["via_device"] = (DOMAIN, self._parent_device)
 
-        if self.coordinator.data.get("inverters_info") and self.coordinator.data.get(
-            "inverters_info"
+        if self.coordinator.data.get("inverter_info") and self.coordinator.data.get(
+            "inverter_info"
         ).get(self._device_serial_number):
             device_info_kw["sw_version"] = (
-                self.coordinator.data.get("inverters_info")
+                self.coordinator.data.get("inverter_info")
                 .get(self._device_serial_number)
                 .get("img_pnum_running")
             )
             device_info_kw["hw_version"] = (
-                self.coordinator.data.get("inverters_info")
+                self.coordinator.data.get("inverter_info")
                 .get(self._device_serial_number)
                 .get("part_num")
             )
@@ -527,28 +486,6 @@ class EnvoySignalEntity(EnvoyDeviceEntity):
         if data is None:
             return 0
         return int(data.get(self._device_serial_number, 0))
-
-
-class EnvoyInverterFirmwareEntity(EnvoyInverterEntity):
-
-    @property
-    def native_value(self) -> str:
-        return (
-            self.coordinator.data.get("inverters_info")
-            .get(self._device_serial_number)
-            .get("img_pnum_running")
-        )
-
-
-class EnvoyRelayFirmwareEntity(EnvoyRelayEntity):
-
-    @property
-    def native_value(self) -> str:
-        return (
-            self.coordinator.data.get("relay_info", {})
-            .get(self._device_serial_number, {})
-            .get("img_pnum_running", None)
-        )
 
 
 class EnvoyInverterSignalEntity(EnvoySignalEntity, EnvoyInverterEntity):

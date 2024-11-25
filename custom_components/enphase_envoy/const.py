@@ -144,47 +144,6 @@ SENSORS = (
         suggested_display_precision=0,
     ),
     SensorEntityDescription(
-        key="inverters",
-        name="Production",
-        native_unit_of_measurement=UnitOfPower.WATT,
-        state_class=SensorStateClass.MEASUREMENT,
-        device_class=SensorDeviceClass.POWER,
-        suggested_display_precision=0,
-    ),
-    # I think this data requires installer perms where inverter_data does not
-    # SensorEntityDescription(
-    #     key="inverters_ac_voltage",
-    #     name="AC Voltage",
-    #     native_unit_of_measurement=UnitOfElectricPotential.VOLT,
-    #     state_class=SensorStateClass.MEASUREMENT,
-    #     device_class=SensorDeviceClass.VOLTAGE,
-    # ),
-    # I think this data requires installer perms where inverter_data does not
-    # SensorEntityDescription(
-    #     key="inverters_dc_voltage",
-    #     name="DC Voltage",
-    #     native_unit_of_measurement=UnitOfElectricPotential.VOLT,
-    #     state_class=SensorStateClass.MEASUREMENT,
-    #     device_class=SensorDeviceClass.VOLTAGE,
-    # ),
-    # I think this data requires installer perms where inverter_data does not
-    # SensorEntityDescription(
-    #     key="inverters_dc_current",
-    #     name="DC Current",
-    #     icon="mdi:current-dc",
-    #     native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-    #     state_class=SensorStateClass.MEASUREMENT,
-    #     device_class=SensorDeviceClass.CURRENT,
-    # ),
-    # I think this data requires installer perms where inverter_data does not
-    # SensorEntityDescription(
-    #     key="inverters_temperature",
-    #     name="Temperature",
-    #     native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-    #     state_class=SensorStateClass.MEASUREMENT,
-    #     device_class=SensorDeviceClass.TEMPERATURE,
-    # ),
-    SensorEntityDescription(
         key="inverter_data_dc_current",
         name="DC Current",
         icon="mdi:current-dc",
@@ -201,18 +160,9 @@ SENSORS = (
         device_class=SensorDeviceClass.FREQUENCY,
         suggested_display_precision=3,
     ),
-    # This is a dupe of other data
-    # SensorEntityDescription(
-    #     key="inverter_data_watts",
-    #     name="Data Watts",
-    #     native_unit_of_measurement=UnitOfPower.WATT,
-    #     state_class=SensorStateClass.MEASUREMENT,
-    #     device_class=SensorDeviceClass.POWER,
-    #     suggested_display_precision=0,
-    # ),
     SensorEntityDescription(
-        key="inverter_data_watts_max",
-        name="Production Max",
+        key="inverter_data_watts",
+        name="Production",
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.POWER,
@@ -220,28 +170,27 @@ SENSORS = (
     ),
     SensorEntityDescription(
         key="inverter_data_ac_voltage",
-        name="Voltage",
+        name="AC Voltage",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.VOLTAGE,
-        suggested_display_precision=1,
+        suggested_display_precision=3,
     ),
-    # This never got data in my system
-    # SensorEntityDescription(
-    #     key="inverter_data_ac_current",
-    #     name="Data Current",
-    #     native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-    #     state_class=SensorStateClass.MEASUREMENT,
-    #     device_class=SensorDeviceClass.CURRENT,
-    #     suggested_display_precision=1,
-    # ),
+    SensorEntityDescription(
+        key="inverter_data_ac_current",
+        name="AC Current",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.CURRENT,
+        suggested_display_precision=3,
+    ),
     SensorEntityDescription(
         key="inverter_data_dc_voltage",
         name="DC Voltage",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.VOLTAGE,
-        suggested_display_precision=1,
+        suggested_display_precision=3,
     ),
     SensorEntityDescription(
         key="inverter_data_temperature",
@@ -249,28 +198,8 @@ SENSORS = (
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.TEMPERATURE,
-        suggested_display_precision=1,
+        suggested_display_precision=0,
     ),
-    # I was hoping for interesting data here, never saw anything useful, just a documentaiton of it existing
-    # SensorEntityDescription(
-    #     key="inverter_data_rssi",
-    #     name="Data RSSI",
-    #     native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS,
-    #     state_class=SensorStateClass.MEASUREMENT,
-    #     device_class=SensorDeviceClass.SIGNAL_STRENGTH,
-    #     suggested_display_precision=1,
-    #     entity_category=EntityCategory.DIAGNOSTIC,
-    # ),
-    # I was hoping for interesting data here, never saw anything useful, just a documentaiton of it existing
-    # SensorEntityDescription(
-    #     key="inverter_data_issi",
-    #     name="Data ISSI",
-    #     native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS,
-    #     state_class=SensorStateClass.MEASUREMENT,
-    #     device_class=SensorDeviceClass.SIGNAL_STRENGTH,
-    #     suggested_display_precision=1,
-    #     entity_category=EntityCategory.DIAGNOSTIC,
-    # ),
     SensorEntityDescription(
         key="inverter_data_lifetime_power",
         name="Lifetime Energy Production",
@@ -285,7 +214,7 @@ SENSORS = (
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         state_class=SensorStateClass.TOTAL,
         device_class=SensorDeviceClass.ENERGY,
-        suggested_display_precision=1,
+        suggested_display_precision=0,
     ),
     SensorEntityDescription(
         key="inverter_data_watt_hours_yesterday",
@@ -293,7 +222,7 @@ SENSORS = (
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         state_class=SensorStateClass.TOTAL,
         device_class=SensorDeviceClass.ENERGY,
-        suggested_display_precision=1,
+        suggested_display_precision=0,
     ),
     SensorEntityDescription(
         key="inverter_data_watt_hours_week",
@@ -301,7 +230,7 @@ SENSORS = (
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         state_class=SensorStateClass.TOTAL,
         device_class=SensorDeviceClass.ENERGY,
-        suggested_display_precision=1,
+        suggested_display_precision=0,
     ),
     # This data is in attributes too, but seemed helpful to be in diagnostics
     SensorEntityDescription(
@@ -428,7 +357,7 @@ SENSORS = (
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SensorEntityDescription(
-        key="inverters_communication_level",
+        key="inverter_pcu_communication_level",
         name="Communication Level",
         device_class=SensorDeviceClass.POWER_FACTOR,
         state_class=SensorStateClass.MEASUREMENT,
@@ -436,7 +365,7 @@ SENSORS = (
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SensorEntityDescription(
-        key="relays_communication_level",
+        key="relay_pcu_communication_level",
         name="Communication Level",
         device_class=SensorDeviceClass.POWER_FACTOR,
         state_class=SensorStateClass.MEASUREMENT,
@@ -450,13 +379,13 @@ SENSORS = (
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SensorEntityDescription(
-        key="inverters_software",
+        key="inverter_info_img_pnum_running",
         name="Firmware Version",
         icon="mdi:memory",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SensorEntityDescription(
-        key="relays_software",
+        key="relay_info_img_pnum_running",
         name="Firmware Version",
         icon="mdi:memory",
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -587,28 +516,14 @@ for phase in ["l1", "l2", "l3"]:
     )
 
 BINARY_SENSORS = (
-    # This sensor appears to mirror the 'communicating' sensor
-    # BinarySensorEntityDescription(
-    #     key="inverter_data_gone",
-    #     name="Data Gone",
-    #     device_class=BinarySensorDeviceClass.POWER,
-    #     entity_category=EntityCategory.DIAGNOSTIC,
-    # ),
-    # This sensor is always on, maybe this is for removed devices or something, documenting, but leaving off
-    # BinarySensorEntityDescription(
-    #     key="inverter_data_active",
-    #     name="Data Active",
-    #     device_class=BinarySensorDeviceClass.POWER,
-    #     entity_category=EntityCategory.DIAGNOSTIC,
-    # ),
     BinarySensorEntityDescription(
-        key="inverters_producing",
+        key="inverter_info_producing",
         name="Producing",
         device_class=BinarySensorDeviceClass.POWER,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     BinarySensorEntityDescription(
-        key="inverters_communicating",
+        key="inverter_info_communicating",
         name="Communicating",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
         entity_category=EntityCategory.DIAGNOSTIC,
@@ -619,26 +534,15 @@ BINARY_SENSORS = (
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
     ),
     BinarySensorEntityDescription(
-        key="relays",
+        key="relay_info_relay",
         name="Contact",
         device_class=BinarySensorDeviceClass.POWER,
     ),
     BinarySensorEntityDescription(
-        key="relays_communicating",
+        key="relay_info_communicating",
         name="Communicating",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
         entity_category=EntityCategory.DIAGNOSTIC,
-    ),
-    BinarySensorEntityDescription(
-        key="relays_forced",
-        name="Forced",
-        device_class=BinarySensorDeviceClass.TAMPER,
-        entity_category=EntityCategory.DIAGNOSTIC,
-    ),
-    BinarySensorEntityDescription(
-        key="firmware",
-        name="Firmware",
-        device_class=BinarySensorDeviceClass.UPDATE,
     ),
     BinarySensorEntityDescription(
         key="batteries_operating",

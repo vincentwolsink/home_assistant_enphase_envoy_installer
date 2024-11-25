@@ -97,41 +97,6 @@ def parse_devicedata(data):
     return idd
 
 
-def parse_devstatus(data):
-    def convert_dev(dev):
-        def iter():
-            for key, value in dev.items():
-                if key == "reportDate":
-                    yield "report_date", (
-                        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(value))
-                        if value
-                        else None
-                    )
-                elif key == "dcVoltageINmV":
-                    yield "dc_voltage", int(value) / 1000
-                elif key == "dcCurrentINmA":
-                    yield "dc_current", int(value) / 1000
-                elif key == "acVoltageINmV":
-                    yield "ac_voltage", int(value) / 1000
-                elif key == "acPowerINmW":
-                    yield "ac_power", int(value) / 1000
-                else:
-                    yield key, value
-
-        return dict(iter())
-
-    new_data = {}
-    for key, val in data.items():
-        if val.get("fields", None) == None or val.get("values", None) == None:
-            new_data[key] = val
-            continue
-
-        new_data[key] = [
-            convert_dev(dict(zip(val["fields"], entry))) for entry in val["values"]
-        ]
-    return new_data
-
-
 class EnvoyReaderError(Exception):
     pass
 
@@ -280,10 +245,7 @@ class EnvoyData(object):
             return
 
         content_type = response.headers.get("content-type", "application/json")
-        if endpoint == "endpoint_devstatus":
-            # Do extra parsing, to zip the fields and values and make it a proper dict
-            self.data[endpoint] = parse_devstatus(response.json())
-        elif endpoint == "endpoint_device_data":
+        if endpoint == "endpoint_device_data":
             # Do extra parsing, to zip the fields and values and make it a proper dict
             self.data[endpoint] = parse_devicedata(response.json())
         elif content_type == "application/json":
@@ -440,42 +402,10 @@ class EnvoyStandard(EnvoyData):
         if grid_status != None:
             return grid_status == "closed"
 
-    inverters_data_value = path_by_token(
-        owner="endpoint_production_inverters.[?(@.devType==1)]",
-        installer="endpoint_devstatus.pcu[?(@.devType==1)]",
-    )
-
     pcu_availability_value = "endpoint_pcu_comm_check"
 
-    @envoy_property
-    def inverters_production(self):
-        # We will use the endpoint based on the token_type, which is automatically resolved by the inverters_data property
-        data = self.get("inverters_data")
-
-        def iter():
-            if (
-                self.reader.token_type == "installer"
-                and not self.reader.disable_installer_account_use
-            ):
-                for item in data:
-                    yield item["serialNumber"], {
-                        "watt": item["ac_power"],
-                        "report_date": item["report_date"],
-                    }
-            else:
-                # endpoint_production_inverters endpoint
-                for item in data:
-                    yield item["serialNumber"], {
-                        "watt": item["lastReportWatts"],
-                        "report_date": time.strftime(
-                            "%Y-%m-%d %H:%M:%S", time.localtime(item["lastReportDate"])
-                        ),
-                    }
-
-        return dict(iter())
-
     @envoy_property(required_endpoint="endpoint_inventory")
-    def inverters_info(self):
+    def inverter_info(self):
         return self._path_to_dict(
             "endpoint_inventory.[?(@.type=='PCU')].devices[?(@.dev_type==1)]",
             "serial_num",
@@ -487,27 +417,6 @@ class EnvoyStandard(EnvoyData):
             "endpoint_inventory.[?(@.type=='NSRB')].devices[?(@.dev_type==12)]",
             "serial_num",
         )
-
-    @envoy_property(required_endpoint="endpoint_devstatus")
-    def inverters_status(self):
-        return self._path_to_dict(
-            "endpoint_devstatus.pcu[?(@.devType==1)]",
-            "serialNumber",
-        )
-
-    @envoy_property(required_endpoint="endpoint_devstatus")
-    def relays(self):
-        status = self._path_to_dict(
-            [
-                "endpoint_devstatus.pcu[?(@.devType==12)]",
-                "endpoint_devstatus.nsrb",
-            ],
-            "serialNumber",
-        )
-        if not status:
-            # fallback to the information which is available with owner token.
-            status = self.get("relay_info")
-        return status
 
     @envoy_property(required_endpoint="endpoint_ensemble_inventory")
     def batteries(self):
