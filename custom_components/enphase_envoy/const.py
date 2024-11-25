@@ -177,14 +177,6 @@ SENSORS = (
         suggested_display_precision=3,
     ),
     SensorEntityDescription(
-        key="inverter_data_ac_current",
-        name="AC Current",
-        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-        state_class=SensorStateClass.MEASUREMENT,
-        device_class=SensorDeviceClass.CURRENT,
-        suggested_display_precision=3,
-    ),
-    SensorEntityDescription(
         key="inverter_data_dc_voltage",
         name="DC Voltage",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
