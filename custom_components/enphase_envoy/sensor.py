@@ -392,7 +392,7 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
                     return datetime.datetime.fromtimestamp(
                         int(value), tz=datetime.timezone.utc
                     )
-                if serial.get("gone", True):
+                if serial.get("gone", True) and not self.entity_description.retain:
                     return None
                 return value
         elif self.entity_description.key.startswith("inverter_info_"):
