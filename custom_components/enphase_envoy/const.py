@@ -1,5 +1,6 @@
 """The enphase_envoy component."""
 
+from dataclasses import dataclass
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntityDescription,
@@ -76,6 +77,11 @@ BATTERY_STATE_MAPPING = {
 STORAGE_MODES = ["backup", "self-consumption", "savings-mode", "economy"]
 
 
+@dataclass
+class InverterSensorEntityDescription(SensorEntityDescription):
+    retain: bool = False
+
+
 def resolve_product_mapping(product_id):
     return PRODUCT_ID_MAPPING.get(product_id.rsplit("-", 1)[0])
 
@@ -143,7 +149,7 @@ SENSORS = (
         device_class=SensorDeviceClass.ENERGY,
         suggested_display_precision=0,
     ),
-    SensorEntityDescription(
+    InverterSensorEntityDescription(
         key="inverter_data_dc_current",
         name="DC Current",
         icon="mdi:current-dc",
@@ -152,7 +158,7 @@ SENSORS = (
         device_class=SensorDeviceClass.CURRENT,
         suggested_display_precision=3,
     ),
-    SensorEntityDescription(
+    InverterSensorEntityDescription(
         key="inverter_data_ac_frequency",
         name="AC Frequency",
         native_unit_of_measurement=UnitOfFrequency.HERTZ,
@@ -160,15 +166,16 @@ SENSORS = (
         device_class=SensorDeviceClass.FREQUENCY,
         suggested_display_precision=3,
     ),
-    SensorEntityDescription(
+    InverterSensorEntityDescription(
         key="inverter_data_watts",
         name="Production",
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.POWER,
         suggested_display_precision=0,
+        retain=True,
     ),
-    SensorEntityDescription(
+    InverterSensorEntityDescription(
         key="inverter_data_ac_voltage",
         name="AC Voltage",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
@@ -176,7 +183,7 @@ SENSORS = (
         device_class=SensorDeviceClass.VOLTAGE,
         suggested_display_precision=3,
     ),
-    SensorEntityDescription(
+    InverterSensorEntityDescription(
         key="inverter_data_dc_voltage",
         name="DC Voltage",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
@@ -184,7 +191,7 @@ SENSORS = (
         device_class=SensorDeviceClass.VOLTAGE,
         suggested_display_precision=3,
     ),
-    SensorEntityDescription(
+    InverterSensorEntityDescription(
         key="inverter_data_temperature",
         name="Temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -192,47 +199,52 @@ SENSORS = (
         device_class=SensorDeviceClass.TEMPERATURE,
         suggested_display_precision=0,
     ),
-    SensorEntityDescription(
+    InverterSensorEntityDescription(
         key="inverter_data_lifetime_power",
         name="Lifetime Energy Production",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         state_class=SensorStateClass.TOTAL_INCREASING,
         device_class=SensorDeviceClass.ENERGY,
         suggested_display_precision=0,
+        retain=True,
     ),
-    SensorEntityDescription(
+    InverterSensorEntityDescription(
         key="inverter_data_watt_hours_today",
         name="Today's Energy Production",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         state_class=SensorStateClass.TOTAL,
         device_class=SensorDeviceClass.ENERGY,
         suggested_display_precision=0,
+        retain=True,
     ),
-    SensorEntityDescription(
+    InverterSensorEntityDescription(
         key="inverter_data_watt_hours_yesterday",
         name="Yesterday's Energy Production",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         state_class=SensorStateClass.TOTAL,
         device_class=SensorDeviceClass.ENERGY,
         suggested_display_precision=0,
+        retain=True,
     ),
-    SensorEntityDescription(
+    InverterSensorEntityDescription(
         key="inverter_data_watt_hours_week",
         name="This Week's Energy Production",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         state_class=SensorStateClass.TOTAL,
         device_class=SensorDeviceClass.ENERGY,
         suggested_display_precision=0,
+        retain=True,
     ),
-    SensorEntityDescription(
+    InverterSensorEntityDescription(
         key="inverter_data_last_reading",
         name="Last Reading",
         native_unit_of_measurement=None,
         state_class=None,
         device_class=SensorDeviceClass.TIMESTAMP,
         entity_category=EntityCategory.DIAGNOSTIC,
+        retain=True,
     ),
-    SensorEntityDescription(
+    InverterSensorEntityDescription(
         key="inverter_data_conversion_error_cycles",
         name="Power Conversion Error Cycles",
         native_unit_of_measurement=None,
@@ -241,8 +253,9 @@ SENSORS = (
         suggested_display_precision=0,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:counter",
+        retain=True,
     ),
-    SensorEntityDescription(
+    InverterSensorEntityDescription(
         key="inverter_data_conversion_error",
         name="Power Conversion Error Seconds",
         native_unit_of_measurement=UnitOfTime.SECONDS,
@@ -250,6 +263,7 @@ SENSORS = (
         device_class=SensorDeviceClass.DURATION,
         suggested_display_precision=0,
         entity_category=EntityCategory.DIAGNOSTIC,
+        retain=True,
     ),
     SensorEntityDescription(
         key="batteries_power",
