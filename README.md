@@ -92,14 +92,22 @@ Available entities differ per Envoy type and configuration.
 ### Inverter
 |Entity name|Entity ID|Unit|
 |-----------|---------|----|
+|Inverter xxx AC Current|sensor.inverter_xxx_ac_current|A|
+|Inverter xxx AC Frequency|sensor.inverter_xxx_ac_frequency|Hz|
 |Inverter xxx AC Voltage|sensor.inverter_xxx_ac_voltage|V|
 |Inverter xxx Communicating|binary_sensor.inverter_xxx_communicating|
 |Inverter xxx Communication Level ¹|sensor.inverter_xxx_communication_level|
 |Inverter xxx DC Current|sensor.inverter_xxx_dc_current|A|
-|Inverter xxx DC Voltage|sensor.inverter_xxx_dc_voltage|V|
+|Inverter xxx Last Reading|sensor.inverter_xxx_last_reading||
+|Inverter xxx Lifetime Energy Production|sensor.inverter_xxx_lifetime_energy_production|Wh|
+|Inverter xxx Power Conversion Error Cycles|sensor.inverter_xxx_power_conversion_error_cycles||
+|Inverter xxx Power Conversion Error Seconds|sensor.inverter_xxx_power_conversion_error_seconds|s|
 |Inverter xxx Producing|binary_sensor.inverter_xxx_producing||
 |Inverter xxx Production|sensor.inverter_xxx_production|W|
 |Inverter xxx Temperature|sensor.inverter_xxx_temperature|°C|
+|Inverter xxx This Week's Energy Production|sensor.inverter_xxx_this_week_s_energy_production|Wh|
+|Inverter xxx Today's Energy Production|sensor.inverter_xxx_today_s_energy_production|Wh|
+|Inverter xxx Yesterday's Energy Production|sensor.inverter_xxx_yesterday_s_energy_production|Wh|
 
 ### Battery
 |Entity name|Entity ID|Unit|
@@ -121,7 +129,13 @@ Available entities differ per Envoy type and configuration.
 |Relay xxx Communicating|binary_sensor.relay_xxx_communicating||
 |Relay xxx Communication Level ¹|sensor.relay_xxx_communication_level||
 |Relay xxx Contact|binary_sensor.relay_xxx_contact||
-|Relay xxx Forced|binary_sensor.relay_xxx_forced||
+|Relay xxx Frequency|binary_sensor.relay_xxx_frequency|Hz|
+|Relay xxx Last Reading|sensor.relay_xxx_last_reading||
+|Relay xxx State Change Count|sensor.relay_xxx_state_change_count||
+|Relay xxx Temperature|sensor.relay_xxx_temperature|°C|
+|Relay xxx Voltage L1|sensor.relay_xxx_voltage_l1|V|
+|Relay xxx Voltage L2|sensor.relay_xxx_voltage_l2|V|
+|Relay xxx Voltage L3|sensor.relay_xxx_voltage_l3|V|
 
 ¹ Optional. Enable via integration configuration.
 
