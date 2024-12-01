@@ -68,7 +68,11 @@ def has_metering_setup(json):
 def parse_devicedata(data):
     idd = {}
     for key, value in data.items():
-        if isinstance(value, dict) and "devName" in value and value["devName"] == "pcu":
+        if (
+            isinstance(value, dict)
+            and value.get("devName") == "pcu"
+            and value.get("active") is True
+        ):
             channel = value["channels"][0]  # unclear when there might be a channel > 0
             lifetime = channel["lifetime"]
             last_reading = channel["lastReading"]
@@ -97,8 +101,8 @@ def parse_devicedata(data):
             }
         elif (
             isinstance(value, dict)
-            and "devName" in value
-            and value["devName"] == "nsrb"
+            and value.get("devName") == "nsrb"
+            and value.get("active") is True
         ):
             channel = value["channels"][0]  # unclear when there might be a channel > 0
             last_reading = channel["lastReading"]
