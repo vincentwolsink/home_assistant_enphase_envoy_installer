@@ -66,59 +66,69 @@ def has_metering_setup(json):
 
 
 def parse_devicedata(data):
+    pcu_data = {
+        "type": "devName",
+        "sn": "sn",
+        "active": "active",
+        "watts": "channels[0].watts.now",
+        "watts_max": "channels[0].watts.max",
+        "watt_hours_today": "channels[0].wattHours.today",
+        "watt_hours_yesterday": "channels[0].wattHours.yesterday",
+        "watt_hours_week": "channels[0].wattHours.week",
+        "ac_voltage": "channels[0].lastReading.acVoltageINmV",
+        "ac_frequency": "channels[0].lastReading.acFrequencyINmHz",
+        "ac_current": "channels[0].lastReading.acCurrentInmA",
+        "dc_voltage": "channels[0].lastReading.dcVoltageINmV",
+        "dc_current": "channels[0].lastReading.dcCurrentINmA",
+        "temperature": "channels[0].lastReading.channelTemp",
+        "rssi": "channels[0].lastReading.rssi",
+        "issi": "channels[0].lastReading.issi",
+        "lifetime_power": "channels[0].lifetime.joulesProduced",
+        "conversion_error": "channels[0].lastReading.pwrConvErrSecs",
+        "conversion_error_cycles": "channels[0].lastReading.pwrConvMaxErrCycles",
+        "gone": "modGone",
+        "last_reading": "channels[0].lastReading.endDate",
+    }
+    nsrb_data = {
+        "type": "devName",
+        "sn": "sn",
+        "active": "active",
+        "temperature": "channels[0].lastReading.temperature",
+        "frequency": "channels[0].lastReading.freqInmHz",
+        "state_change_count": "channels[0].lastReading.stateChngCnt",
+        "voltage_l1": "channels[0].lastReading.[voltRmsL1,VrmsL1N]",
+        "voltage_l2": "channels[0].lastReading.[voltRmsL2,VrmsL2N]",
+        "voltage_l3": "channels[0].lastReading.[voltRmsL3,VrmsL3N]",
+        "gone": "modGone",
+        "last_reading": "channels[0].lastReading.endDate",
+    }
+
     idd = {}
-    for key, value in data.items():
-        if (
-            isinstance(value, dict)
-            and value.get("devName") == "pcu"
-            and value.get("active") is True
-        ):
-            channel = value["channels"][0]  # unclear when there might be a channel > 0
-            lifetime = channel["lifetime"]
-            last_reading = channel["lastReading"]
-            idd[value["sn"]] = {
-                "type": value["devName"],
-                "sn": value["sn"],
-                "active": value["active"],
-                "watts": channel["watts"]["now"],
-                "watts_max": channel["watts"]["max"],
-                "watt_hours_today": channel["wattHours"]["today"],
-                "watt_hours_yesterday": channel["wattHours"]["yesterday"],
-                "watt_hours_week": channel["wattHours"]["week"],
-                "ac_voltage": int(last_reading["acVoltageINmV"]) / 1000,
-                "ac_frequency": int(last_reading["acFrequencyINmHz"]) / 1000,
-                "ac_current": int(last_reading["acCurrentInmA"]) / 1000,
-                "dc_voltage": int(last_reading["dcVoltageINmV"]) / 1000,
-                "dc_current": int(last_reading["dcCurrentINmA"]) / 1000,
-                "temperature": last_reading["channelTemp"],
-                "rssi": last_reading["rssi"],
-                "issi": last_reading["issi"],
-                "lifetime_power": int(lifetime["joulesProduced"]) * 0.000277778,
-                "conversion_error": last_reading["pwrConvErrSecs"],
-                "conversion_error_cycles": last_reading["pwrConvMaxErrCycles"],
-                "gone": value["modGone"],
-                "last_reading": last_reading["endDate"],
-            }
-        elif (
-            isinstance(value, dict)
-            and value.get("devName") == "nsrb"
-            and value.get("active") is True
-        ):
-            channel = value["channels"][0]  # unclear when there might be a channel > 0
-            last_reading = channel["lastReading"]
-            idd[value["sn"]] = {
-                "type": value["devName"],
-                "sn": value["sn"],
-                "active": value["active"],
-                "temperature": last_reading["temperature"],
-                "voltage_l1": int(last_reading["VrmsL1N"]) / 1000,
-                "voltage_l2": int(last_reading["VrmsL2N"]) / 1000,
-                "voltage_l3": int(last_reading["VrmsL3N"]) / 1000,
-                "frequency": int(last_reading["freqInmHz"]) / 1000,
-                "state_change_count": last_reading["stateChngCnt"],
-                "gone": value["modGone"],
-                "last_reading": last_reading["endDate"],
-            }
+    for device in data.values():
+        if isinstance(device, dict) and device.get("active") is True:
+            if device.get("devName") == "pcu":
+                dataset = pcu_data
+            elif device.get("devName") == "nsrb":
+                dataset = nsrb_data
+            else:
+                continue
+
+            device_data = {}
+            for field, path in dataset.items():
+                result = jsonpath(device, path)
+                if result:
+                    value = result[0]
+                    _LOGGER.debug(f"Found device data field {field}: {value}")
+                    if path.endswith(("mA", "mV", "mHz")) or field.startswith(
+                        "voltage_"
+                    ):
+                        device_data[field] = int(value) / 1000
+                    elif path.endswith("joulesProduced"):
+                        device_data[field] = int(value) * 0.000277778
+                    else:
+                        device_data[field] = value
+            idd[device.get("sn")] = device_data
+
     return idd
 
 
