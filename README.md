@@ -25,10 +25,11 @@ Features:
 ## Screenshots
 
 ![phase_sensors](https://github.com/vincentwolsink/home_assistant_enphase_envoy_installer/assets/1639734/87fc0c3d-1fd8-4e2c-b7ce-df48531c90e6)
-![inverter_sensors](https://github.com/vincentwolsink/home_assistant_enphase_envoy_installer/assets/1639734/d0033e75-6b89-46dd-bf1e-449bbca957f2)
+<img width=333 src="https://github.com/user-attachments/assets/12da33c1-6be0-40dd-bda1-40e31727eaa5">
 
 ## Available Entities
-Available entities differ per Envoy type and configuration.
+Available entities differ per Envoy type and conf
+iguration.
 
 ### Envoy
 |Entity name|Entity ID|Unit|
