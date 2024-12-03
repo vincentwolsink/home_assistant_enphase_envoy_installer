@@ -437,6 +437,12 @@ class EnvoyStandard(EnvoyData):
         if grid_status != None:
             return grid_status == "closed"
 
+    @envoy_property(required_endpoint="endpoint_production_inverters")
+    def inverter_production(self):
+        return self._path_to_dict(
+            "endpoint_production_inverters.[?(@.devType==1)]", "serialNumber"
+        )
+
     pcu_availability_value = "endpoint_pcu_comm_check"
 
     @envoy_property(required_endpoint="endpoint_inventory")
@@ -594,11 +600,6 @@ class EnvoyMeteredWithCT(EnvoyMetered):
                 f"daily_production_{phase}_value",
                 f"endpoint_production_json.production[?(@.type=='eim')].lines[{i}].whToday",
             )
-
-        # When we're using the endpoint_production_report primarily, then the following
-        # endpoint can be used way less frequently
-        reader.uri_registry["endpoint_production_json"]["cache_time"] = 50
-        reader.uri_registry["endpoint_production_inverters"]["cache_time"] = 290
 
         return EnvoyMetered.__new__(cls)
 
