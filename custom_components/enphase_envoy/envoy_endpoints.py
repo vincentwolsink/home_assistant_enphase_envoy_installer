@@ -75,12 +75,12 @@ ENVOY_ENDPOINTS = {
         "installer_required": False,
         "optional": False,
     },
-    # "devstatus": {
-    #     "url": "https://{}/ivp/peb/devstatus",
-    #     "cache": 0,
-    #     "installer_required": True,
-    #     "optional": True,
-    # },
+    "devstatus": {
+        "url": "https://{}/ivp/peb/devstatus",
+        "cache": 0,
+        "installer_required": True,
+        "optional": True,
+    },
     "pcu_comm_check": {
         "url": "https://{}/installer/pcu_comm_check",
         "cache": 3600,

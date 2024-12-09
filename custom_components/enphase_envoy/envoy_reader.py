@@ -65,6 +65,44 @@ def has_metering_setup(json):
     return json["production"][1]["activeCount"] > 0
 
 
+def parse_devstatus(data):
+    pcu_data = {
+        "sn": "serialNumber",
+        "type": "devType",
+        "last_reading": "reportDate",
+        "temperature": "temperature",
+        "dc_voltage": "dcVoltageINmV",
+        "dc_current": "dcCurrentINmA",
+        "ac_voltage": "acVoltageINmV",
+        "ac_power": "acPowerINmW",
+    }
+
+    idd = []
+    for itemtype, content in data.items():
+        if itemtype == "pcu":
+            dataset = pcu_data
+        else:
+            continue
+
+        fields = content.get("fields", {})
+        values = content.get("values", [])
+        field_map = {key: fields.index(field) for key, field in dataset.items()}
+
+        for valueset in values:
+            device_data = {}
+            for field, index in field_map.items():
+                value = valueset[index]
+
+                _LOGGER.debug(f"Found device status field {field}: {value}")
+                if dataset[field].endswith(("mA", "mV", "mHz")):
+                    device_data[field] = int(value) / 1000
+                else:
+                    device_data[field] = value
+            idd.append(device_data)
+
+    return idd
+
+
 def parse_devicedata(data):
     pcu_data = {
         "type": "devName",
@@ -103,7 +141,7 @@ def parse_devicedata(data):
         "last_reading": "channels[0].lastReading.endDate",
     }
 
-    idd = {}
+    idd = []
     for device in data.values():
         if isinstance(device, dict) and device.get("active") is True:
             if device.get("devName") == "pcu":
@@ -127,7 +165,7 @@ def parse_devicedata(data):
                         device_data[field] = int(value) * 0.000277778
                     else:
                         device_data[field] = value
-            idd[device.get("sn")] = device_data
+            idd.append(device_data)
 
     return idd
 
@@ -281,8 +319,9 @@ class EnvoyData(object):
 
         content_type = response.headers.get("content-type", "application/json")
         if endpoint == "endpoint_device_data":
-            # Do extra parsing, to zip the fields and values and make it a proper dict
             self.data[endpoint] = parse_devicedata(response.json())
+        elif endpoint == "endpoint_devstatus":
+            self.data[endpoint] = parse_devstatus(response.json())
         elif content_type == "application/json":
             self.data[endpoint] = response.json()
         elif content_type in ("text/xml", "application/xml"):
@@ -466,6 +505,10 @@ class EnvoyStandard(EnvoyData):
     @envoy_property(required_endpoint="endpoint_device_data")
     def relay_device_data(self):
         return self._path_to_dict("endpoint_device_data.[?(@.type=='nsrb')]", "sn")
+
+    @envoy_property(required_endpoint="endpoint_devstatus")
+    def inverter_device_status(self):
+        return self._path_to_dict("endpoint_devstatus.[?(@.type==1)]", "sn")
 
     @envoy_property(required_endpoint="endpoint_ensemble_inventory")
     def batteries(self):
