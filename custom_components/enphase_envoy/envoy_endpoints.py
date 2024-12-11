@@ -73,14 +73,14 @@ ENVOY_ENDPOINTS = {
         "url": "https://{}/ivp/pdm/device_data",
         "cache": 0,
         "installer_required": False,
-        "optional": False,
+        "optional": True,
     },
-    # "devstatus": {
-    #     "url": "https://{}/ivp/peb/devstatus",
-    #     "cache": 0,
-    #     "installer_required": True,
-    #     "optional": True,
-    # },
+    "devstatus": {
+        "url": "https://{}/ivp/peb/devstatus",
+        "cache": 0,
+        "installer_required": True,
+        "optional": True,
+    },
     "pcu_comm_check": {
         "url": "https://{}/installer/pcu_comm_check",
         "cache": 3600,

@@ -36,6 +36,7 @@
           "enable_additional_metrics": "[Metered only] Enable additional metrics like total amps, frequency, apparent and reactive power and power factor.",
           "disable_installer_account_use": "Do not collect data that requires installer or DIY enphase account",
           "enable_pcu_comm_check": "Enable powerline communication level sensors (slow)",
+          "devstatus_device_data": "Use alternative endpoint 'devstatus' (installer account only) for device sensors",
           "lifetime_production_correction": "Correction of lifetime production value (Wh)",
           "disabled_endpoints": "[Advanced] Disabled Envoy endpoints"
         },

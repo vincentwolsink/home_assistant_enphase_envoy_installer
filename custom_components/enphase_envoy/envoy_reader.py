@@ -65,6 +65,50 @@ def has_metering_setup(json):
     return json["production"][1]["activeCount"] > 0
 
 
+def parse_devstatus(data):
+    pcu_data = {
+        "sn": "serialNumber",
+        "type": "devType",
+        "last_reading": "reportDate",
+        "temperature": "temperature",
+        "dc_voltage": "dcVoltageINmV",
+        "dc_current": "dcCurrentINmA",
+        "ac_voltage": "acVoltageINmV",
+        "ac_power": "acPowerINmW",
+        "gone": "communicating",
+    }
+    device_type = {1: "pcu", 12: "nsrb"}
+
+    idd = []
+    for itemtype, content in data.items():
+        if itemtype == "pcu":
+            dataset = pcu_data
+        else:
+            continue
+
+        fields = content.get("fields", {})
+        values = content.get("values", [])
+        field_map = {key: fields.index(field) for key, field in dataset.items()}
+
+        for valueset in values:
+            device_data = {}
+            for field, index in field_map.items():
+                value = valueset[index]
+
+                _LOGGER.debug(f"Found device status field {field}: {value}")
+                if dataset[field].endswith(("mA", "mV", "mHz")):
+                    device_data[field] = int(value) / 1000
+                elif field == "type":
+                    device_data[field] = device_type.get(value, value)
+                elif field == "gone":
+                    device_data[field] = not value
+                else:
+                    device_data[field] = value
+            idd.append(device_data)
+
+    return idd
+
+
 def parse_devicedata(data):
     pcu_data = {
         "type": "devName",
@@ -103,7 +147,7 @@ def parse_devicedata(data):
         "last_reading": "channels[0].lastReading.endDate",
     }
 
-    idd = {}
+    idd = []
     for device in data.values():
         if isinstance(device, dict) and device.get("active") is True:
             if device.get("devName") == "pcu":
@@ -127,7 +171,7 @@ def parse_devicedata(data):
                         device_data[field] = int(value) * 0.000277778
                     else:
                         device_data[field] = value
-            idd[device.get("sn")] = device_data
+            idd.append(device_data)
 
     return idd
 
@@ -281,8 +325,9 @@ class EnvoyData(object):
 
         content_type = response.headers.get("content-type", "application/json")
         if endpoint == "endpoint_device_data":
-            # Do extra parsing, to zip the fields and values and make it a proper dict
             self.data[endpoint] = parse_devicedata(response.json())
+        elif endpoint == "endpoint_devstatus":
+            self.data[endpoint] = parse_devstatus(response.json())
         elif content_type == "application/json":
             self.data[endpoint] = response.json()
         elif content_type in ("text/xml", "application/xml"):
@@ -297,6 +342,7 @@ class EnvoyData(object):
             return self._required_endpoints
 
         endpoints = set()
+        endpoints.add(self.reader.device_data_endpoint)
 
         # Loop through all local attributes, and return unique first required jsonpath attribute.
         for attr in dir(self):
@@ -459,13 +505,17 @@ class EnvoyStandard(EnvoyData):
             "serial_num",
         )
 
-    @envoy_property(required_endpoint="endpoint_device_data")
+    @envoy_property()
     def inverter_device_data(self):
-        return self._path_to_dict("endpoint_device_data.[?(@.type=='pcu')]", "sn")
+        return self._path_to_dict(
+            f"{self.reader.device_data_endpoint}.[?(@.type=='pcu')]", "sn"
+        )
 
-    @envoy_property(required_endpoint="endpoint_device_data")
+    @envoy_property()
     def relay_device_data(self):
-        return self._path_to_dict("endpoint_device_data.[?(@.type=='nsrb')]", "sn")
+        return self._path_to_dict(
+            f"{self.reader.device_data_endpoint}.[?(@.type=='nsrb')]", "sn"
+        )
 
     @envoy_property(required_endpoint="endpoint_ensemble_inventory")
     def batteries(self):
@@ -636,6 +686,7 @@ class EnvoyReader:
         disable_negative_production=False,
         disabled_endpoints=[],
         lifetime_production_correction=0,
+        device_data_endpoint="endpoint_device_data",
     ):
         """Init the EnvoyReader."""
         self.host = host.lower()
@@ -660,6 +711,7 @@ class EnvoyReader:
         self.required_endpoints = set()  # in case we would need it..
         self.disabled_endpoints = disabled_endpoints
         self.lifetime_production_correction = lifetime_production_correction
+        self.device_data_endpoint = device_data_endpoint
 
         self.uri_registry = {}
         for key, endpoint in ENVOY_ENDPOINTS.items():
