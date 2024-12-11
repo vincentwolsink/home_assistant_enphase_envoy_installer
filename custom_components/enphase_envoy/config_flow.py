@@ -290,6 +290,10 @@ class EnvoyOptionsFlowHandler(config_entries.OptionsFlow):
                 default=self.config_entry.options.get("enable_pcu_comm_check", False),
             ): bool,
             vol.Optional(
+                "devstatus_device_data",
+                default=self.config_entry.options.get("devstatus_device_data", False),
+            ): bool,
+            vol.Optional(
                 "lifetime_production_correction",
                 default=self.config_entry.options.get(
                     "lifetime_production_correction", 0

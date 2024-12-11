@@ -75,7 +75,9 @@ def parse_devstatus(data):
         "dc_current": "dcCurrentINmA",
         "ac_voltage": "acVoltageINmV",
         "ac_power": "acPowerINmW",
+        "gone": "communicating",
     }
+    device_type = {1: "pcu", 12: "nsrb"}
 
     idd = []
     for itemtype, content in data.items():
@@ -96,6 +98,10 @@ def parse_devstatus(data):
                 _LOGGER.debug(f"Found device status field {field}: {value}")
                 if dataset[field].endswith(("mA", "mV", "mHz")):
                     device_data[field] = int(value) / 1000
+                elif field == "type":
+                    device_data[field] = device_type.get(value, value)
+                elif field == "gone":
+                    device_data[field] = not value
                 else:
                     device_data[field] = value
             idd.append(device_data)
@@ -336,6 +342,7 @@ class EnvoyData(object):
             return self._required_endpoints
 
         endpoints = set()
+        endpoints.add(self.reader.device_data_endpoint)
 
         # Loop through all local attributes, and return unique first required jsonpath attribute.
         for attr in dir(self):
@@ -498,17 +505,17 @@ class EnvoyStandard(EnvoyData):
             "serial_num",
         )
 
-    @envoy_property(required_endpoint="endpoint_device_data")
+    @envoy_property()
     def inverter_device_data(self):
-        return self._path_to_dict("endpoint_device_data.[?(@.type=='pcu')]", "sn")
+        return self._path_to_dict(
+            f"{self.reader.device_data_endpoint}.[?(@.type=='pcu')]", "sn"
+        )
 
-    @envoy_property(required_endpoint="endpoint_device_data")
+    @envoy_property()
     def relay_device_data(self):
-        return self._path_to_dict("endpoint_device_data.[?(@.type=='nsrb')]", "sn")
-
-    @envoy_property(required_endpoint="endpoint_devstatus")
-    def inverter_device_status(self):
-        return self._path_to_dict("endpoint_devstatus.[?(@.type==1)]", "sn")
+        return self._path_to_dict(
+            f"{self.reader.device_data_endpoint}.[?(@.type=='nsrb')]", "sn"
+        )
 
     @envoy_property(required_endpoint="endpoint_ensemble_inventory")
     def batteries(self):
@@ -679,6 +686,7 @@ class EnvoyReader:
         disable_negative_production=False,
         disabled_endpoints=[],
         lifetime_production_correction=0,
+        device_data_endpoint="endpoint_device_data",
     ):
         """Init the EnvoyReader."""
         self.host = host.lower()
@@ -703,6 +711,7 @@ class EnvoyReader:
         self.required_endpoints = set()  # in case we would need it..
         self.disabled_endpoints = disabled_endpoints
         self.lifetime_production_correction = lifetime_production_correction
+        self.device_data_endpoint = device_data_endpoint
 
         self.uri_registry = {}
         for key, endpoint in ENVOY_ENDPOINTS.items():

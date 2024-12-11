@@ -89,6 +89,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         disable_negative_production=options.get("disable_negative_production", False),
         disabled_endpoints=disabled_endpoints,
         lifetime_production_correction=options.get("lifetime_production_correction", 0),
+        device_data_endpoint=(
+            "endpoint_devstatus"
+            if options.get("devstatus_device_data", False)
+            else "endpoint_device_data"
+        ),
     )
     await envoy_reader._sync_store(load=True)
 
