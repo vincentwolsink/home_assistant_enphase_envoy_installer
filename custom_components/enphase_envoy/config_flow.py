@@ -220,16 +220,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry):
-        return EnvoyOptionsFlowHandler(config_entry)
+    def async_get_options_flow(config_entry: ConfigEntry):
+        return EnvoyOptionsFlowHandler()
 
 
 class EnvoyOptionsFlowHandler(config_entries.OptionsFlow):
     """Envoy config flow options handler."""
-
-    def __init__(self, config_entry):
-        """Initialize Envoy options flow."""
-        self.config_entry = config_entry
 
     async def async_step_init(self, _user_input=None):
         """Manage the options."""
