@@ -176,6 +176,11 @@ def parse_devicedata(data):
     return idd
 
 
+def read_file_as_bytes(filename):
+    with open(filename, "rb") as f:
+        return f.read()
+
+
 class EnvoyReaderError(Exception):
     pass
 
@@ -1328,9 +1333,9 @@ class EnvoyReader:
     async def upload_grid_profile(self, file):
         if self.endpoint_installer_agf is not None:
             formatted_url = ENDPOINT_URL_INSTALLER_AGF_UPLOAD_PROFILE.format(self.host)
-            resp = await self._async_post(
-                formatted_url, files={"file": open(file, "rb")}
-            )
+            loop = asyncio.get_running_loop()
+            content = await loop.run_in_executor(None, read_file_as_bytes, file)
+            resp = await self._async_post(formatted_url, files={"file": content})
             message = resp.json().get("message")
             if message != "success":
                 raise EnvoyError(f"Failed uploading grid profile: {message}")
