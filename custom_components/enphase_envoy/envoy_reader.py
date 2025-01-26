@@ -747,7 +747,7 @@ class EnvoyReader:
         return self.uri_registry[attr]
 
     def _clear_endpoint_cache(self, attr):
-        if attr not in self.uri_registry[attr]:
+        if attr not in self.uri_registry:
             return
 
         # Setting last_fetch to 0 ensures it will be fetched upon next run
@@ -1156,6 +1156,13 @@ class EnvoyReader:
                     "- FETCHING ENDPOINT %s TOOK %.4f seconds",
                     endpoint,
                     time.time() - endpoint_settings["last_fetch"],
+                )
+            else:
+                _LOGGER.info(
+                    "Skipping update of %s: last fetch: %s, cache time: %s",
+                    endpoint,
+                    endpoint_settings["last_fetch"],
+                    endpoint_settings["cache_time"],
                 )
 
             if self.data:
