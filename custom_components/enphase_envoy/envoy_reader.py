@@ -593,6 +593,18 @@ class EnvoyMetered(EnvoyStandard):
                 full_path = f"{ct_path}.lines[{i}]{path}"
                 setattr(cls, f"{attr}_{phase}_value", full_path)
 
+        for attr, path in {
+            "net_consumption": ".wNow",
+            "daily_net_consumption": ".whToday",
+            "lifetime_net_consumption": ".whLifetime",
+        }.items():
+            ct_path = cls._net_consumption_ct
+            setattr(cls, f"{attr}_value", ct_path + path)
+
+            for i, phase in enumerate(["l1", "l2", "l3"]):
+                full_path = f"{ct_path}.lines[{i}]{path}"
+                setattr(cls, f"{attr}_{phase}_value", full_path)
+
         return EnvoyStandard.__new__(cls)
 
     _production = "endpoint_production_json.production[?(@.type=='inverters')]"
@@ -615,6 +627,7 @@ class EnvoyMetered(EnvoyStandard):
         "endpoint_production_json.production[?(@.type=='eim' && @.activeCount > 0)]"
     )
     _consumption_ct = "endpoint_production_json.consumption[?(@.measurementType == 'total-consumption' && @.activeCount > 0)]"
+    _net_consumption_ct = "endpoint_production_json.consumption[?(@.measurementType == 'net-consumption' && @.activeCount > 0)]"
     voltage_value = _production_ct + ".rmsVoltage"
 
 

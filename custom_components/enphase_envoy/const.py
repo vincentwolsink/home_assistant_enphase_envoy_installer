@@ -104,7 +104,7 @@ def get_model_name(model, hardware_id):
 SENSORS = (
     SensorEntityDescription(
         key="production",
-        name="Current Power Production",
+        name="Power Production",
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.POWER,
@@ -127,7 +127,15 @@ SENSORS = (
     ),
     SensorEntityDescription(
         key="consumption",
-        name="Current Power Consumption",
+        name="Power Consumption",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=0,
+    ),
+    SensorEntityDescription(
+        key="net_consumption",
+        name="Net Power Consumption",
         native_unit_of_measurement=UnitOfPower.WATT,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.POWER,
@@ -345,14 +353,14 @@ SENSORS = (
     ),
     SensorEntityDescription(
         key="voltage",
-        name="Current Voltage",
+        name="Voltage",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.VOLTAGE,
     ),
     SensorEntityDescription(
         key="ampere",
-        name="Current Amps",
+        name="Amperes",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.CURRENT,
@@ -479,7 +487,7 @@ for phase in ["l1", "l2", "l3"]:
         [
             SensorEntityDescription(
                 key=f"production_{phase}",
-                name=f"Current Power Production {phase.upper()}",
+                name=f"Power Production {phase.upper()}",
                 native_unit_of_measurement=UnitOfPower.WATT,
                 state_class=SensorStateClass.MEASUREMENT,
                 device_class=SensorDeviceClass.POWER,
@@ -503,14 +511,14 @@ for phase in ["l1", "l2", "l3"]:
             ),
             SensorEntityDescription(
                 key=f"voltage_{phase}",
-                name=f"Current Voltage {phase.upper()}",
+                name=f"Voltage {phase.upper()}",
                 native_unit_of_measurement=UnitOfElectricPotential.VOLT,
                 state_class=SensorStateClass.MEASUREMENT,
                 device_class=SensorDeviceClass.VOLTAGE,
             ),
             SensorEntityDescription(
                 key=f"ampere_{phase}",
-                name=f"Current Amps {phase.upper()}",
+                name=f"Amperes {phase.upper()}",
                 native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                 state_class=SensorStateClass.MEASUREMENT,
                 device_class=SensorDeviceClass.CURRENT,
@@ -550,7 +558,7 @@ for phase in ["l1", "l2", "l3"]:
             #
             SensorEntityDescription(
                 key=f"consumption_{phase}",
-                name=f"Current Power Consumption {phase.upper()}",
+                name=f"Power Consumption {phase.upper()}",
                 native_unit_of_measurement=UnitOfPower.WATT,
                 state_class=SensorStateClass.MEASUREMENT,
                 device_class=SensorDeviceClass.POWER,
@@ -567,6 +575,30 @@ for phase in ["l1", "l2", "l3"]:
             SensorEntityDescription(
                 key=f"lifetime_consumption_{phase}",
                 name=f"Lifetime Energy Consumption {phase.upper()}",
+                native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+                state_class=SensorStateClass.TOTAL,
+                device_class=SensorDeviceClass.ENERGY,
+                suggested_display_precision=0,
+            ),
+            SensorEntityDescription(
+                key=f"net_consumption_{phase}",
+                name=f"Net Power Consumption {phase.upper()}",
+                native_unit_of_measurement=UnitOfPower.WATT,
+                state_class=SensorStateClass.MEASUREMENT,
+                device_class=SensorDeviceClass.POWER,
+                suggested_display_precision=0,
+            ),
+            SensorEntityDescription(
+                key=f"daily_net_consumption_{phase}",
+                name=f"Today's Net Energy Consumption {phase.upper()}",
+                native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+                state_class=SensorStateClass.TOTAL,
+                device_class=SensorDeviceClass.ENERGY,
+                suggested_display_precision=0,
+            ),
+            SensorEntityDescription(
+                key=f"lifetime_net_consumption_{phase}",
+                name=f"Lifetime Net Energy Consumption {phase.upper()}",
                 native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
                 state_class=SensorStateClass.TOTAL,
                 device_class=SensorDeviceClass.ENERGY,
