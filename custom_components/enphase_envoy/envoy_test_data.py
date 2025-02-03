@@ -70,6 +70,12 @@ ENVOY_ENDPOINTS = {
         "installer_required": False,
         "optional": False,
     },
+    "device_data": {
+        "url": TEST_DATA + "endpoint_device_data.json",
+        "cache": 0,
+        "installer_required": False,
+        "optional": True,
+    },
     "devstatus": {
         "url": TEST_DATA + "endpoint_devstatus.json",
         "cache": 20,
