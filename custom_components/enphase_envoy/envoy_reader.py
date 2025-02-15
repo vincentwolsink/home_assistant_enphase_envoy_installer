@@ -176,6 +176,18 @@ def parse_devicedata(data):
     return idd
 
 
+def merge_metersdata(data1=[], data2=[]):
+    for el2 in data2:
+        for el1 in data1:
+            if el1["eid"] == el2["eid"]:
+                el1.update(el2)
+                break
+        else:
+            data1.append(el2)
+
+    return data1
+
+
 def read_file_as_bytes(filename):
     with open(filename, "rb") as f:
         return f.read()
@@ -340,14 +352,21 @@ class EnvoyData(object):
         else:
             self.data[endpoint] = response.text
 
+        if endpoint in ["endpoint_meters", "endpoint_meters_readings"]:
+            self.data["endpoint_meters_readings"] = merge_metersdata(
+                self.data.get("endpoint_meters_readings", []), self.data[endpoint]
+            )
+
+        _LOGGER.debug("Endpoint '%s' data: %s", endpoint, self.data[endpoint])
+
     @property
     def required_endpoints(self):
         """Method that will return all endpoints which are defined in the _value parameters."""
-        if self._required_endpoints != None:  # return cached value
+        if self._required_endpoints is not None:  # return cached value
             return self._required_endpoints
 
-        endpoints = set()
-        endpoints.add(self.reader.device_data_endpoint)
+        endpoints = []
+        endpoints.append(self.reader.device_data_endpoint)
 
         # Loop through all local attributes, and return unique first required jsonpath attribute.
         for attr in dir(self):
@@ -360,11 +379,11 @@ class EnvoyData(object):
                         # If the resolved path is None, we skip this path for the endpoints
                         continue
 
-                endpoints.add(path.split(".", 1)[0])
+                endpoints.append(path.split(".", 1)[0])
                 continue  # discovered, so continue
 
             if attr in self._envoy_properties and isinstance(
-                self._envoy_properties[attr], str
+                self._envoy_properties[attr], (str, list)
             ):
                 value = getattr(self, attr)
                 if self.initial_update_finished and value in (None, [], {}):
@@ -373,7 +392,13 @@ class EnvoyData(object):
                     # so do not require it.
                     continue
 
-                endpoints.add(self._envoy_properties[attr])
+                attr_values = self._envoy_properties[attr]
+                if not isinstance(attr_values, list):
+                    attr_values = [attr_values]
+
+                endpoints.extend(attr_values)
+
+        endpoints = set(endpoints)
 
         if self.initial_update_finished:
             # Save the list in memory, as we should not evaluate this list again.
@@ -657,19 +682,41 @@ class EnvoyMeteredWithCT(EnvoyMetered):
                 full_path = f"{ct_path}.lines[{i}]{path}"
                 setattr(cls, f"{attr}_{phase}_value", full_path)
 
-        setattr(
-            cls,
-            "daily_production_value",
-            "endpoint_production_json.production[?(@.type=='eim')].whToday",
-        )
         for i, phase in enumerate(["l1", "l2", "l3"]):
             setattr(
                 cls,
                 f"daily_production_{phase}_value",
                 f"endpoint_production_json.production[?(@.type=='eim')].lines[{i}].whToday",
             )
+            setattr(
+                cls,
+                f"lifetime_net_production_{phase}_value",
+                f"endpoint_meters_readings.[?(@.measurementType == 'net-consumption' && @.state == 'enabled' && @.phaseCount > {i})].channels[{i}].actEnergyRcvd",
+            )
+            setattr(
+                cls,
+                f"lifetime_batteries_charged_{phase}_value",
+                f"endpoint_meters_readings.[?(@.measurementType == 'storage' && @.state == 'enabled' && @.phaseCount > {i})].channels[{i}].actEnergyRcvd",
+            )
+            setattr(
+                cls,
+                f"lifetime_batteries_discharged_{phase}_value",
+                f"endpoint_meters_readings.[?(@.measurementType == 'storage' && @.state == 'enabled' && @.phaseCount > {i})].channels[{i}].actEnergyDlvd",
+            )
 
         return EnvoyMetered.__new__(cls)
+
+    @envoy_property(required_endpoint=["endpoint_meters", "endpoint_meters_readings"])
+    def meters_readings(self):
+        return self._resolve_path("endpoint_meters_readings")
+
+    daily_production_value = (
+        "endpoint_production_json.production[?(@.type=='eim')].whToday"
+    )
+    lifetime_net_production_value = "endpoint_meters_readings.[?(@.measurementType == 'net-consumption' && @.state == 'enabled')].actEnergyRcvd"
+
+    lifetime_batteries_charged_value = "endpoint_meters_readings.[?(@.measurementType == 'storage' && @.state == 'enabled')].actEnergyRcvd"
+    lifetime_batteries_discharged_value = "endpoint_meters_readings.[?(@.measurementType == 'storage' && @.state == 'enabled')].actEnergyDlvd"
 
 
 def get_envoydataclass(envoy_type, production_json):
@@ -1135,6 +1182,7 @@ class EnvoyReader:
         for endpoint in endpoints:
             endpoint_settings = self.uri_registry.get(endpoint)
 
+            _LOGGER.info("VALIDATING ENDPOINT %s", endpoint)
             if endpoint_settings["optional"] and endpoint in self.disabled_endpoints:
                 _LOGGER.info(
                     "Skipping update of disabled %s: %s",
@@ -1171,7 +1219,7 @@ class EnvoyReader:
                     url=endpoint_settings["url"],
                 )
                 _LOGGER.info(
-                    "- FETCHING ENDPOINT %s TOOK %.4f seconds",
+                    "FETCHING ENDPOINT %s TOOK %.4f seconds",
                     endpoint,
                     time.time() - endpoint_settings["last_fetch"],
                 )

@@ -88,6 +88,18 @@ ENVOY_ENDPOINTS = {
         "installer_required": True,
         "optional": True,
     },
+    "meters": {
+        "url": TEST_DATA + "endpoint_meters.json",
+        "cache": 0,
+        "installer_required": False,
+        "optional": True,
+    },
+    "meters_readings": {
+        "url": TEST_DATA + "endpoint_meters_readings.json",
+        "cache": 0,
+        "installer_required": False,
+        "optional": True,
+    },
     # Netprofile endpoints
     "installer_agf": {
         "url": TEST_DATA + "endpoint_installer_agf_index_json.json",
