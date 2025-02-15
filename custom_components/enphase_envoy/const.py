@@ -126,6 +126,14 @@ SENSORS = (
         suggested_display_precision=0,
     ),
     SensorEntityDescription(
+        key="lifetime_net_production",
+        name="Lifetime Net Energy Production",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        state_class=SensorStateClass.TOTAL,
+        device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=0,
+    ),
+    SensorEntityDescription(
         key="consumption",
         name="Power Consumption",
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -305,6 +313,22 @@ SENSORS = (
         device_class=SensorDeviceClass.POWER,
     ),
     SensorEntityDescription(
+        key="lifetime_batteries_charged",
+        name="Lifetime Batteries Energy Charged",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        state_class=SensorStateClass.TOTAL,
+        device_class=SensorDeviceClass.ENERGY,
+        icon="mdi:battery-charging",
+    ),
+    SensorEntityDescription(
+        key="lifetime_batteries_discharged",
+        name="Lifetime Batteries Energy Discharged",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        state_class=SensorStateClass.TOTAL,
+        device_class=SensorDeviceClass.ENERGY,
+        icon="mdi:battery-charging",
+    ),
+    SensorEntityDescription(
         key="batteries_percentFull",
         name="Charge",
         native_unit_of_measurement=PERCENTAGE,
@@ -325,6 +349,7 @@ SENSORS = (
         state_class=SensorStateClass.TOTAL,
         device_class=SensorDeviceClass.ENERGY,
         entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:battery",
     ),
     SensorEntityDescription(
         key="batteries_encharge_available_energy",
@@ -332,6 +357,7 @@ SENSORS = (
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         state_class=SensorStateClass.TOTAL,
         device_class=SensorDeviceClass.ENERGY,
+        icon="mdi:battery-charging-100",
     ),
     SensorEntityDescription(
         key="batteries_led_status",
@@ -352,6 +378,7 @@ SENSORS = (
         state_class=SensorStateClass.TOTAL,
         device_class=SensorDeviceClass.ENERGY,
         entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:battery",
     ),
     SensorEntityDescription(
         key="agg_batteries_available_energy",
@@ -359,6 +386,7 @@ SENSORS = (
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         state_class=SensorStateClass.TOTAL,
         device_class=SensorDeviceClass.ENERGY,
+        icon="mdi:battery-charging-100",
     ),
     SensorEntityDescription(
         key="agg_batteries_power",
@@ -526,6 +554,14 @@ for phase in ["l1", "l2", "l3"]:
                 suggested_display_precision=0,
             ),
             SensorEntityDescription(
+                key=f"lifetime_net_production_{phase}",
+                name=f"Lifetime Net Energy Production {phase.upper()}",
+                native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+                state_class=SensorStateClass.TOTAL_INCREASING,
+                device_class=SensorDeviceClass.ENERGY,
+                suggested_display_precision=0,
+            ),
+            SensorEntityDescription(
                 key=f"voltage_{phase}",
                 name=f"Voltage {phase.upper()}",
                 native_unit_of_measurement=UnitOfElectricPotential.VOLT,
@@ -619,6 +655,22 @@ for phase in ["l1", "l2", "l3"]:
                 state_class=SensorStateClass.TOTAL,
                 device_class=SensorDeviceClass.ENERGY,
                 suggested_display_precision=0,
+            ),
+            SensorEntityDescription(
+                key=f"lifetime_batteries_charged_{phase}",
+                name=f"Lifetime Batteries Energy Charged {phase.upper()}",
+                native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+                state_class=SensorStateClass.TOTAL,
+                device_class=SensorDeviceClass.ENERGY,
+                icon="mdi:battery-charging",
+            ),
+            SensorEntityDescription(
+                key=f"lifetime_batteries_discharged_{phase}",
+                name=f"Lifetime Batteries Energy Discharged {phase.upper()}",
+                native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+                state_class=SensorStateClass.TOTAL,
+                device_class=SensorDeviceClass.ENERGY,
+                icon="mdi:battery-charging",
             ),
         ]
     )
