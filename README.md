@@ -45,14 +45,6 @@ iguration.
 |Envoy xxx Batteries Mode|select.envoy_xxx_batteries_mode||
 |Envoy xxx Batteries Power|sensor.envoy_xxx_batteries_power|W|
 |Envoy xxx Batteries Reserve Charge|number.envoy_xxx_batteries_reserve_charge|%|
-|Envoy xxx Batteries Energy Charged|sensor.envoy_xxx_lifetime_batteries_charged|Wh|
-|Envoy xxx Batteries Energy Charged L1|sensor.envoy_xxx_lifetime_batteries_charged_l1|Wh|
-|Envoy xxx Batteries Energy Charged L2|sensor.envoy_xxx_lifetime_batteries_charged_l2|Wh|
-|Envoy xxx Batteries Energy Charged L3|sensor.envoy_xxx_lifetime_batteries_charged_l3|Wh|
-|Envoy xxx Batteries Energy Discharged|sensor.envoy_xxx_lifetime_batteries_discharged|Wh|
-|Envoy xxx Batteries Energy Discharged L1|sensor.envoy_xxx_lifetime_batteries_discharged_l1|Wh|
-|Envoy xxx Batteries Energy Discharged L2|sensor.envoy_xxx_lifetime_batteries_discharged_l2|Wh|
-|Envoy xxx Batteries Energy Discharged L3|sensor.envoy_xxx_lifetime_batteries_discharged_l3|Wh|
 |Envoy xxx Current Amps ¹|sensor.envoy_xxx_current_amps|A|
 |Envoy xxx Current Amps L1 ¹|sensor.envoy_xxx_current_amps_l1|A|
 |Envoy xxx Current Amps L2 ¹|sensor.envoy_xxx_current_amps_l2|A|
@@ -74,18 +66,26 @@ iguration.
 |Envoy xxx Frequency L3 ¹|sensor.envoy_xxx_frequency_l3|Hz|
 |Envoy xxx Grid Profile|sensor.envoy_xxx_grid_profile||
 |Envoy xxx Grid Status|binary_sensor.envoy_xxx_grid_status||
+|Envoy xxx Lifetime Batteries Energy Charged|sensor.envoy_xxx_lifetime_batteries_charged|Wh|
+|Envoy xxx Lifetime Batteries Energy Charged L1|sensor.envoy_xxx_lifetime_batteries_charged_l1|Wh|
+|Envoy xxx Lifetime Batteries Energy Charged L2|sensor.envoy_xxx_lifetime_batteries_charged_l2|Wh|
+|Envoy xxx Lifetime Batteries Energy Charged L3|sensor.envoy_xxx_lifetime_batteries_charged_l3|Wh|
+|Envoy xxx Lifetime Batteries Energy Discharged|sensor.envoy_xxx_lifetime_batteries_discharged|Wh|
+|Envoy xxx Lifetime Batteries Energy Discharged L1|sensor.envoy_xxx_lifetime_batteries_discharged_l1|Wh|
+|Envoy xxx Lifetime Batteries Energy Discharged L2|sensor.envoy_xxx_lifetime_batteries_discharged_l2|Wh|
+|Envoy xxx Lifetime Batteries Energy Discharged L3|sensor.envoy_xxx_lifetime_batteries_discharged_l3|Wh|
 |Envoy xxx Lifetime Energy Consumption|sensor.envoy_xxx_lifetime_energy_consumption|Wh|
 |Envoy xxx Lifetime Energy Consumption L1|sensor.envoy_xxx_lifetime_energy_consumption_l1|Wh|
 |Envoy xxx Lifetime Energy Consumption L2|sensor.envoy_xxx_lifetime_energy_consumption_l2|Wh|
 |Envoy xxx Lifetime Energy Consumption L3|sensor.envoy_xxx_lifetime_energy_consumption_l3|Wh|
-|Envoy xxx Lifetime Net Energy Consumption|sensor.envoy_xxx_lifetime_net_energy_consumption|Wh|
-|Envoy xxx Lifetime Net Energy Consumption L1|sensor.envoy_xxx_lifetime_net_energy_consumption_l1|Wh|
-|Envoy xxx Lifetime Net Energy Consumption L2|sensor.envoy_xxx_lifetime_net_energy_consumption_l2|Wh|
-|Envoy xxx Lifetime Net Energy Consumption L3|sensor.envoy_xxx_lifetime_net_energy_consumption_l3|Wh|
 |Envoy xxx Lifetime Energy Production|sensor.envoy_xxx_lifetime_energy_production|Wh|
 |Envoy xxx Lifetime Energy Production L1|sensor.envoy_xxx_lifetime_energy_production_l1|Wh|
 |Envoy xxx Lifetime Energy Production L2|sensor.envoy_xxx_lifetime_energy_production_l2|Wh|
 |Envoy xxx Lifetime Energy Production L3|sensor.envoy_xxx_lifetime_energy_production_l3|Wh|
+|Envoy xxx Lifetime Net Energy Consumption|sensor.envoy_xxx_lifetime_net_energy_consumption|Wh|
+|Envoy xxx Lifetime Net Energy Consumption L1|sensor.envoy_xxx_lifetime_net_energy_consumption_l1|Wh|
+|Envoy xxx Lifetime Net Energy Consumption L2|sensor.envoy_xxx_lifetime_net_energy_consumption_l2|Wh|
+|Envoy xxx Lifetime Net Energy Consumption L3|sensor.envoy_xxx_lifetime_net_energy_consumption_l3|Wh|
 |Envoy xxx Lifetime Net Energy Production|sensor.envoy_xxx_lifetime_energy_production|Wh|
 |Envoy xxx Lifetime Net Energy Production L1|sensor.envoy_xxx_lifetime_net_energy_production_l1|Wh|
 |Envoy xxx Lifetime Net Energy Production L2|sensor.envoy_xxx_lifetime_net_energy_production_l2|Wh|
