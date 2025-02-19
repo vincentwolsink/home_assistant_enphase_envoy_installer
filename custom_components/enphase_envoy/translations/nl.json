@@ -5,8 +5,8 @@
           "reauth_successful": "Herauthenticatie was succesvol"
       },
       "error": {
-          "cannot_connect": "Kan geen verbinding maken",
-          "invalid_auth": "Ongeldige authenticatie",
+          "cannot_connect": "Kan geen verbinding maken met Envoy. Controleer host en serienummer.",
+          "invalid_auth": "Inloggen mislukt. Controleer Enlighten gebruikersnaam/wachtwoord.",
           "unknown": "Onverwachte fout"
       },
       "flow_title": "{serial} ({host})",

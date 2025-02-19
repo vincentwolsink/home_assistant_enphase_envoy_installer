@@ -1284,7 +1284,7 @@ class EnvoyReader:
             self.endpoint_production_json
             and self.endpoint_production_json.status_code == 401
         ):
-            raise RuntimeError(
+            raise EnvoyError(
                 "Could not connect to Envoy model. "
                 + "Appears your Envoy is running firmware that requires secure communcation. "
                 + "Please enter in the needed Enlighten credentials during setup."
@@ -1306,7 +1306,7 @@ class EnvoyReader:
                 self.endpoint_type = ENVOY_MODEL_S
 
         if not self.endpoint_type:
-            raise RuntimeError(
+            raise EnvoyError(
                 "Could not connect or determine Envoy model. "
                 + "Check that the device is up at 'https://"
                 + self.host

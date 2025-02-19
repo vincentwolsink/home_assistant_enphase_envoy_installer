@@ -5,8 +5,8 @@
       "reauth_successful": "Re-authentication was successful"
     },
     "error": {
-      "cannot_connect": "Failed to connect",
-      "invalid_auth": "Invalid authentication",
+      "cannot_connect": "Failed to connect to Envoy. Please check host and serial.",
+      "invalid_auth": "Cannot login. Please check Enlighten username/password.",
       "unknown": "Unexpected error"
     },
     "flow_title": "{serial} ({host})",
