@@ -6,7 +6,7 @@ import contextlib
 import logging
 from typing import Any
 
-from .envoy_reader import EnvoyReader
+from .envoy_reader import EnvoyReader, EnlightenError, EnvoyError
 import httpx
 import voluptuous as vol
 
@@ -52,9 +52,9 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> EnvoyRead
 
     try:
         await envoy_reader.get_data()
-    except httpx.HTTPStatusError as err:
+    except EnlightenError as err:
         raise InvalidAuth from err
-    except (RuntimeError, httpx.HTTPError) as err:
+    except (EnvoyError, httpx.ConnectError) as err:
         raise CannotConnect from err
 
     return envoy_reader
