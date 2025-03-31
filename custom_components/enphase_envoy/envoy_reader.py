@@ -341,14 +341,16 @@ class EnvoyData(object):
             return
 
         content_type = response.headers.get("content-type", "application/json")
+        path = response.url.path
+
         if endpoint == "endpoint_device_data":
             self.data[endpoint] = parse_devicedata(response.json())
         elif endpoint == "endpoint_devstatus":
             self.data[endpoint] = parse_devstatus(response.json())
-        elif content_type == "application/json":
-            self.data[endpoint] = response.json()
-        elif content_type in ("text/xml", "application/xml"):
+        elif content_type in ("text/xml", "application/xml") or path.endswith(".xml"):
             self.data[endpoint] = xmltodict.parse(response.text)
+        elif content_type == "application/json" or path.endswith(".json"):
+            self.data[endpoint] = response.json()
         else:
             self.data[endpoint] = response.text
 
