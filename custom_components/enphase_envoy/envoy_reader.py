@@ -207,6 +207,8 @@ class EnvoyError(EnvoyReaderError):
 
 class FileData:
     def __init__(self, file):
+        self.file = file
+
         if file.endswith(".json"):
             self.content_type = "application/json"
             with open(file) as json_file:
@@ -226,8 +228,20 @@ class FileData:
     def headers(self):
         return {"content-type": self.content_type}
 
+    @property
+    def url(self):
+        return self.Url(self.file)
+
     def json(self):
         return self.json_data
+
+    class Url:
+        def __init__(self, url):
+            self.url = url
+
+        @property
+        def path(self):
+            return self.url.split("/")[-1]
 
 
 class StreamData:
