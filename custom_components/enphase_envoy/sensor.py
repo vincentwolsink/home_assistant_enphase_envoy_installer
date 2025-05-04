@@ -438,44 +438,45 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
     @property
     def extra_state_attributes(self):
         """Return the state attributes."""
-        if self.entity_description.key == "inverter_data_watts":
-            if self.coordinator.data.get("inverter_production"):
-                value = (
-                    self.coordinator.data.get("inverter_production")
-                    .get(self._device_serial_number)
-                    .get("lastReportDate")
-                )
-                return {
-                    "last_reported": datetime.datetime.fromtimestamp(
-                        int(value), tz=datetime.timezone.utc
+        try:
+            if self.entity_description.key == "inverter_data_watts":
+                if self.coordinator.data.get("inverter_production"):
+                    value = (
+                        self.coordinator.data.get("inverter_production")
+                        .get(self._device_serial_number)
+                        .get("lastReportDate")
                     )
-                }
-        elif self.entity_description.key.startswith("inverter_info_"):
-            if self.coordinator.data.get("inverter_info"):
-                value = (
-                    self.coordinator.data.get("inverter_info")
-                    .get(self._device_serial_number)
-                    .get("last_rpt_date")
-                )
-                return {
-                    "last_reported": datetime.datetime.fromtimestamp(
-                        int(value), tz=datetime.timezone.utc
+                    return {
+                        "last_reported": datetime.datetime.fromtimestamp(
+                            int(value), tz=datetime.timezone.utc
+                        )
+                    }
+            elif self.entity_description.key.startswith("inverter_info_"):
+                if self.coordinator.data.get("inverter_info"):
+                    value = (
+                        self.coordinator.data.get("inverter_info")
+                        .get(self._device_serial_number)
+                        .get("last_rpt_date")
                     )
-                }
-        elif self.entity_description.key.startswith("inverter_data_"):
-            if self.coordinator.data.get("inverter_device_data"):
-                value = (
-                    self.coordinator.data.get("inverter_device_data")
-                    .get(self._device_serial_number)
-                    .get("last_reading")
-                )
-                return {
-                    "last_reported": datetime.datetime.fromtimestamp(
-                        int(value), tz=datetime.timezone.utc
+                    return {
+                        "last_reported": datetime.datetime.fromtimestamp(
+                            int(value), tz=datetime.timezone.utc
+                        )
+                    }
+            elif self.entity_description.key.startswith("inverter_data_"):
+                if self.coordinator.data.get("inverter_device_data"):
+                    value = (
+                        self.coordinator.data.get("inverter_device_data")
+                        .get(self._device_serial_number)
+                        .get("last_reading")
                     )
-                }
-
-        return None
+                    return {
+                        "last_reported": datetime.datetime.fromtimestamp(
+                            int(value), tz=datetime.timezone.utc
+                        )
+                    }
+        except (ValueError, TypeError):
+            return None
 
     @property
     def device_info(self) -> DeviceInfo | None:
