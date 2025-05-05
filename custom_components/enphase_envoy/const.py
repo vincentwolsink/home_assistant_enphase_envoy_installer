@@ -60,6 +60,7 @@ PRODUCT_ID_MAPPING = {
     "800-00656": {"name": "Envoy-S-Standard-EU", "sku": "ENV-S-WB-230"},
     "800-01359": {"name": "IQ8+ Microinverter", "sku": "IQ8PLUS-72-M-INT"},
     "800-01391": {"name": "IQ8HC Microinverter", "sku": "IQ8HC-72-M-INT"},
+    "800-01396": {"name": "IQ8MC Microinverter", "sku": "IQ8MC-72-M-INT"},
     "800-01736": {"name": "IQ7+ Microinverter", "sku": "IQ7PLUS-72-M-INT"},
     "800-00631": {"name": "IQ7+ Microinverter", "sku": "IQ7PLUS-72-2-INT"},
     "800-01127": {"name": "IQ7A Microinverter", "sku": "IQ7A-72-M-INT"},
