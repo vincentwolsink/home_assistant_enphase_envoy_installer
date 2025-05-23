@@ -6,6 +6,12 @@ ENVOY_ENDPOINTS = {
         "installer_required": False,
         "optional": False,
     },
+    "peb_newscan": {
+        "url": "https://{}/ivp/peb/newscan",
+        "cache": 3600,
+        "installer_required": True,
+        "optional": True,
+    },
     # Production/consumption endpoints
     "production_json": {
         "url": "https://{}/production.json?details=1",

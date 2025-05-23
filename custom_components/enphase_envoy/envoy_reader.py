@@ -132,6 +132,7 @@ def parse_devicedata(data):
         "conversion_error_cycles": "channels[0].lastReading.pwrConvMaxErrCycles",
         "gone": "modGone",
         "last_reading": "channels[0].lastReading.endDate",
+        "last_reading_interval": "channels[0].lastReading.duration",
     }
     nsrb_data = {
         "type": "devName",
@@ -485,6 +486,7 @@ class EnvoyStandard(EnvoyData):
     serial_number_value = "endpoint_info.envoy_info.device.sn"
     grid_profile_value = "endpoint_installer_agf.selected_profile"
     grid_profiles_available_value = "endpoint_installer_agf.profiles"
+    polling_interval_value = "endpoint_peb_newscan.newDeviceScan.polling-period-secs"
 
     @envoy_property()
     def envoy_info(self):
