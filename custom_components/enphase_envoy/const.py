@@ -296,6 +296,16 @@ SENSORS = (
         retain=True,
     ),
     InverterSensorEntityDescription(
+        key="inverter_data_last_reading_interval",
+        name="Last Reading Interval",
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.DURATION,
+        suggested_display_precision=0,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        retain=True,
+    ),
+    InverterSensorEntityDescription(
         key="inverter_data_conversion_error_cycles",
         name="Power Conversion Error Cycles",
         native_unit_of_measurement=None,
@@ -453,6 +463,15 @@ SENSORS = (
         key="envoy_software",
         name="Firmware Version",
         icon="mdi:memory",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SensorEntityDescription(
+        key="polling_interval",
+        name="Polling Interval",
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.DURATION,
+        suggested_display_precision=0,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SensorEntityDescription(
