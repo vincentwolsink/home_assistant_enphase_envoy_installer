@@ -209,6 +209,16 @@ SENSORS = (
         retain=True,
     ),
     InverterSensorEntityDescription(
+        key="inverter_data_watts_max",
+        name="Max Reported Production",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=0,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        retain=True,
+    ),
+    InverterSensorEntityDescription(
         key="inverter_data_ac_voltage",
         name="AC Voltage",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
