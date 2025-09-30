@@ -12,6 +12,12 @@ ENVOY_ENDPOINTS = {
         "installer_required": True,
         "optional": True,
     },
+    "dpel": {
+        "url": "https://{}/ivp/ss/dpel",
+        "cache": 0,
+        "installer_required": True,
+        "optional": True,
+    },
     # Production/consumption endpoints
     "production_json": {
         "url": "https://{}/production.json?details=1",

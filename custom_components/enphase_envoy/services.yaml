@@ -13,3 +13,13 @@ upload_grid_profile:
       example: "/share/grid_profiles/64d31e5868ac391817b21af1"
       selector:
         text:
+enable_dpel:
+  description: Enable DPEL (Dynamic Power Export Limit)
+  fields:
+    watts:
+      description: Optional power limit in watts (default is 50W if not specified)
+      example: 50
+      required: false
+disable_dpel:
+  description: Disable DPEL (Dynamic Power Export Limit)
+

@@ -158,6 +158,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         ),
     )
 
+    async def async_enable_dpel(call: ServiceCall):
+        watts = call.data["watts"] if "watts" in call.data else None
+        await envoy_reader.enable_dpel(watts=watts)
+        await coordinator.async_request_refresh()
+
+    hass.services.async_register(
+        DOMAIN,
+        "enable_dpel",
+        async_enable_dpel)
+    
+    async def async_disable_dpel(call: ServiceCall):
+        await envoy_reader.disable_dpel()
+        await coordinator.async_request_refresh()
+    
+    hass.services.async_register(
+        DOMAIN,
+        "disable_dpel",
+        async_disable_dpel)
+    
     async def get_grid_profiles(call: ServiceCall) -> ServiceResponse:
         return {
             "selected_profile": coordinator.data.get("grid_profile"),
