@@ -738,9 +738,8 @@ class EnvoyMeteredWithCT(EnvoyMetered):
 
     @envoy_property(required_endpoint="endpoint_dpel")
     def dpel_enabled(self):
-        return self._resolve_path(
-            "endpoint_dpel.dynamic_pel_settings.enable"
-        )
+        return self._resolve_path("endpoint_dpel.dynamic_pel_settings.enable")
+
 
 def get_envoydataclass(envoy_type, production_json):
     if envoy_type == ENVOY_MODEL_S:
@@ -1413,23 +1412,26 @@ class EnvoyReader:
             "export_limit": True,
             "limit_value_W": watts if watts is not None else 50.0,
             "slew_rate": 50.0,
-            "enable_dynamic_limiting": False
+            "enable_dynamic_limiting": False,
         }
-        enable_dpel_json = json.dumps({
-            "dynamic_pel_settings": dynamic_pel_settings,
-            "filename": "site_settings",
-            "version": "00.00.01"
-        })
+        enable_dpel_json = json.dumps(
+            {
+                "dynamic_pel_settings": dynamic_pel_settings,
+                "filename": "site_settings",
+                "version": "00.00.01",
+            }
+        )
         await self._async_post(formatted_url, data=enable_dpel_json)
 
     async def disable_dpel(self):
         formatted_url = ENVOY_ENDPOINTS["dpel"]["url"].format(self.host)
-        disable_dpel_json=json.dumps({
-            "dynamic_pel_settings": {
-            "enable": False
-            },
-            "filename": "site_settings",
-            "version": "00.00.01"})
+        disable_dpel_json = json.dumps(
+            {
+                "dynamic_pel_settings": {"enable": False},
+                "filename": "site_settings",
+                "version": "00.00.01",
+            }
+        )
         await self._async_post(formatted_url, data=disable_dpel_json)
 
     async def set_grid_profile(self, profile_id):
