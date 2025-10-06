@@ -159,8 +159,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     async def async_enable_dpel(call: ServiceCall):
-        watts = call.data["watts"] if "watts" in call.data else None
-        await envoy_reader.enable_dpel(watts=watts)
+        await envoy_reader.enable_dpel(call.data["watt"])
         await coordinator.async_request_refresh()
 
     hass.services.async_register(DOMAIN, "enable_dpel", async_enable_dpel)

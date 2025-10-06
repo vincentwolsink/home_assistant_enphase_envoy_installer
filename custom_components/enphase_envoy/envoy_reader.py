@@ -1405,12 +1405,12 @@ class EnvoyReader:
             # Make sure the next poll will update the endpoint.
             self._clear_endpoint_cache("endpoint_production_power")
 
-    async def enable_dpel(self, watts=None):
+    async def enable_dpel(self, watt):
         formatted_url = ENVOY_ENDPOINTS["dpel"]["url"].format(self.host)
         dynamic_pel_settings = {
             "enable": True,
             "export_limit": True,
-            "limit_value_W": watts if watts is not None else 50.0,
+            "limit_value_W": watt,
             "slew_rate": 50.0,
             "enable_dynamic_limiting": False,
         }

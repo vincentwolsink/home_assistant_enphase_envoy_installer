@@ -70,6 +70,20 @@
           "description": "Path to the grid profile package file"
         }
       }
+    },
+    "enable_dpel": {
+      "name": "Enable DPEL",
+      "description": "Enable DPEL (Dynamic Power Export Limit)",
+      "fields": {
+        "watt": {
+          "name": "Watt",
+          "description": "Power export limit in watt"
+        }
+      }
+    },
+    "disable_dpel": {
+      "name": "Disable DPEL",
+      "description": "Disable DPEL (Dynamic Power Export Limit)"
     }
   }
 }

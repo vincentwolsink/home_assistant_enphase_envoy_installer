@@ -770,8 +770,8 @@ BINARY_SENSORS = (
     ),
     BinarySensorEntityDescription(
         key="dpel_enabled",
-        name="DPEL",
-        device_class=BinarySensorDeviceClass.POWER,
+        name="Dynamic Power Export Limiting",
+        icon="mdi:transmission-tower-export",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
