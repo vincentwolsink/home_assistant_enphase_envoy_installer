@@ -78,6 +78,10 @@
         "watt": {
           "name": "Watt",
           "description": "Power export limit in watt"
+        },
+        "slew_rate": {
+          "name": "Slew rate",
+          "description": "Power export limit slew rate"
         }
       }
     },

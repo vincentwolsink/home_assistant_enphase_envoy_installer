@@ -20,4 +20,9 @@ enable_dpel:
       required: true
       selector:
         number:
+    slew_rate:
+      example: 50
+      required: false
+      selector:
+        number:
 disable_dpel:
