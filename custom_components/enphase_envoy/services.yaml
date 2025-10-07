@@ -13,3 +13,16 @@ upload_grid_profile:
       example: "/share/grid_profiles/64d31e5868ac391817b21af1"
       selector:
         text:
+enable_dpel:
+  fields:
+    watt:
+      example: 50
+      required: true
+      selector:
+        number:
+    slew_rate:
+      example: 50
+      required: false
+      selector:
+        number:
+disable_dpel:

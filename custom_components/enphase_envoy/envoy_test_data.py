@@ -7,6 +7,18 @@ ENVOY_ENDPOINTS = {
         "installer_required": False,
         "optional": False,
     },
+    "peb_newscan": {
+        "url": TEST_DATA + "endpoint_peb_newscan.json",
+        "cache": 3600,
+        "installer_required": True,
+        "optional": True,
+    },
+    "dpel": {
+        "url": TEST_DATA + "endpoint_dpel.json",
+        "cache": 0,
+        "installer_required": True,
+        "optional": True,
+    },
     # Production/consumption endpoints
     "production_json": {
         "url": TEST_DATA + "endpoint_production_json.json",

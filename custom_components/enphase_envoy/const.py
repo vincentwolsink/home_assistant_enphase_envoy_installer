@@ -768,6 +768,12 @@ BINARY_SENSORS = (
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:power-sleep",
     ),
+    BinarySensorEntityDescription(
+        key="dpel_enabled",
+        name="Dynamic Power Export Limiting",
+        icon="mdi:transmission-tower-export",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
 )
 
 SWITCHES = (
