@@ -771,7 +771,8 @@ BINARY_SENSORS = (
     BinarySensorEntityDescription(
         key="dpel_enabled",
         name="Dynamic Power Export Limiting",
-        icon="mdi:transmission-tower-export",
+        # 'tower-import' icon means 'sending power to grid'
+        icon="mdi:transmission-tower-import",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
