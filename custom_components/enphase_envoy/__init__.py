@@ -160,7 +160,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def async_enable_dpel(call: ServiceCall):
         await envoy_reader.enable_dpel(
-            watt=call.data.get("watt"), slew=call.data.get("slew_rate", 50)
+            watt=call.data.get("watt"), 
+            slew=call.data.get("slew_rate", 50), 
+            export_limit=call.data.get("export_limit", True)
         )
         await coordinator.async_request_refresh()
 
