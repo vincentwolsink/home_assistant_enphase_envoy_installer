@@ -82,6 +82,10 @@
         "slew_rate": {
           "name": "Slew rate",
           "description": "Power export limit slew rate"
+        },
+        "export_limit": {
+          "name": "Export Limit",
+          "description": "Create an Export Limit by setting True (Default) or a Production Limit by setting False"
         }
       }
     },

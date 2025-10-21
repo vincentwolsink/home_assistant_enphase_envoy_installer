@@ -25,4 +25,9 @@ enable_dpel:
       required: false
       selector:
         number:
+    export_limit:
+      example: true
+      required: false
+      selector:
+        boolean:
 disable_dpel:
