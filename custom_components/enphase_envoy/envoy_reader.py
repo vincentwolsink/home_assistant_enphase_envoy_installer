@@ -736,9 +736,16 @@ class EnvoyMeteredWithCT(EnvoyMetered):
     lifetime_batteries_charged_value = "endpoint_meters_readings.[?(@.measurementType == 'storage' && @.state == 'enabled')].actEnergyRcvd"
     lifetime_batteries_discharged_value = "endpoint_meters_readings.[?(@.measurementType == 'storage' && @.state == 'enabled')].actEnergyDlvd"
 
+    dpel_enabled_value = "endpoint_dpel.dynamic_pel_settings.enable"
+    dpel_limit_value = "endpoint_dpel.dynamic_pel_settings.limit_value_W"
+
     @envoy_property(required_endpoint="endpoint_dpel")
-    def dpel_enabled(self):
-        return self._resolve_path("endpoint_dpel.dynamic_pel_settings.enable")
+    def dpel_mode(self):
+        export_limit = self._resolve_path(
+            "endpoint_dpel.dynamic_pel_settings.export_limit"
+        )
+        if export_limit is not None:
+            return "Export" if export_limit else "Production"
 
 
 def get_envoydataclass(envoy_type, production_json):

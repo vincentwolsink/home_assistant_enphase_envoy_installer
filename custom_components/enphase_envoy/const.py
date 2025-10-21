@@ -547,6 +547,25 @@ SENSORS = (
         device_class=SensorDeviceClass.TIMESTAMP,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
+    SensorEntityDescription(
+        key="dpel_limit",
+        name="DPEL Limit",
+        icon="mdi:transmission-tower-import",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.POWER,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    SensorEntityDescription(
+        key="dpel_mode",
+        name="DPEL Mode",
+        icon="mdi:transmission-tower-import",
+        native_unit_of_measurement=None,
+        state_class=None,
+        device_class=SensorDeviceClass.ENUM,
+        options=["Production", "Export"],
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
 )
 ADDITIONAL_METRICS.extend(
     [
@@ -770,7 +789,7 @@ BINARY_SENSORS = (
     ),
     BinarySensorEntityDescription(
         key="dpel_enabled",
-        name="Dynamic Power Export Limiting",
+        name="DPEL",
         # 'tower-import' icon means 'sending power to grid'
         icon="mdi:transmission-tower-import",
         entity_category=EntityCategory.DIAGNOSTIC,
