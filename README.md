@@ -62,6 +62,9 @@ iguration.
 |Envoy xxx Current Voltage L1|sensor.envoy_xxx_current_voltage_l1|V|
 |Envoy xxx Current Voltage L2|sensor.envoy_xxx_current_voltage_l2|V|
 |Envoy xxx Current Voltage L3|sensor.envoy_xxx_current_voltage_l3|V|
+|Envoy xxx DPEL|binary_sensor.envoy_xxx_dpel_enabled||
+|Envoy xxx DPEL Limit|sensor.envoy_xxx_dpel_limit|W|
+|Envoy xxx DPEL Mode|select.envoy_xxx_dpel_mode||
 |Envoy xxx Frequency L1 ¹|sensor.envoy_xxx_frequency_l1|Hz|
 |Envoy xxx Frequency L2 ¹|sensor.envoy_xxx_frequency_l2|Hz|
 |Envoy xxx Frequency L3 ¹|sensor.envoy_xxx_frequency_l3|Hz|
