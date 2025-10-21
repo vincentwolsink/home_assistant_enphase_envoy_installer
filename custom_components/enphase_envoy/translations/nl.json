@@ -61,5 +61,27 @@
       "name": "Haal netwerkprofielen op",
       "description": "Haal huidige geselecteerde en alle beschikbare netwerkprofielen op."
     }
+  },
+  "enable_dpel": {
+    "name": "DPEL Inschakelen ",
+    "description": "DPEL (Dynamic Power Export Limit) Inschakelen",
+    "fields": {
+      "watt": {
+        "name": "Watt",
+        "description": "Vermogen export limiet in watt"
+      },
+      "slew_rate": {
+        "name": "Slew rate",
+        "description": "Vermogen export limiet slew rate"
+      },
+      "export_limit": {
+        "name": "Export Limiet",
+        "description": "Stel een Export Limiet in bij True (standaard) of een Productie Limiet bij False"
+      }
+    }
+  },
+  "disable_dpel": {
+    "name": "DPEL Uitschakelen",
+    "description": "DPEL (Dynamic Power Export Limit) Uitschakelen"
   }
 }
