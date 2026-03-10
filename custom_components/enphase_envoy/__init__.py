@@ -212,10 +212,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     @Throttle(time_between_realtime_updates)
     def update_production_meters(streamdata: StreamData):
         new_data = {}
+        total_production = 0
+        total_consumption = 0
+        total_net_consumption = 0
+
         for phase in ["l1", "l2", "l3"]:
             production_watts = envoy_reader.process_production_value(
                 streamdata.production[phase].watts
             )
+            consumption_watts = streamdata.consumption[phase].watts
+            net_consumption_watts = streamdata.net_consumption[phase].watts
+
+            total_production += production_watts
+            total_consumption += consumption_watts
+            total_net_consumption += net_consumption_watts
+
             new_data.update(
                 {
                     "production_" + phase: production_watts,
@@ -225,9 +236,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     "power_factor" + phase: streamdata.production[phase].pf,
                     "reactive_power_" + phase: streamdata.production[phase].var,
                     "frequency_" + phase: streamdata.production[phase].hz,
-                    "consumption_" + phase: streamdata.consumption[phase].watts,
+                    "consumption_" + phase: consumption_watts,
+                    "net_consumption_" + phase: net_consumption_watts,
                 }
             )
+
+        new_data["production"] = total_production
+        new_data["consumption"] = total_consumption
+        new_data["net_consumption"] = total_net_consumption
 
         for key, value in new_data.items():
             if live_entities.get(key, False) and coordinator.data.get(key) != value:

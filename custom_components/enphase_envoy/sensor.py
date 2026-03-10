@@ -15,6 +15,9 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+# Sensor keys that can be updated via the realtime meter stream
+STREAM_UPDATEABLE_KEYS = frozenset({"production", "consumption", "net_consumption"})
+
 from .const import (
     COORDINATOR,
     DOMAIN,
@@ -243,17 +246,18 @@ async def async_setup_entry(
             if data is None:
                 continue
 
-            entities.append(
-                CoordinatedEnvoyEntity(
-                    description=sensor_description,
-                    name=f"{name} {sensor_description.name}",
-                    device_name=name,
-                    device_serial_number=config_entry.unique_id,
-                    serial_number=None,
-                    coordinator=coordinator,
-                    device_host=config_entry.data[CONF_HOST],
-                )
+            entity = CoordinatedEnvoyEntity(
+                description=sensor_description,
+                name=f"{name} {sensor_description.name}",
+                device_name=name,
+                device_serial_number=config_entry.unique_id,
+                serial_number=None,
+                coordinator=coordinator,
+                device_host=config_entry.data[CONF_HOST],
             )
+            if sensor_description.key in STREAM_UPDATEABLE_KEYS:
+                live_entities[sensor_description.key] = entity
+            entities.append(entity)
 
     for sensor_description in PHASE_SENSORS:
         if not options.get(ENABLE_ADDITIONAL_METRICS, False):
