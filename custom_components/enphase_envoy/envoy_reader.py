@@ -1053,7 +1053,7 @@ class EnvoyReader:
             raise EnlightenError("Just received token already expired")
 
         # this is normally owner or installer
-        _LOGGER.info("TOKEN TYPE: %s", self.token_type)
+        _LOGGER.debug("TOKEN TYPE: %s", self.token_type)
 
         await self._refresh_token_cookies()
 
@@ -1207,13 +1207,13 @@ class EnvoyReader:
         if endpoints == None:
             endpoints = self.data.required_endpoints | self.required_endpoints
 
-        _LOGGER.info("Updating endpoints %s", endpoints)
+        _LOGGER.debug("Updating endpoints %s", endpoints)
         for endpoint in endpoints:
             endpoint_settings = self.uri_registry.get(endpoint)
 
-            _LOGGER.info("VALIDATING ENDPOINT %s", endpoint)
+            _LOGGER.debug("VALIDATING ENDPOINT %s", endpoint)
             if endpoint_settings["optional"] and endpoint in self.disabled_endpoints:
-                _LOGGER.info(
+                _LOGGER.debug(
                     "Skipping update of disabled %s: %s",
                     endpoint,
                     endpoint_settings["url"],
@@ -1227,7 +1227,7 @@ class EnvoyReader:
             if endpoint_settings["installer_required"] and (
                 self.token_type != "installer" or self.disable_installer_account_use
             ):
-                _LOGGER.info(
+                _LOGGER.debug(
                     "Skipping installer endpoint %s (got token %s and "
                     "disabled installer use: %s)",
                     endpoint,
@@ -1239,7 +1239,7 @@ class EnvoyReader:
             endpoint_settings.setdefault("last_fetch", 0)
             time_since_last_fetch = time.time() - endpoint_settings["last_fetch"]
             if time_since_last_fetch > endpoint_settings["cache_time"]:
-                _LOGGER.info(
+                _LOGGER.debug(
                     "UPDATING ENDPOINT %s: %s", endpoint, endpoint_settings["url"]
                 )
                 endpoint_settings["last_fetch"] = time.time()
@@ -1247,13 +1247,13 @@ class EnvoyReader:
                     attr=endpoint,
                     url=endpoint_settings["url"],
                 )
-                _LOGGER.info(
+                _LOGGER.debug(
                     "FETCHING ENDPOINT %s TOOK %.4f seconds",
                     endpoint,
                     time.time() - endpoint_settings["last_fetch"],
                 )
             else:
-                _LOGGER.info(
+                _LOGGER.debug(
                     "Skipping update of %s: last fetch: %s, cache time: %s",
                     endpoint,
                     endpoint_settings["last_fetch"],
