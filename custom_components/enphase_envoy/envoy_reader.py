@@ -1137,6 +1137,16 @@ class EnvoyReader:
         url = ENDPOINT_URL_STREAM.format(self.host)
         _LOGGER.debug("Connecting to %s", url)
 
+        # Use a dedicated client with timeouts appropriate for SSE streaming.
+        # The Envoy normally sends data every few seconds; 60s without any
+        # bytes means the connection is stale and should be recycled.
+        stream_timeout = httpx.Timeout(
+            connect=10.0, read=60.0, write=10.0, pool=10.0
+        )
+        stream_client = httpx.AsyncClient(
+            verify=False, timeout=stream_timeout
+        )
+
         try:
             _LOGGER.debug(
                 "HTTP GET stream: %s: Header:%s Cookies:%s",
@@ -1144,7 +1154,7 @@ class EnvoyReader:
                 self._authorization_header,
                 self._cookies,
             )
-            async with self.async_client.stream(
+            async with stream_client.stream(
                 "GET",
                 url,
                 headers=self._authorization_header,
@@ -1192,11 +1202,17 @@ class EnvoyReader:
                         print(StreamData(reading))
 
             return True
+        except httpx.ReadTimeout:
+            _LOGGER.warning(
+                "Stream read timeout — no data received for %.0fs, reconnecting",
+                stream_timeout.read,
+            )
         except Exception as e:
             _LOGGER.exception("Realtime data error: %s", str(e))
         finally:
-            _LOGGER.error("Stopped reading realtime data")
+            _LOGGER.debug("Stopped reading realtime data")
             self.is_receiving_realtime_data = False
+            await stream_client.aclose()
 
     async def update_endpoints(self, endpoints=None):
         """Update one or more endpoints, and set the appropriate class attribute.
