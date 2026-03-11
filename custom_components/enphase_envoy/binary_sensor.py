@@ -63,7 +63,7 @@ async def async_setup_entry(
                     )
 
         elif sensor_description.key.startswith("relay_info_"):
-            if coordinator.data.get("relay_info") != None:
+            if coordinator.data.get("relay_info") is not None:
                 for serial_number, data in coordinator.data["relay_info"].items():
                     device_name = f"Relay {serial_number}"
                     entity_name = f"{device_name} {sensor_description.name}"
