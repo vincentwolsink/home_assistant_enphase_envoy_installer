@@ -1171,7 +1171,7 @@ class EnvoyReader:
                     return True  # keep retrying.
 
                 self.is_receiving_realtime_data = True
-                _LOGGER.debug("Starting to read chunks of data.")
+                _LOGGER.info("Connected to /stream/meter, receiving realtime data")
 
                 async for chunk in response.aiter_text():
                     if not chunk.startswith("data:"):
