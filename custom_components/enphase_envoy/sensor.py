@@ -5,18 +5,13 @@ from __future__ import annotations
 import datetime
 import logging
 
-_LOGGER = logging.getLogger(__name__)
-
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-
-# Sensor keys that can be updated via the realtime meter stream
-STREAM_UPDATEABLE_KEYS = frozenset({"production", "consumption", "net_consumption"})
 
 from .const import (
     COORDINATOR,
@@ -31,6 +26,11 @@ from .const import (
     resolve_hardware_id,
     get_model_name,
 )
+
+_LOGGER = logging.getLogger(__name__)
+
+# Sensor keys that can be updated via the realtime meter stream
+STREAM_UPDATEABLE_KEYS = frozenset({"production", "consumption", "net_consumption"})
 
 
 async def async_setup_entry(
@@ -365,7 +365,6 @@ class CoordinatedEnvoyEntity(EnvoyEntity, CoordinatorEntity):
 
 
 class EnvoyDeviceEntity(CoordinatorEntity, SensorEntity):
-
     def __init__(
         self,
         description,
@@ -399,7 +398,6 @@ class EnvoyDeviceEntity(CoordinatorEntity, SensorEntity):
 
 
 class EnvoyInverterEntity(EnvoyDeviceEntity):
-
     @property
     def native_value(self):
         """Return the state of the sensor."""
@@ -516,7 +514,6 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
 
 
 class EnvoyRelayEntity(EnvoyDeviceEntity):
-
     @property
     def native_value(self):
         if self.entity_description.key.startswith("relay_data_"):
@@ -594,7 +591,6 @@ class EnvoyRelayEntity(EnvoyDeviceEntity):
 
 
 class EnvoySignalEntity(EnvoyDeviceEntity):
-
     @property
     def icon(self):
         return {
@@ -701,7 +697,6 @@ class EnvoyBatteryEntity(EnvoyDeviceEntity):
 
 
 class EnvoyBatteryFirmwareEntity(EnvoyBatteryEntity):
-
     @property
     def native_value(self) -> str:
         if self.coordinator.data.get("batteries") and self.coordinator.data.get(

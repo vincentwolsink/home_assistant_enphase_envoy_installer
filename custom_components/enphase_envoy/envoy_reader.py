@@ -15,7 +15,6 @@ import secrets
 import string
 
 from jsonpath import jsonpath
-from functools import partial
 from urllib import parse
 from json.decoder import JSONDecodeError
 
@@ -307,7 +306,7 @@ def envoy_property(*a, **kw):
         EnvoyData._envoy_properties[f.__name__] = endpoint
         return property(f)
 
-    if endpoint != None or len(a) == 0:
+    if endpoint is not None or len(a) == 0:
         return prop
     return prop(*a)
 
@@ -437,7 +436,7 @@ class EnvoyData(object):
         _LOGGER.debug("Resolving jsonpath %s", path)
 
         result = jsonpath(self.data, path)
-        if result == False:
+        if not result:
             _LOGGER.debug("the configured path %s did not return anything!", path)
             return default
 
@@ -520,7 +519,7 @@ class EnvoyStandard(EnvoyData):
     def production_power(self):
         """Return production power status reported by Envoy"""
         force_off = self._resolve_path("endpoint_production_power.powerForcedOff")
-        if force_off != None:
+        if force_off is not None:
             return not force_off
 
     @envoy_property(required_endpoint="endpoint_ensemble_inventory")
@@ -528,7 +527,7 @@ class EnvoyStandard(EnvoyData):
         grid_status = self._resolve_path(
             "endpoint_ensemble_inventory.[?(@.type=='ENPOWER')].devices[0].mains_oper_state"
         )
-        if grid_status != None:
+        if grid_status is not None:
             return grid_status == "closed"
 
     @envoy_property(required_endpoint="endpoint_production_inverters")
@@ -1094,7 +1093,7 @@ class EnvoyReader:
             token, options={"verify_signature": False}, algorithms="ES256"
         )
 
-        if decode.get("enphaseUser", None) != None:
+        if decode.get("enphaseUser", None) is not None:
             self.token_type = decode["enphaseUser"]  # owner or installer
             _LOGGER.debug("TOKEN TYPE: %s", self.token_type)
 
@@ -1204,7 +1203,7 @@ class EnvoyReader:
 
         If no endpoint provided, then it will determine the endpoints based on the EnvoyData class.
         If a endpoint is provided, it needs to be a list of registered endpoints"""
-        if endpoints == None:
+        if endpoints is None:
             endpoints = self.data.required_endpoints | self.required_endpoints
 
         _LOGGER.debug("Updating endpoints %s", endpoints)
@@ -1220,7 +1219,7 @@ class EnvoyReader:
                 )
                 continue
 
-            if endpoint_settings == None:
+            if endpoint_settings is None:
                 _LOGGER.error(f"No settings found for uri {endpoint}")
                 continue
 
@@ -1379,7 +1378,7 @@ class EnvoyReader:
         )
 
     def process_production_value(self, production):
-        if not self.disable_negative_production or production == None:
+        if not self.disable_negative_production or production is None:
             # return production as is (which is the default)
             return production
 

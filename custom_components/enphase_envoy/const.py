@@ -26,7 +26,6 @@ from homeassistant.const import (
     UnitOfTime,
     UnitOfReactivePower,
     EntityCategory,
-    SIGNAL_STRENGTH_DECIBELS,
 )
 
 DOMAIN = "enphase_envoy"

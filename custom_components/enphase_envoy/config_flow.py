@@ -23,6 +23,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util.network import is_ipv4_address, is_ipv6_address
+from homeassistant.config_entries import ConfigEntry
 
 from .const import (
     DOMAIN,

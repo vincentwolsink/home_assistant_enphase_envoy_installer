@@ -3,17 +3,14 @@
 from __future__ import annotations
 
 import asyncio
-from contextlib import suppress
 from datetime import timedelta
 import logging
-import time
 from typing import Optional
 import copy
 
 import async_timeout
 from .envoy_reader import EnvoyReader, StreamData
 import httpx
-from numpy import isin
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -43,9 +40,6 @@ from .const import (
     DOMAIN,
     NAME,
     PLATFORMS,
-    BINARY_SENSORS,
-    SENSORS,
-    PHASE_SENSORS,
     CONF_SERIAL,
     READER,
     DEFAULT_SCAN_INTERVAL,
@@ -262,7 +256,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             result = await envoy_reader.stream_reader(
                 meter_callback=update_production_meters
             )
-            if result == False:
+            if not result:
                 # If result is False, then we are done reconnecting
                 _LOGGER.warning(
                     "Reading /stream/meter failed, stopping realtime updates"
