@@ -1140,12 +1140,8 @@ class EnvoyReader:
         # Use a dedicated client with timeouts appropriate for SSE streaming.
         # The Envoy normally sends data every few seconds; 60s without any
         # bytes means the connection is stale and should be recycled.
-        stream_timeout = httpx.Timeout(
-            connect=10.0, read=60.0, write=10.0, pool=10.0
-        )
-        stream_client = httpx.AsyncClient(
-            verify=False, timeout=stream_timeout
-        )
+        stream_timeout = httpx.Timeout(connect=10.0, read=60.0, write=10.0, pool=10.0)
+        stream_client = httpx.AsyncClient(verify=False, timeout=stream_timeout)
 
         try:
             _LOGGER.debug(
