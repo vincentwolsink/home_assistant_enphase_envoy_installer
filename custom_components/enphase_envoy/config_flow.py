@@ -10,7 +10,6 @@ from .envoy_reader import EnvoyReader, EnlightenError, EnvoyError
 import httpx
 import voluptuous as vol
 
-from homeassistant import config_entries
 from homeassistant.components import zeroconf
 from homeassistant.const import (
     CONF_HOST,
@@ -23,7 +22,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util.network import is_ipv4_address, is_ipv6_address
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlowWithReload
 
 from .const import (
     DOMAIN,
@@ -61,7 +60,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> EnvoyRead
     return envoy_reader
 
 
-class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class ConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Enphase Envoy."""
 
     VERSION = 1
@@ -225,7 +224,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return EnvoyOptionsFlowHandler()
 
 
-class EnvoyOptionsFlowHandler(config_entries.OptionsFlow):
+class EnvoyOptionsFlowHandler(OptionsFlowWithReload):
     """Envoy config flow options handler."""
 
     async def async_step_init(self, _user_input=None):
