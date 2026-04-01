@@ -263,7 +263,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 )
                 return
 
-            _LOGGER.warning("Re-connecting /stream/meter")
+            _LOGGER.debug("Re-connecting /stream/meter")
             # throttle reconnect attempts
             await asyncio.sleep(30)
 
