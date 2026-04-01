@@ -11,7 +11,6 @@ from .const import (
     COORDINATOR,
     DOMAIN,
     NAME,
-    READER,
     BINARY_SENSORS,
     resolve_hardware_id,
     get_model_name,
@@ -26,7 +25,6 @@ async def async_setup_entry(
     data = hass.data[DOMAIN][config_entry.entry_id]
     coordinator = data[COORDINATOR]
     name = data[NAME]
-    reader = data[READER]
 
     entities = []
     for sensor_description in BINARY_SENSORS:
@@ -125,7 +123,6 @@ async def async_setup_entry(
                     config_entry.unique_id,
                     None,
                     coordinator,
-                    reader,
                 )
             )
 
