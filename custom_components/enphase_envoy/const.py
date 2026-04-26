@@ -565,6 +565,12 @@ SENSORS = (
         options=["Production", "Export"],
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
+    SensorEntityDescription(
+        key="token_type",
+        name="Token Type",
+        icon="mdi:account-hard-hat",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
 )
 ADDITIONAL_METRICS.extend(
     [

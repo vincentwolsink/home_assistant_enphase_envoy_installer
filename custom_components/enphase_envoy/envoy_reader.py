@@ -616,6 +616,10 @@ class EnvoyStandard(EnvoyData):
         "endpoint_admin_tariff.tariff.storage_settings.charge_from_grid"
     )
 
+    @envoy_property
+    def token_type(self):
+        return self.reader.token_type
+
 
 class EnvoyMetered(EnvoyStandard):
     """
