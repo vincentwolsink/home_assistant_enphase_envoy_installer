@@ -618,7 +618,7 @@ class EnvoyStandard(EnvoyData):
 
     @envoy_property
     def token_type(self):
-        return self.reader.token_type.capitalize()
+        return self.reader.token_type
 
 
 class EnvoyMetered(EnvoyStandard):
@@ -1078,6 +1078,16 @@ class EnvoyReader:
         if self._is_enphase_token_expired(self._token):
             raise EnlightenError("Just received token already expired")
 
+        if self.token_type != "installer":
+            _LOGGER.warning(
+                "Received token is of type %s, disabling installer account usage",
+                self.token_type,
+            )
+            self.disable_installer_account_use = True
+
+        if self._is_enphase_token_expired(self._token):
+            raise EnlightenError("Just received token already expired")
+
         # this is normally owner or installer
         _LOGGER.debug("TOKEN TYPE: %s", self.token_type)
 
@@ -1262,9 +1272,8 @@ class EnvoyReader:
                 _LOGGER.error(f"No settings found for uri {endpoint}")
                 continue
 
-            if (
-                endpoint_settings["installer_required"]
-                and self.disable_installer_account_use
+            if endpoint_settings["installer_required"] and (
+                self.token_type != "installer" or self.disable_installer_account_use
             ):
                 _LOGGER.debug(
                     "Skipping installer endpoint %s (got token %s and "
