@@ -162,7 +162,7 @@ iguration.
 
 ## Installation
 
-ℹ️ This integration replaces the Home Assistant built-in Enphase integration. Please remove any current Enphase configuration before installing this one.
+ℹ️ This integration replaces the Home Assistant built-in Enphase integration. Please remove any current Enphase configuration before installing this one. (You won't lose sensor history/statistics if you make sure the sensor names are matching.)
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=vincentwolsink&repository=home_assistant_enphase_envoy_installer&category=integration)
 
