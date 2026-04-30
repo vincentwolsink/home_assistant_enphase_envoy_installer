@@ -16,7 +16,8 @@
                   "host": "Host",
                   "password": "Enlighten Wachtwoord",
                   "username": "Enlighten Gebruikersnaam",
-                  "serial": "Envoy Serienummer"
+                  "serial": "Envoy Serienummer",
+                  "token_method_envoy": "Simuleer lokale Web UI login (vereist voor DHZ account)"
               },
               "description": "Voer de hostname/ip en serienummer van je Envoy in. Gebruik je Enlighten (installer) account gegevens."
           }

@@ -47,6 +47,7 @@ DEFAULT_REALTIME_UPDATE_THROTTLE = 10
 DEFAULT_GETDATA_TIMEOUT = 60
 
 CONF_SERIAL = "serial"
+CONF_TOKEN_ENVOY = "token_method_envoy"
 
 LIVE_UPDATEABLE_ENTITIES = "live-update-entities"
 ENABLE_ADDITIONAL_METRICS = "enable_additional_metrics"
