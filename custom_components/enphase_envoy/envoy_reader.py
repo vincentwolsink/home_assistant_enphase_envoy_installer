@@ -13,9 +13,9 @@ import hashlib
 import base64
 import secrets
 import string
+import re
 
 from jsonpath import jsonpath
-from urllib import parse
 from json.decoder import JSONDecodeError
 
 from .envoy_endpoints import (
@@ -28,12 +28,9 @@ from .envoy_endpoints import (
 ENVOY_MODEL_M = "Metered"
 ENVOY_MODEL_S = "Standard"
 
-ENLIGHTEN_AUTH_URL = "https://enlighten.enphaseenergy.com/login/login.json?"
-ENLIGHTEN_TOKEN_URL = "https://entrez.enphaseenergy.com/tokens"
-
 # paths used for fetching enlighten token through envoy
-ENLIGHTEN_LOGIN_URL = "https://entrez.enphaseenergy.com/login"
-ENDPOINT_URL_GET_JWT = "https://{}/auth/get_jwt"
+ENTREZ_LOGIN_URL = "https://entrez.enphaseenergy.com/login"
+ENTREZ_TOKEN_URL = "https://entrez.enphaseenergy.com/entrez_tokens"
 ENDPOINT_URL_CHECK_JWT = "https://{}/auth/check_jwt"
 
 _LOGGER = logging.getLogger(__name__)
@@ -787,7 +784,6 @@ class EnvoyReader:
         disabled_endpoints=[],
         lifetime_production_correction=0,
         device_data_endpoint="endpoint_device_data",
-        token_method_envoy=False,
     ):
         """Init the EnvoyReader."""
         self.host = host.lower()
@@ -813,7 +809,6 @@ class EnvoyReader:
         self.disabled_endpoints = disabled_endpoints
         self.lifetime_production_correction = lifetime_production_correction
         self.device_data_endpoint = device_data_endpoint
-        self.token_method_envoy = token_method_envoy
 
         self.uri_registry = {}
         for key, endpoint in ENVOY_ENDPOINTS.items():
@@ -975,109 +970,49 @@ class EnvoyReader:
             _LOGGER.debug("TransportError: %s", e)
             raise e
 
-    async def _fetch_enlighten_token_json(self):
+    async def _fetch_entrez_token(self):
         """
-        Try to fetch the token json from Enlighten API
+        Try to fetch the token json from Entrez
         :return:
         """
         _LOGGER.debug("Fetching enlighten token")
         async with self.async_client as client:
             # login to Enlighten
             payload_login = {
-                "user[email]": self.enlighten_user,
-                "user[password]": self.enlighten_pass,
+                "username": self.enlighten_user,
+                "password": self.enlighten_pass,
             }
-            resp = await client.post(ENLIGHTEN_AUTH_URL, data=payload_login, timeout=30)
-            if resp.status_code >= 400:
+            login_resp = await client.post(
+                ENTREZ_LOGIN_URL, data=payload_login, timeout=30
+            )
+            if login_resp.status_code >= 400:
                 raise EnlightenError("Could not Authenticate via Enlighten")
 
             # now that we're in a logged in session, we can request the installer token
-            login_data = resp.json()
             payload_token = {
-                "session_id": login_data["session_id"],
-                "serial_num": self.enlighten_serial_num,
-                "username": self.enlighten_user,
+                "serialNum": self.enlighten_serial_num,
             }
-            resp = await client.post(
-                ENLIGHTEN_TOKEN_URL, json=payload_token, timeout=30
-            )
-            if resp.status_code != 200:
-                raise EnlightenError("Could not get enlighten token")
-            return resp.text
-
-    async def _fetch_envoy_token_json(self):
-        """
-        Fetch a token, using the same procedure envoy uses in the webUI
-
-        :returns received access_token
-        """
-        _LOGGER.debug("Fetching envoy token")
-        async with self.async_client as client:
-            # Step 1, generate local secret
-            code_verifier = random_content(40)
-
-            _LOGGER.debug("Local auth secret: %s", code_verifier)
-
-            # Step 2, call the entrez login with form fields
-            # all params are reverse engineered, so prone to changes
-            login_data = dict(
-                username=self.enlighten_user,
-                password=self.enlighten_pass,
-                codeChallenge=generate_challenge(code_verifier),
-                redirectUri=f"https://{self.host}/auth/callback",
-                client="envoy-ui",
-                clientId="envoy-ui-client",
-                authFlow="oauth",
-                serialNum=self.enlighten_serial_num,
-                granttype="authorize",
-                state="",
-                invalidSerialNum="",
-            )
-            _LOGGER.debug(
-                "Doing authorize at entrez, with codeChallenge: %s",
-                login_data["codeChallenge"],
-            )
-            resp = await client.post(ENLIGHTEN_LOGIN_URL, data=login_data)
-
-            if resp.status_code >= 400:
-                raise EnlightenError("Could not Login via Enlighten")
-
-            # we should expect a 302 redirect
-            if resp.status_code != 302:
-                raise EnlightenError("Login did not succeed")
-
-            # Step 3: Fetch the code from the query params.
-            redirect_location = resp.headers.get("location")
-            url_parts = parse.urlparse(redirect_location)
-            query_parts = parse.parse_qs(url_parts.query)
-
-            # Step 4: Fetch the JWT token through envoy
-            json_data = {
-                "client_id": "envoy-ui-1",
-                "code": query_parts["code"][0],
-                "code_verifier": code_verifier,
-                "grant_type": "authorization_code",
-                "redirect_uri": login_data["redirectUri"],
-            }
-            _LOGGER.debug("Checking JWT on envoy with params %s", json_data)
-            resp = await client.post(
-                ENDPOINT_URL_GET_JWT.format(self.host),
-                json=json_data,
+            token_resp = await client.post(
+                ENTREZ_TOKEN_URL,
+                data=payload_token,
                 timeout=30,
+                cookies=login_resp.cookies,
             )
+            if token_resp.status_code != 200:
+                raise EnlightenError("Could not get enlighten token")
 
-            if resp.status_code != 200:
-                raise EnvoyError(
-                    f"Could not fetch access token from envoy; HTTP {resp.status_code}: {resp.text}"
-                )
+            match = re.search(
+                r"<textarea[^>]*>(.*?)</textarea>", token_resp.text, re.DOTALL
+            )
+            if match:
+                token = match.group(1).strip()
+            else:
+                raise EnlightenError("Could not get enlighten token")
 
-            return resp.json()["access_token"]
+            return token
 
     async def _get_enphase_token(self):
-        if self.token_method_envoy:
-            self._token = await self._fetch_envoy_token_json()
-        else:
-            self._token = await self._fetch_enlighten_token_json()
+        self._token = await self._fetch_entrez_token()
 
         _LOGGER.debug("Envoy Token")
         if self._is_enphase_token_expired(self._token):
