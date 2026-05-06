@@ -23,7 +23,7 @@ ENVOY_ENDPOINTS = {
         "url": "https://{}/production.json?details=1",
         "cache": 0,
         "installer_required": False,
-        "optional": False,
+        "optional": True,
     },
     "production_v1": {
         "url": "https://{}/api/v1/production",
@@ -103,7 +103,7 @@ ENVOY_ENDPOINTS = {
         "url": "https://{}/ivp/meters",
         "cache": 0,
         "installer_required": False,
-        "optional": True,
+        "optional": False,
     },
     "meters_readings": {
         "url": "https://{}/ivp/meters/readings",
