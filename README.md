@@ -4,6 +4,10 @@
 [![Maintainer][maintainer-shield]][maintainer]
 [![HACS Custom][hacs-shield]][hacs-url]
 
+⚠️ Enphase is rolling out a firmware update for the Gateways (Envoy) which broke authentication for this integration. If you experience issues, please update to the the latest release, which will fix this. In general, please always update to the latest release (shown above) before opening an issue/bug report.
+
+
+
 This is a HACS custom integration for enphase envoys with firmware version 7 and up.
 
 Especially made to provide extra functionality with your installer or DIY account.
