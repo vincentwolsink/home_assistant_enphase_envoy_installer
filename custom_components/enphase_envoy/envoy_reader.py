@@ -9,10 +9,6 @@ import xmltodict
 import httpx
 import ipaddress
 import json
-import hashlib
-import base64
-import secrets
-import string
 import re
 
 from jsonpath import jsonpath
@@ -34,34 +30,6 @@ ENTREZ_TOKEN_URL = "https://entrez.enphaseenergy.com/entrez_tokens"
 ENDPOINT_URL_CHECK_JWT = "https://{}/auth/check_jwt"
 
 _LOGGER = logging.getLogger(__name__)
-
-
-def random_content(length):
-    chars = string.ascii_letters + string.digits
-    return "".join(secrets.choice(chars) for _ in range(length))
-
-
-def generate_challenge(code):
-    sha_code = hashlib.sha256()
-    sha_code.update(code.encode("utf-8"))
-
-    return (
-        base64.b64encode(sha_code.digest())
-        .decode("utf-8")
-        .replace("+", "-")  # + will be -
-        .replace("/", "_")  # / will be _
-        .replace("=", "")  # remove = chars
-    )
-
-
-def has_production_and_consumption(json):
-    """Check if json has keys for both production and consumption."""
-    return "production" in json and "consumption" in json
-
-
-def has_metering_setup(json):
-    """Check if Active Count of Production CTs (eim) installed is greater than one."""
-    return json["production"][1]["activeCount"] > 0
 
 
 def parse_devstatus(data):
@@ -751,18 +719,6 @@ class EnvoyMeteredWithCT(EnvoyMetered):
             return "Export" if export_limit else "Production"
 
 
-def get_envoydataclass(envoy_type, production_json):
-    if envoy_type == ENVOY_MODEL_S:
-        return EnvoyStandard
-
-    # It is a metered Envoy, check the production json if the eim entry has activeCount > 0
-    for prod in production_json.get("production", []):
-        if prod["type"] == "eim" and prod["activeCount"] > 0:
-            return EnvoyMeteredWithCT
-
-    return EnvoyMetered
-
-
 class EnvoyReader:
     """Instance of EnvoyReader"""
 
@@ -1272,8 +1228,8 @@ class EnvoyReader:
         # endpoints to be polled.
         self.data.initial_update_finished = True
 
-        if self.endpoint_production_json.status_code == 401:
-            self.endpoint_production_json.raise_for_status()
+        if self.endpoint_meters.status_code == 401:
+            self.endpoint_meters.raise_for_status()
 
     @property
     def all_values(self):
@@ -1293,26 +1249,23 @@ class EnvoyReader:
     async def detect_model(self):
         """Method to determine if the Envoy supports consumption values or only production."""
         # Fetch required endpoints for model detection
-        await self.update_endpoints(["endpoint_production_json"])
-
-        # If self.endpoint_production_json.status_code is set with
-        # 401 then we will give an error
-        if (
-            self.endpoint_production_json
-            and self.endpoint_production_json.status_code == 401
-        ):
-            raise EnvoyError(
-                "Could not connect to Envoy model. "
-                + "Appears your Envoy is running firmware that requires secure communcation. "
-                + "Please enter in the needed Enlighten credentials during setup."
-            )
+        await self.update_endpoints(["endpoint_info", "endpoint_meters"])
 
         if (
-            self.endpoint_production_json
-            and self.endpoint_production_json.status_code == 200
-            and has_production_and_consumption(self.endpoint_production_json.json())
+            self.endpoint_info
+            and self.endpoint_info.status_code == 200
+            and self.data._resolve_path("endpoint_info.envoy_info.device.imeter")
+            == "true"
         ):
             self.endpoint_type = ENVOY_MODEL_M
+
+            # It is a metered Envoy, check meters if CTs are enabled
+            if self.data._resolve_path(
+                "endpoint_meters.[?(@.measurementType == 'production' && @.state == 'enabled']"
+            ):
+                self.data = EnvoyMeteredWithCT(self)
+            else:
+                self.data = EnvoyMetered(self)
 
         else:
             await self.update_endpoints(["endpoint_production_v1"])
@@ -1321,6 +1274,7 @@ class EnvoyReader:
                 and self.endpoint_production_v1.status_code == 200
             ):
                 self.endpoint_type = ENVOY_MODEL_S
+                self.data = EnvoyStandard(self)
 
         if not self.endpoint_type:
             raise EnvoyError(
@@ -1329,11 +1283,6 @@ class EnvoyReader:
                 + self.host
                 + "'."
             )
-
-        # Configure the correct self.data
-        self.data = get_envoydataclass(
-            self.endpoint_type, self.endpoint_production_json.json()
-        )(self)
 
     async def get_full_serial_number(self):
         """Method to get the Envoy serial number.
