@@ -12,6 +12,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util.network import is_ipv6_address
 
 from .const import (
     COORDINATOR,
@@ -347,9 +348,13 @@ class CoordinatedEnvoyEntity(EnvoyEntity, CoordinatorEntity):
         if not self._device_serial_number:
             return None
 
-        sw_version = self.coordinator.data.get("envoy_info", {}).get("software", None)
-        hw_version = self.coordinator.data.get("envoy_info", {}).get("pn", None)
+        sw_version = self.coordinator.data.get("envoy_info", {}).get("software")
+        hw_version = self.coordinator.data.get("envoy_info", {}).get("pn")
         model = self.coordinator.data.get("envoy_info", {}).get("model", "Standard")
+
+        device_host = self.device_host
+        if is_ipv6_address(self.device_host):
+            device_host = f"[{self.device_host}]"
 
         return DeviceInfo(
             identifiers={(DOMAIN, str(self._device_serial_number))},
@@ -358,9 +363,7 @@ class CoordinatedEnvoyEntity(EnvoyEntity, CoordinatorEntity):
             name=self._device_name,
             sw_version=sw_version,
             hw_version=resolve_hardware_id(hw_version),
-            configuration_url=(
-                f"https://{self.device_host}/" if self.device_host else None
-            ),
+            configuration_url=f"https://{device_host}/home",
         )
 
 
