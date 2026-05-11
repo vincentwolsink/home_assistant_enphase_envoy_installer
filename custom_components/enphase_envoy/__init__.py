@@ -245,7 +245,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 coordinator.data[key] = value
 
                 # Let hass know the data is updated
-                live_entities[key].async_write_ha_state()
+                if live_entities[key].hass:
+                    live_entities[key].async_write_ha_state()
 
     async def read_realtime_updates() -> None:
         while (
