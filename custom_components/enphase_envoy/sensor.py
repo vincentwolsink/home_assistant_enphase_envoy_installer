@@ -363,6 +363,7 @@ class CoordinatedEnvoyEntity(EnvoyEntity, CoordinatorEntity):
             name=self._device_name,
             sw_version=sw_version,
             hw_version=resolve_hardware_id(hw_version),
+            serial_number=str(self._device_serial_number),
             configuration_url=f"https://{device_host}/home",
         )
 
@@ -512,6 +513,7 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
             manufacturer="Enphase",
             model=model_name,
             name=self._device_name,
+            serial_number=str(self._device_serial_number),
             **device_info_kw,
         )
 
@@ -589,6 +591,7 @@ class EnvoyRelayEntity(EnvoyDeviceEntity):
             manufacturer="Enphase",
             model=model_name,
             name=self._device_name,
+            serial_number=str(self._device_serial_number),
             **device_info_kw,
         )
 
@@ -696,6 +699,7 @@ class EnvoyBatteryEntity(EnvoyDeviceEntity):
             via_device=(DOMAIN, self._parent_device),
             sw_version=sw_version,
             hw_version=resolve_hardware_id(hw_version),
+            serial_number=str(self._device_serial_number),
         )
 
 
