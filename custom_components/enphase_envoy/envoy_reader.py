@@ -1261,7 +1261,7 @@ class EnvoyReader:
 
             # It is a metered Envoy, check meters if CTs are enabled
             if self.data._resolve_path(
-                "endpoint_meters.[?(@.measurementType == 'production' && @.state == 'enabled']"
+                "endpoint_meters.[?(@.measurementType == 'production' && @.state == 'enabled')]"
             ):
                 self.data = EnvoyMeteredWithCT(self)
             else:
