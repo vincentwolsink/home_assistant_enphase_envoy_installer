@@ -153,11 +153,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     async def async_enable_dpel(call: ServiceCall):
+        watt = call.data.get("watt")
+        export_limit = call.data.get("export_limit", True)
+        
         await envoy_reader.enable_dpel(
             watt=call.data.get("watt"),
             slew=call.data.get("slew_rate", 50),
             export_limit=call.data.get("export_limit", True),
         )
+        
+        coordinator.data["dpel_limit"] = watt
+        coordinator.data["dpel_mode"] = "export" if export_limit else "production"
+        
         await coordinator.async_request_refresh()
 
     hass.services.async_register(DOMAIN, "enable_dpel", async_enable_dpel)
