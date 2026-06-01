@@ -463,19 +463,9 @@ class EnvoyStandard(EnvoyData):
             "model": getattr(self, "ALIAS", self.__class__.__name__[5:]),
         }
 
-    production_value = path_by_token(
-        owner="endpoint_production_v1.wattsNow",
-        installer="endpoint_pdm_energy.production.pcu.wattsNow",
-    )
-    daily_production_value = path_by_token(
-        owner="endpoint_production_v1.wattHoursToday",
-        installer="endpoint_pdm_energy.production.pcu.wattHoursToday",
-    )
-
-    _lifetime_production_path = path_by_token(
-        owner="endpoint_production_v1.wattHoursLifetime",
-        installer="endpoint_pdm_energy.production.pcu.wattHoursLifetime",
-    )
+    production_value = "endpoint_production_v1.wattsNow"
+    daily_production_value = "endpoint_production_v1.wattHoursToday"
+    _lifetime_production_path = "endpoint_production_v1.wattHoursLifetime"
 
     @envoy_property(required_endpoint="endpoint_production_v1")
     def lifetime_production(self):
@@ -620,22 +610,6 @@ class EnvoyMetered(EnvoyStandard):
                 setattr(cls, f"{attr}_{phase}_value", full_path)
 
         return EnvoyStandard.__new__(cls)
-
-    _production = "endpoint_production_json.production[?(@.type=='inverters')]"
-    production_value = _production + ".wNow"
-
-    _lifetime_production_path = path_by_token(
-        owner=_production + ".whLifetime",
-        installer="endpoint_pdm_energy.production.pcu.wattHoursLifetime",
-    )
-
-    @envoy_property(required_endpoint="endpoint_production_json")
-    def lifetime_production(self):
-        lifetime_production = self._resolve_path(self._lifetime_production_path)
-        if lifetime_production is not None:
-            return lifetime_production + self.reader.lifetime_production_correction
-
-    daily_production_value = "endpoint_pdm_energy.production.pcu.wattHoursToday"
 
     _production_ct = (
         "endpoint_production_json.production[?(@.type=='eim' && @.activeCount > 0)]"
