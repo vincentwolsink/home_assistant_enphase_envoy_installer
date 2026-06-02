@@ -611,6 +611,20 @@ class EnvoyMetered(EnvoyStandard):
 
         return EnvoyStandard.__new__(cls)
 
+    production_value = (
+        "endpoint_production_json.production[?(@.type=='inverters')].wNow"
+    )
+    daily_production_value = "endpoint_pdm_energy.production.pcu.wattHoursToday"
+    _lifetime_production_path = (
+        "endpoint_production_json.production[?(@.type=='inverters')].whLifetime"
+    )
+
+    @envoy_property(required_endpoint="endpoint_production_json")
+    def lifetime_production(self):
+        lifetime_production = self._resolve_path(self._lifetime_production_path)
+        if lifetime_production is not None:
+            return lifetime_production + self.reader.lifetime_production_correction
+
     _production_ct = (
         "endpoint_production_json.production[?(@.type=='eim' && @.activeCount > 0)]"
     )
