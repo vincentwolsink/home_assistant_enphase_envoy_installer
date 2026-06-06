@@ -25,8 +25,8 @@ ENVOY_MODEL_M = "Metered"
 ENVOY_MODEL_S = "Standard"
 
 # paths used for fetching enlighten token through envoy
-ENTREZ_LOGIN_URL = "https://entrez.enphaseenergy.com/login"
-ENTREZ_TOKEN_URL = "https://entrez.enphaseenergy.com/entrez_tokens"
+ENTREZ_LOGIN_URL = "https://enlighten.enphaseenergy.com/login/login.json"
+ENTREZ_TOKEN_URL = "https://entrez.enphaseenergy.com/tokens"
 ENDPOINT_URL_CHECK_JWT = "https://{}/auth/check_jwt"
 
 _LOGGER = logging.getLogger(__name__)
@@ -923,35 +923,31 @@ class EnvoyReader:
         async with self.async_client as client:
             # login to Enlighten
             payload_login = {
-                "username": self.enlighten_user,
-                "password": self.enlighten_pass,
+                "user[email]": self.enlighten_user,
+                "user[password]": self.enlighten_pass,
             }
             login_resp = await client.post(
                 ENTREZ_LOGIN_URL, data=payload_login, timeout=30
             )
             if login_resp.status_code >= 400:
                 raise EnlightenError("Could not Authenticate via Enlighten")
-
+            login_data = login_resp.json()
             # now that we're in a logged in session, we can request the installer token
             payload_token = {
-                "serialNum": self.enlighten_serial_num,
+            	"session_id": login_data["session_id"],
+                "serial_num": self.enlighten_serial_num,
+                "username": self.enlighten_user,
             }
             token_resp = await client.post(
                 ENTREZ_TOKEN_URL,
-                data=payload_token,
-                timeout=30,
-                cookies=login_resp.cookies,
+                json=payload_token,
+                timeout=30
             )
+
             if token_resp.status_code != 200:
                 raise EnlightenError("Could not get enlighten token")
 
-            match = re.search(
-                r"<textarea[^>]*>(.*?)</textarea>", token_resp.text, re.DOTALL
-            )
-            if match:
-                token = match.group(1).strip()
-            else:
-                raise EnlightenError("Could not get enlighten token")
+            token = token_resp.text
 
             return token
 
