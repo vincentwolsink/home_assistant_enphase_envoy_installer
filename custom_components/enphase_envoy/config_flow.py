@@ -23,11 +23,14 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util.network import is_ipv4_address, is_ipv6_address
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlowWithReload
+from homeassistant.helpers.storage import Store
 
 from .const import (
     DOMAIN,
     CONF_SERIAL,
     CONF_TOKEN_SOURCE,
+    STORAGE_KEY,
+    STORAGE_VERSION,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_REALTIME_UPDATE_THROTTLE,
     ENABLE_ADDITIONAL_METRICS,
@@ -70,27 +73,38 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self):
         """Initialize an envoy flow."""
         self.ip_address = None
-        self.username = None
-        self._reauth_entry = None
+        self._current_entry = None
 
     @callback
     def _async_generate_schema(self):
         """Generate schema."""
         schema = {}
+        default_data = {}
 
         if self.ip_address:
-            schema[vol.Required(CONF_HOST, default=self.ip_address)] = vol.In(
-                [self.ip_address]
+            default_data[CONF_HOST] = self.ip_address
+        if self._current_entry:
+            default_data[CONF_HOST] = self._current_entry.data.get(CONF_HOST)
+            default_data[CONF_SERIAL] = self._current_entry.data.get(CONF_SERIAL)
+            default_data[CONF_USERNAME] = self._current_entry.data.get(CONF_USERNAME)
+            default_data[CONF_PASSWORD] = self._current_entry.data.get(CONF_PASSWORD)
+            default_data[CONF_TOKEN_SOURCE] = self._current_entry.data.get(
+                CONF_TOKEN_SOURCE
             )
-        else:
-            schema[vol.Required(CONF_HOST)] = str
 
-        schema[vol.Required(CONF_SERIAL, default=self.unique_id)] = str
-        schema[vol.Required(CONF_USERNAME, default=self.username)] = str
-        schema[vol.Required(CONF_PASSWORD, default="")] = str
-        schema[vol.Required(CONF_TOKEN_SOURCE, default="entrez")] = vol.In(
-            ["entrez", "enlighten"]
+        schema[vol.Required(CONF_HOST, default=default_data.get(CONF_HOST))] = str
+        schema[vol.Required(CONF_SERIAL, default=default_data.get(CONF_SERIAL))] = str
+        schema[vol.Required(CONF_USERNAME, default=default_data.get(CONF_USERNAME))] = (
+            str
         )
+        schema[vol.Required(CONF_PASSWORD, default=default_data.get(CONF_PASSWORD))] = (
+            str
+        )
+        schema[
+            vol.Required(
+                CONF_TOKEN_SOURCE, default=default_data.get(CONF_TOKEN_SOURCE, "entrez")
+            )
+        ] = vol.In(["entrez", "enlighten"])
 
         return vol.Schema(schema)
 
@@ -149,7 +163,13 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def async_step_reauth(self, user_input):
         """Handle configuration by re-auth."""
-        self._reauth_entry = self.hass.config_entries.async_get_entry(
+        self._current_entry = self.hass.config_entries.async_get_entry(
+            self.context["entry_id"]
+        )
+        return await self.async_step_user()
+
+    async def async_step_reconfigure(self, user_input):
+        self._current_entry = self.hass.config_entries.async_get_entry(
             self.context["entry_id"]
         )
         return await self.async_step_user()
@@ -178,7 +198,7 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             if (
-                not self._reauth_entry
+                not self._current_entry
                 and user_input[CONF_HOST] in self._async_current_hosts()
             ):
                 return self.async_abort(reason="already_configured")
@@ -195,12 +215,19 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
                 data = user_input.copy()
                 data[CONF_NAME] = self._async_envoy_name()
 
-                if self._reauth_entry:
-                    self.hass.config_entries.async_update_entry(
-                        self._reauth_entry,
+                if self._current_entry:
+                    # Remove saved token to prevent it being used after reconfire
+                    store = Store(
+                        self.hass,
+                        STORAGE_VERSION,
+                        ".".join([STORAGE_KEY, self._current_entry.entry_id]),
+                    )
+                    await store.async_remove()
+
+                    return self.async_update_reload_and_abort(
+                        self._current_entry,
                         data=data,
                     )
-                    return self.async_abort(reason="reauth_successful")
 
                 if not self.unique_id and await self._async_set_unique_id_from_envoy(
                     envoy_reader
