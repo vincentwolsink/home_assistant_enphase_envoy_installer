@@ -27,6 +27,10 @@ ENVOY_MODEL_S = "Standard"
 # paths used for fetching enlighten token through envoy
 ENTREZ_LOGIN_URL = "https://entrez.enphaseenergy.com/login"
 ENTREZ_TOKEN_URL = "https://entrez.enphaseenergy.com/entrez_tokens"
+
+ENLIGHTEN_LOGIN_URL = "https://enlighten.enphaseenergy.com/login/login.json"
+ENLIGHTEN_TOKEN_URL = "https://entrez.enphaseenergy.com/tokens"
+
 ENDPOINT_URL_CHECK_JWT = "https://{}/auth/check_jwt"
 
 _LOGGER = logging.getLogger(__name__)
@@ -728,6 +732,7 @@ class EnvoyReader:
         disabled_endpoints=[],
         lifetime_production_correction=0,
         device_data_endpoint="endpoint_device_data",
+        token_source=None,
     ):
         """Init the EnvoyReader."""
         self.host = host.lower()
@@ -747,6 +752,7 @@ class EnvoyReader:
         self.enlighten_serial_num = enlighten_serial_num
         self.token_refresh_buffer_seconds = token_refresh_buffer_seconds
         self.token_type = None
+        self.token_source = token_source
 
         self.data: EnvoyData = EnvoyStandard(self)
         self.required_endpoints = set()  # in case we would need it..
@@ -919,7 +925,7 @@ class EnvoyReader:
         Try to fetch the token json from Entrez
         :return:
         """
-        _LOGGER.debug("Fetching enlighten token")
+        _LOGGER.debug("Fetching Entrez token")
         async with self.async_client as client:
             # login to Enlighten
             payload_login = {
@@ -930,7 +936,7 @@ class EnvoyReader:
                 ENTREZ_LOGIN_URL, data=payload_login, timeout=30
             )
             if login_resp.status_code >= 400:
-                raise EnlightenError("Could not Authenticate via Enlighten")
+                raise EnlightenError("Could not authenticate via Entrez")
 
             # now that we're in a logged in session, we can request the installer token
             payload_token = {
@@ -943,22 +949,60 @@ class EnvoyReader:
                 cookies=login_resp.cookies,
             )
             if token_resp.status_code != 200:
-                raise EnlightenError("Could not get enlighten token")
+                raise EnlightenError("Could not get Entrez token")
 
             match = re.search(
                 r"<textarea[^>]*>(.*?)</textarea>", token_resp.text, re.DOTALL
             )
             if match:
                 token = match.group(1).strip()
+                if token.startswith("Error"):
+                    raise EnlightenError("Could not get Entrez token")
             else:
-                raise EnlightenError("Could not get enlighten token")
+                raise EnlightenError("Could not get Entrez token")
 
             return token
 
-    async def _get_enphase_token(self):
-        self._token = await self._fetch_entrez_token()
+    async def _fetch_enlighten_token(self):
+        """
+        Try to fetch the token json from Enlighten API
+        :return:
+        """
+        _LOGGER.debug("Fetching Enlighten token")
+        async with self.async_client as client:
+            # login to Enlighten
+            payload_login = {
+                "user[email]": self.enlighten_user,
+                "user[password]": self.enlighten_pass,
+            }
+            resp = await client.post(
+                ENLIGHTEN_LOGIN_URL, data=payload_login, timeout=30
+            )
+            if resp.status_code >= 400:
+                raise EnlightenError("Could not authenticate via Enlighten")
 
-        _LOGGER.debug("Envoy Token")
+            # now that we're in a logged in session, we can request the installer token
+            login_data = resp.json()
+            payload_token = {
+                "session_id": login_data["session_id"],
+                "serial_num": self.enlighten_serial_num,
+                "username": self.enlighten_user,
+            }
+            resp = await client.post(
+                ENLIGHTEN_TOKEN_URL, json=payload_token, timeout=30
+            )
+            if resp.status_code != 200:
+                raise EnlightenError("Could not get Enlighten token")
+            return resp.text
+
+    async def _get_enphase_token(self):
+        if self.token_source == "enlighten":
+            self._token = await self._fetch_enlighten_token()
+            _LOGGER.debug("Enlighten Token: %s", self._token)
+        else:
+            self._token = await self._fetch_entrez_token()
+            _LOGGER.debug("Entrez Token: %s", self._token)
+
         if self._is_enphase_token_expired(self._token):
             raise EnlightenError("Just received token already expired")
 
@@ -1010,9 +1054,12 @@ class EnvoyReader:
         return False
 
     def _is_enphase_token_expired(self, token):
-        decode = jwt.decode(
-            token, options={"verify_signature": False}, algorithms="ES256"
-        )
+        try:
+            decode = jwt.decode(
+                token, options={"verify_signature": False}, algorithms="ES256"
+            )
+        except jwt.exceptions.DecodeError:
+            raise EnlightenError("Invalid token received")
 
         if decode.get("enphaseUser", None) is not None:
             self.token_type = decode["enphaseUser"]  # owner or installer

@@ -3,13 +3,13 @@
     "flow_title": "{serial} ({host})",
     "step": {
       "user": {
-        "description": "Enter the hostname/ip and serial of your Envoy. Use your Enlighten Installer account credentials.",
+        "description": "Enter the hostname/ip and serial of your Envoy. Use your Enphase (installer) account credentials.",
         "data": {
           "host": "[%key:common::config_flow::data::host%]",
           "username": "[%key:common::config_flow::data::username%]",
           "password": "[%key:common::config_flow::data::password%]",
-          "serial": "Envoy Serial Number",
-          "disable_installer_account_use": "I have no installer or DIY enphase account, just Home owner"
+          "serial": "Serial Number",
+          "token_source": "Login method (token source)"
         }
       }
     },
@@ -21,6 +21,14 @@
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
       "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]"
+    }
+  },
+  "selector": {
+    "token_source": {
+      "options": {
+        "entrez": "Entrez",
+        "enlighten": "Enlighten"
+      }
     }
   },
   "options": {

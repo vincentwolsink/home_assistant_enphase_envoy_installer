@@ -6,7 +6,7 @@
     },
     "error": {
       "cannot_connect": "Failed to connect to Envoy. Please check host and serial.",
-      "invalid_auth": "Cannot login. Please check Enlighten username/password.",
+      "invalid_auth": "Cannot login. Please check Enphase username/password.",
       "unknown": "Unexpected error"
     },
     "flow_title": "{serial} ({host})",
@@ -14,11 +14,20 @@
       "user": {
         "data": {
           "host": "Host",
-          "password": "Enlighten Password",
-          "username": "Enlighten Username",
-          "serial": "Envoy Serial Number"
+          "username": "Username",
+          "password": "Password",
+          "serial": "Serial number",
+          "token_source": "Login method (token source)"
         },
-        "description": "Enter the hostname/ip and serial of your Envoy. Use your Enlighten (installer) account credentials."
+        "description": "Enter the hostname/ip and serial of your Envoy. Use your Enphase (installer) account credentials."
+      }
+    }
+  },
+  "selector": {
+    "token_source": {
+      "options": {
+        "entrez": "Entrez",
+        "enlighten": "Enlighten"
       }
     }
   },
