@@ -41,6 +41,7 @@ from .const import (
     NAME,
     PLATFORMS,
     CONF_SERIAL,
+    CONF_TOKEN_SOURCE,
     READER,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_REALTIME_UPDATE_THROTTLE,
@@ -88,6 +89,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             if options.get("devstatus_device_data", False)
             else "endpoint_device_data"
         ),
+        token_source=config.get(CONF_TOKEN_SOURCE),
     )
     await envoy_reader._sync_store(load=True)
 

@@ -27,6 +27,7 @@ from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlowWit
 from .const import (
     DOMAIN,
     CONF_SERIAL,
+    CONF_TOKEN_SOURCE,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_REALTIME_UPDATE_THROTTLE,
     ENABLE_ADDITIONAL_METRICS,
@@ -48,6 +49,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> EnvoyRead
         enlighten_pass=data[CONF_PASSWORD],
         inverters=False,
         enlighten_serial_num=data[CONF_SERIAL],
+        token_source=data[CONF_TOKEN_SOURCE],
     )
 
     try:
@@ -86,6 +88,9 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
         schema[vol.Required(CONF_SERIAL, default=self.unique_id)] = str
         schema[vol.Required(CONF_USERNAME, default=self.username)] = str
         schema[vol.Required(CONF_PASSWORD, default="")] = str
+        schema[vol.Required(CONF_TOKEN_SOURCE, default="entrez")] = vol.In(
+            ["entrez", "enlighten"]
+        )
 
         return vol.Schema(schema)
 

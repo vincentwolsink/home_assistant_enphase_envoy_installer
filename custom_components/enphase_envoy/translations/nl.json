@@ -6,7 +6,7 @@
       },
       "error": {
           "cannot_connect": "Kan geen verbinding maken met Envoy. Controleer host en serienummer.",
-          "invalid_auth": "Inloggen mislukt. Controleer Enlighten gebruikersnaam/wachtwoord.",
+          "invalid_auth": "Inloggen mislukt. Controleer Enphase gebruikersnaam/wachtwoord.",
           "unknown": "Onverwachte fout"
       },
       "flow_title": "{serial} ({host})",
@@ -14,13 +14,22 @@
           "user": {
               "data": {
                   "host": "Host",
-                  "password": "Enlighten Wachtwoord",
-                  "username": "Enlighten Gebruikersnaam",
-                  "serial": "Envoy Serienummer"
+                  "username": "Gebruikersnaam",
+                  "password": "Wachtwoord",
+                  "serial": "Serienummer",
+                  "token_source": "Login methode (token bron)"
               },
-              "description": "Voer de hostname/ip en serienummer van je Envoy in. Gebruik je Enlighten (installer) account gegevens."
+              "description": "Voer de hostname/ip en serienummer van je Envoy in. Gebruik je Enphase (installer) account gegevens."
           }
       }
+  },
+  "selector": {
+    "token_source": {
+      "options": {
+        "entrez": "Entrez",
+        "enlighten": "Enlighten"
+      }
+    }
   },
   "options": {
     "step": {
