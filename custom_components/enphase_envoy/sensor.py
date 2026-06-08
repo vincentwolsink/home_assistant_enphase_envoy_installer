@@ -506,7 +506,7 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
                 .get(self._device_serial_number)
                 .get("part_num")
             )
-        model_name = (get_model_name("Inverter", device_info_kw["hw_version"]),)
+        model_name = get_model_name("Inverter", device_info_kw["hw_version"])
 
         return DeviceInfo(
             identifiers={(DOMAIN, str(self._device_serial_number))},
