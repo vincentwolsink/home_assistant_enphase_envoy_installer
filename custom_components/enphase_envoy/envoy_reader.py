@@ -11,7 +11,6 @@ import ipaddress
 import json
 import re
 
-from jsonpath import jsonpath
 from json.decoder import JSONDecodeError
 
 from .envoy_endpoints import (
@@ -34,6 +33,39 @@ ENLIGHTEN_TOKEN_URL = "https://entrez.enphaseenergy.com/tokens"
 ENDPOINT_URL_CHECK_JWT = "https://{}/auth/check_jwt"
 
 _LOGGER = logging.getLogger(__name__)
+
+
+# Token = a dict key  OR  a [n] list index.
+_JSONPATH_TOKEN = re.compile(r"([^.\[\]]+)|\[(\d+)\]")
+
+
+def jsonpath(obj, path):
+    """Resolve a simple dotted path (e.g. "channels[0].watts.now") against a
+    nested dict/list structure.
+
+    Replaces the external ``jsonpath`` PyPI package: it shares the ``jsonpath``
+    import name with ``jsonpath-python`` (pulled in transitively by recent Home
+    Assistant cores), so ``from jsonpath import jsonpath`` may resolve to a
+    module instead of the callable, raising ``TypeError: 'module' object is not
+    callable`` and breaking all data fetching. Only the simple key/index paths
+    used by this integration are supported. Returns a single-element list with
+    the matched value, or ``False`` when the path does not resolve (mirroring the
+    subset of the old API this integration relied on).
+    """
+    current = obj
+    for name, index in _JSONPATH_TOKEN.findall(path):
+        if name:
+            if isinstance(current, dict) and name in current:
+                current = current[name]
+            else:
+                return False
+        else:
+            i = int(index)
+            if isinstance(current, (list, tuple)) and -len(current) <= i < len(current):
+                current = current[i]
+            else:
+                return False
+    return [current]
 
 
 def parse_devstatus(data):
