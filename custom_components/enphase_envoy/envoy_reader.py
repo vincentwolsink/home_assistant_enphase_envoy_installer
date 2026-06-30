@@ -630,10 +630,10 @@ class EnvoyMetered(EnvoyStandard):
             return lifetime_production + self.reader.lifetime_production_correction
 
     _production_ct = (
-        "endpoint_production_json.production[?(@.type=='eim' && @.activeCount > 0)]"
+        "endpoint_production_json.production[?(@.type=='eim' and @.activeCount > 0)]"
     )
-    _consumption_ct = "endpoint_production_json.consumption[?(@.measurementType == 'total-consumption' && @.activeCount > 0)]"
-    _net_consumption_ct = "endpoint_production_json.consumption[?(@.measurementType == 'net-consumption' && @.activeCount > 0)]"
+    _consumption_ct = "endpoint_production_json.consumption[?(@.measurementType == 'total-consumption' and @.activeCount > 0)]"
+    _net_consumption_ct = "endpoint_production_json.consumption[?(@.measurementType == 'net-consumption' and @.activeCount > 0)]"
     voltage_value = _production_ct + ".rmsVoltage"
 
 
@@ -672,17 +672,17 @@ class EnvoyMeteredWithCT(EnvoyMetered):
             setattr(
                 cls,
                 f"lifetime_net_production_{phase}_value",
-                f"endpoint_meters_readings.[?(@.measurementType == 'net-consumption' && @.state == 'enabled' && @.phaseCount > {i})].channels[{i}].actEnergyRcvd",
+                f"endpoint_meters_readings.[?(@.measurementType == 'net-consumption' and @.state == 'enabled' and @.phaseCount > {i})].channels[{i}].actEnergyRcvd",
             )
             setattr(
                 cls,
                 f"lifetime_batteries_charged_{phase}_value",
-                f"endpoint_meters_readings.[?(@.measurementType == 'storage' && @.state == 'enabled' && @.phaseCount > {i})].channels[{i}].actEnergyRcvd",
+                f"endpoint_meters_readings.[?(@.measurementType == 'storage' and @.state == 'enabled' and @.phaseCount > {i})].channels[{i}].actEnergyRcvd",
             )
             setattr(
                 cls,
                 f"lifetime_batteries_discharged_{phase}_value",
-                f"endpoint_meters_readings.[?(@.measurementType == 'storage' && @.state == 'enabled' && @.phaseCount > {i})].channels[{i}].actEnergyDlvd",
+                f"endpoint_meters_readings.[?(@.measurementType == 'storage' and @.state == 'enabled' and @.phaseCount > {i})].channels[{i}].actEnergyDlvd",
             )
 
         return EnvoyMetered.__new__(cls)
@@ -694,10 +694,10 @@ class EnvoyMeteredWithCT(EnvoyMetered):
     daily_production_value = (
         "endpoint_production_json.production[?(@.type=='eim')].whToday"
     )
-    lifetime_net_production_value = "endpoint_meters_readings.[?(@.measurementType == 'net-consumption' && @.state == 'enabled')].actEnergyRcvd"
+    lifetime_net_production_value = "endpoint_meters_readings.[?(@.measurementType == 'net-consumption' and @.state == 'enabled')].actEnergyRcvd"
 
-    lifetime_batteries_charged_value = "endpoint_meters_readings.[?(@.measurementType == 'storage' && @.state == 'enabled')].actEnergyRcvd"
-    lifetime_batteries_discharged_value = "endpoint_meters_readings.[?(@.measurementType == 'storage' && @.state == 'enabled')].actEnergyDlvd"
+    lifetime_batteries_charged_value = "endpoint_meters_readings.[?(@.measurementType == 'storage' and @.state == 'enabled')].actEnergyRcvd"
+    lifetime_batteries_discharged_value = "endpoint_meters_readings.[?(@.measurementType == 'storage' and @.state == 'enabled')].actEnergyDlvd"
 
     dpel_enabled_value = "endpoint_dpel.dynamic_pel_settings.enable"
     dpel_limit_value = "endpoint_dpel.dynamic_pel_settings.limit_value_W"
@@ -1296,7 +1296,7 @@ class EnvoyReader:
 
             # It is a metered Envoy, check meters if CTs are enabled
             if self.data._resolve_path(
-                "endpoint_meters.[?(@.measurementType == 'production' && @.state == 'enabled')]"
+                "endpoint_meters.[?(@.measurementType == 'production' and @.state == 'enabled')]"
             ):
                 self.data = EnvoyMeteredWithCT(self)
             else:
