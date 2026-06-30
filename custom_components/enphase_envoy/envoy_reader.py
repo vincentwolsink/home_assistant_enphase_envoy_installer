@@ -11,7 +11,7 @@ import ipaddress
 import json
 import re
 
-from jsonpath import jsonpath
+from jsonpath import JSONPath
 from json.decoder import JSONDecodeError
 
 from .envoy_endpoints import (
@@ -131,7 +131,7 @@ def parse_devicedata(data):
 
             device_data = {}
             for field, path in dataset.items():
-                result = jsonpath(device, path)
+                result = JSONPath(path).parse(device)
                 if result:
                     value = result[0]
                     _LOGGER.debug(f"Found device data field {field}: {value}")
@@ -407,7 +407,7 @@ class EnvoyData(object):
     def _resolve_path(self, path, default=None):
         _LOGGER.debug("Resolving jsonpath %s", path)
 
-        result = jsonpath(self.data, path)
+        result = JSONPath(path).parse(self.data)
         if not result:
             _LOGGER.debug("the configured path %s did not return anything!", path)
             return default
