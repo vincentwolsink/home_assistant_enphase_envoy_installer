@@ -2,3 +2,5 @@ httpx
 pyjwt
 xmltodict
 jsonpath-python
+pytest
+pytest-asyncio
