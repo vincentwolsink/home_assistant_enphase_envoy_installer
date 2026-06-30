@@ -12,14 +12,21 @@
     "flow_title": "{serial} ({host})",
     "step": {
       "user": {
+        "description": "Enter the hostname/ip and serial of your Envoy. Use your Enphase (installer) account credentials.",
         "data": {
           "host": "Host",
           "username": "Username",
           "password": "Password",
-          "serial": "Serial number",
-          "token_source": "Login method (token source)"
+          "serial": "Serial number"
         },
-        "description": "Enter the hostname/ip and serial of your Envoy. Use your Enphase (installer) account credentials."
+        "sections": {
+          "advanced_options": {
+            "name": "Advanced options",
+            "data": {
+              "token_source": "Login method (token source)"
+            }
+          }
+        }
       }
     }
   },

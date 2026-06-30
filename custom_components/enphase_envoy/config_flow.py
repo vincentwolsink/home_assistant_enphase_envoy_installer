@@ -18,7 +18,7 @@ from homeassistant.const import (
     CONF_USERNAME,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.data_entry_flow import FlowResult
+from homeassistant.data_entry_flow import FlowResult, section
 from homeassistant.helpers import config_validation as cv
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util.network import is_ipv4_address, is_ipv6_address
@@ -42,6 +42,7 @@ from .envoy_endpoints import ENVOY_ENDPOINTS
 _LOGGER = logging.getLogger(__name__)
 
 ENVOY = "Envoy"
+ADVANCED_OPTIONS = "advanced_options"
 
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> EnvoyReader:
@@ -52,7 +53,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> EnvoyRead
         enlighten_pass=data[CONF_PASSWORD],
         inverters=False,
         enlighten_serial_num=data[CONF_SERIAL],
-        token_source=data[CONF_TOKEN_SOURCE],
+        token_source=data[ADVANCED_OPTIONS][CONF_TOKEN_SOURCE],
     )
 
     try:
@@ -100,11 +101,17 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
         schema[vol.Required(CONF_PASSWORD, default=default_data.get(CONF_PASSWORD))] = (
             str
         )
-        schema[
-            vol.Required(
-                CONF_TOKEN_SOURCE, default=default_data.get(CONF_TOKEN_SOURCE, "entrez")
-            )
-        ] = vol.In(["entrez", "enlighten"])
+        schema[vol.Required(ADVANCED_OPTIONS)] = section(
+            vol.Schema(
+                {
+                    vol.Required(
+                        CONF_TOKEN_SOURCE,
+                        default=default_data.get(CONF_TOKEN_SOURCE, "entrez"),
+                    ): vol.In(["entrez", "enlighten"])
+                }
+            ),
+            {"collapsed": True},
+        )
 
         return vol.Schema(schema)
 
@@ -214,6 +221,9 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
             else:
                 data = user_input.copy()
                 data[CONF_NAME] = self._async_envoy_name()
+
+                advanced_options = data.pop(ADVANCED_OPTIONS)
+                data[CONF_TOKEN_SOURCE] = advanced_options[CONF_TOKEN_SOURCE]
 
                 if self._current_entry:
                     # Remove saved token to prevent it being used after reconfire
