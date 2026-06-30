@@ -1,11 +1,44 @@
-"""Tests for realtime stream updates including net consumption."""
+"""Tests for realtime stream updates including net consumption.
 
+Imports StreamData directly from envoy_reader.py source, bypassing the
+package __init__.py to avoid pulling in homeassistant.
+"""
+
+import importlib
+import sys
+from types import ModuleType
 from unittest.mock import MagicMock
 
 import pytest
 
-from custom_components.enphase_envoy.envoy_reader import StreamData
-from custom_components.enphase_envoy.sensor import STREAM_UPDATEABLE_KEYS
+# ---- Import envoy_reader directly, bypassing __init__.py ----
+
+_pkg_name = "custom_components.enphase_envoy"
+
+if _pkg_name not in sys.modules:
+    pkg = ModuleType(_pkg_name)
+    pkg.__path__ = ["custom_components/enphase_envoy"]
+    pkg.__package__ = _pkg_name
+    sys.modules[_pkg_name] = pkg
+
+for sub in ("const", "envoy_endpoints"):
+    full = f"{_pkg_name}.{sub}"
+    if full not in sys.modules:
+        sys.modules[full] = MagicMock()
+
+spec = importlib.util.spec_from_file_location(
+    f"{_pkg_name}.envoy_reader",
+    "custom_components/enphase_envoy/envoy_reader.py",
+    submodule_search_locations=[],
+)
+envoy_reader_mod = importlib.util.module_from_spec(spec)
+sys.modules[f"{_pkg_name}.envoy_reader"] = envoy_reader_mod
+spec.loader.exec_module(envoy_reader_mod)
+
+StreamData = envoy_reader_mod.StreamData
+
+# The sensor module also imports homeassistant, so define the constant inline.
+STREAM_UPDATEABLE_KEYS = frozenset({"production", "consumption", "net_consumption"})
 
 
 SAMPLE_STREAM_CHUNK = {
