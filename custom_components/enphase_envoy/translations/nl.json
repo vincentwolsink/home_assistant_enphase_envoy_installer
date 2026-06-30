@@ -1,27 +1,34 @@
 {
   "config": {
-      "abort": {
-          "already_configured": "Apparaat is al geconfigureerd",
-          "reauth_successful": "Herauthenticatie was succesvol"
-      },
-      "error": {
-          "cannot_connect": "Kan geen verbinding maken met Envoy. Controleer host en serienummer.",
-          "invalid_auth": "Inloggen mislukt. Controleer Enphase gebruikersnaam/wachtwoord.",
-          "unknown": "Onverwachte fout"
-      },
-      "flow_title": "{serial} ({host})",
-      "step": {
-          "user": {
-              "data": {
-                  "host": "Host",
-                  "username": "Gebruikersnaam",
-                  "password": "Wachtwoord",
-                  "serial": "Serienummer",
-                  "token_source": "Login methode (token bron)"
-              },
-              "description": "Voer de hostname/ip en serienummer van je Envoy in. Gebruik je Enphase (installer) account gegevens."
+    "abort": {
+      "already_configured": "Apparaat is al geconfigureerd",
+      "reauth_successful": "Herauthenticatie was succesvol"
+    },
+    "error": {
+      "cannot_connect": "Kan geen verbinding maken met Envoy. Controleer host en serienummer.",
+      "invalid_auth": "Inloggen mislukt. Controleer Enphase gebruikersnaam/wachtwoord.",
+      "unknown": "Onverwachte fout"
+    },
+    "flow_title": "{serial} ({host})",
+    "step": {
+      "user": {
+        "description": "Voer de hostname/ip en serienummer van je Envoy in. Gebruik je Enphase (installer) account gegevens.",
+        "data": {
+          "host": "Host",
+          "username": "Gebruikersnaam",
+          "password": "Wachtwoord",
+          "serial": "Serienummer"
+        },
+        "sections": {
+          "advanced_options": {
+            "name": "Geavanceerde opties",
+            "data": {
+              "token_source": "Login methode (token bron)"
+            }
           }
+        }
       }
+    }
   },
   "selector": {
     "token_source": {
