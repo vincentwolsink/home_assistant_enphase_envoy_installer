@@ -11,7 +11,6 @@ import ipaddress
 import json
 import re
 
-from jsonpath import jsonpath
 from json.decoder import JSONDecodeError
 
 from .envoy_endpoints import (
@@ -20,6 +19,7 @@ from .envoy_endpoints import (
     ENDPOINT_URL_INSTALLER_AGF_SET_PROFILE,
     ENDPOINT_URL_INSTALLER_AGF_UPLOAD_PROFILE,
 )
+from .jsonpath_vendor import jsonpath
 
 ENVOY_MODEL_M = "Metered"
 ENVOY_MODEL_S = "Standard"
