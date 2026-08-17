@@ -90,7 +90,7 @@ iguration.
 |Envoy xxx Lifetime Net Energy Consumption L1|sensor.envoy_xxx_lifetime_net_energy_consumption_l1|Wh|
 |Envoy xxx Lifetime Net Energy Consumption L2|sensor.envoy_xxx_lifetime_net_energy_consumption_l2|Wh|
 |Envoy xxx Lifetime Net Energy Consumption L3|sensor.envoy_xxx_lifetime_net_energy_consumption_l3|Wh|
-|Envoy xxx Lifetime Net Energy Production|sensor.envoy_xxx_lifetime_energy_production|Wh|
+|Envoy xxx Lifetime Net Energy Production|sensor.envoy_xxx_lifetime_net_energy_production|Wh|
 |Envoy xxx Lifetime Net Energy Production L1|sensor.envoy_xxx_lifetime_net_energy_production_l1|Wh|
 |Envoy xxx Lifetime Net Energy Production L2|sensor.envoy_xxx_lifetime_net_energy_production_l2|Wh|
 |Envoy xxx Lifetime Net Energy Production L3|sensor.envoy_xxx_lifetime_net_energy_production_l3|Wh|
