@@ -1,11 +1,11 @@
-from homeassistant.core import HomeAssistant
+from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.components.select import SelectEntity
-from homeassistant.helpers.entity import DeviceInfo
 
-from .const import COORDINATOR, DOMAIN, NAME, READER, STORAGE_MODES, STORAGE_MODE_SELECT
+from .const import COORDINATOR, DOMAIN, NAME, READER, STORAGE_MODE_SELECT, STORAGE_MODES
 
 
 async def async_setup_entry(

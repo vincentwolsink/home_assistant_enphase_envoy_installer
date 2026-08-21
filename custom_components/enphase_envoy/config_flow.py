@@ -6,11 +6,10 @@ import contextlib
 import logging
 from typing import Any
 
-from .envoy_reader import EnvoyReader, EnlightenError, EnvoyError
 import httpx
 import voluptuous as vol
-
 from homeassistant.components import zeroconf
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlowWithReload
 from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
@@ -19,25 +18,24 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult, section
-from homeassistant.helpers import config_validation as cv
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.util.network import is_ipv4_address, is_ipv6_address
-from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlowWithReload
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.storage import Store
+from homeassistant.util.network import is_ipv4_address, is_ipv6_address
 
 from .const import (
-    DOMAIN,
     CONF_SERIAL,
     CONF_TOKEN_SOURCE,
+    DEFAULT_GETDATA_TIMEOUT,
+    DEFAULT_REALTIME_UPDATE_THROTTLE,
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+    ENABLE_ADDITIONAL_METRICS,
     STORAGE_KEY,
     STORAGE_VERSION,
-    DEFAULT_SCAN_INTERVAL,
-    DEFAULT_REALTIME_UPDATE_THROTTLE,
-    ENABLE_ADDITIONAL_METRICS,
-    DEFAULT_GETDATA_TIMEOUT,
 )
 from .envoy_endpoints import ENVOY_ENDPOINTS
-
+from .envoy_reader import EnlightenError, EnvoyError, EnvoyReader
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -230,7 +228,7 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
                     store = Store(
                         self.hass,
                         STORAGE_VERSION,
-                        ".".join([STORAGE_KEY, self._current_entry.entry_id]),
+                        f"{STORAGE_KEY}.{self._current_entry.entry_id}",
                     )
                     await store.async_remove()
 
@@ -287,7 +285,7 @@ class EnvoyOptionsFlowHandler(OptionsFlowWithReload):
         disabled_endpoints = [
             ep
             for ep in self.config_entry.options.get("disabled_endpoints", [])
-            if ep in optional_endpoints.keys()
+            if ep in optional_endpoints
         ]
 
         schema = {

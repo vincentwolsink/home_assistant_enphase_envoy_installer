@@ -1,19 +1,19 @@
 import datetime
 
-from homeassistant.core import HomeAssistant
+from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.components.binary_sensor import BinarySensorEntity
-from homeassistant.helpers.entity import DeviceInfo
 
 from .const import (
+    BINARY_SENSORS,
     COORDINATOR,
     DOMAIN,
     NAME,
-    BINARY_SENSORS,
-    resolve_hardware_id,
     get_model_name,
+    resolve_hardware_id,
 )
 
 
@@ -30,7 +30,7 @@ async def async_setup_entry(
     for sensor_description in BINARY_SENSORS:
         if sensor_description.key.startswith("inverter_data_"):
             if coordinator.data.get("inverter_device_data"):
-                for inverter in coordinator.data["inverter_device_data"].keys():
+                for inverter in coordinator.data["inverter_device_data"]:
                     device_name = f"Inverter {inverter}"
                     entity_name = f"{device_name} {sensor_description.name}"
                     entities.append(
@@ -46,7 +46,7 @@ async def async_setup_entry(
 
         elif sensor_description.key.startswith("inverter_info_"):
             if coordinator.data.get("inverter_info"):
-                for inverter in coordinator.data["inverter_info"].keys():
+                for inverter in coordinator.data["inverter_info"]:
                     device_name = f"Inverter {inverter}"
                     entity_name = f"{device_name} {sensor_description.name}"
                     entities.append(
@@ -93,7 +93,7 @@ async def async_setup_entry(
 
         elif sensor_description.key.startswith("batteries_"):
             if coordinator.data.get("batteries"):
-                for battery in coordinator.data["batteries"].keys():
+                for battery in coordinator.data["batteries"]:
                     device_name = f"Battery {battery}"
                     entity_name = f"{device_name} {sensor_description.name}"
                     serial_number = battery

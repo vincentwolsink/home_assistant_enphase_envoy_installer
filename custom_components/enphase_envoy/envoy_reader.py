@@ -2,23 +2,24 @@
 
 import asyncio
 import datetime
-import time
-import logging
-import jwt
-import xmltodict
-import httpx
 import ipaddress
 import json
+import logging
 import re
-
-from jsonpath import JSONPath
+import time
 from json.decoder import JSONDecodeError
+from typing import ClassVar
+
+import httpx
+import jwt
+import xmltodict
+from jsonpath import JSONPath
 
 from .envoy_endpoints import (
-    ENVOY_ENDPOINTS,
-    ENDPOINT_URL_STREAM,
     ENDPOINT_URL_INSTALLER_AGF_SET_PROFILE,
     ENDPOINT_URL_INSTALLER_AGF_UPLOAD_PROFILE,
+    ENDPOINT_URL_STREAM,
+    ENVOY_ENDPOINTS,
 )
 
 ENVOY_MODEL_M = "Metered"
@@ -32,6 +33,11 @@ ENLIGHTEN_LOGIN_URL = "https://enlighten.enphaseenergy.com/login/login.json"
 ENLIGHTEN_TOKEN_URL = "https://entrez.enphaseenergy.com/tokens"
 
 ENDPOINT_URL_CHECK_JWT = "https://{}/auth/check_jwt"
+
+# Number of consecutive failed fetches an endpoint tolerates while keeping
+# the previous value, before the update cycle is aborted (so entities
+# report unavailable instead of serving stale data indefinitely).
+MAX_ENDPOINT_FAILURES = 3
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -148,7 +154,9 @@ def parse_devicedata(data):
     return idd
 
 
-def merge_metersdata(data1=[], data2=[]):
+def merge_metersdata(data1=None, data2=None):
+    data1 = data1 if data1 is not None else []
+    data2 = data2 if data2 is not None else []
     for el2 in data2:
         for el1 in data1:
             if el1["eid"] == el2["eid"]:
@@ -257,10 +265,13 @@ class StreamData:
                 getattr(self, attr)[phase] = self.PhaseData(data[data_key][phase_key])
 
     def __str__(self):
-        return "<StreamData production=%s, consumption=%s, net_consumption=%s />" % (
-            dict([[k, str(v)] for k, v in self.production.items()]),
-            dict([[k, str(v)] for k, v in self.consumption.items()]),
-            dict([[k, str(v)] for k, v in self.net_consumption.items()]),
+        production = {k: str(v) for k, v in self.production.items()}
+        consumption = {k: str(v) for k, v in self.consumption.items()}
+        net_consumption = {k: str(v) for k, v in self.net_consumption.items()}
+        return (
+            f"<StreamData production={production}, "
+            f"consumption={consumption}, "
+            f"net_consumption={net_consumption} />"
         )
 
 
@@ -296,10 +307,10 @@ def path_by_token(owner, installer=None):
     return property(path)
 
 
-class EnvoyData(object):
+class EnvoyData:
     """Functions in this class will provide getters and setters for data to be provided"""
 
-    _envoy_properties = {}
+    _envoy_properties: ClassVar[dict] = {}
 
     def __new__(cls, *a, **kw):
         cls._attributes = []
@@ -307,9 +318,10 @@ class EnvoyData(object):
             if attr.endswith("_value"):
                 cls._attributes.append(attr[:-6])
 
-            elif isinstance(getattr(cls, attr), property):
-                if attr in cls._envoy_properties:
-                    cls._attributes.append(attr)
+            elif isinstance(getattr(cls, attr), property) and (
+                attr in cls._envoy_properties
+            ):
+                cls._attributes.append(attr)
 
         return object.__new__(cls)
 
@@ -361,11 +373,10 @@ class EnvoyData(object):
             if attr.endswith("_value") and isinstance(
                 (path := getattr(self, attr)), (str)
             ):
-                if self.initial_update_finished:
-                    # Check if the path resolves, if not, do not include endpoint.
-                    if self._resolve_path(path) is None:
-                        # If the resolved path is None, we skip this path for the endpoints
-                        continue
+                if self.initial_update_finished and self._resolve_path(path) is None:
+                    # Check if the path resolves; if the resolved path is None,
+                    # we skip this path for the endpoints
+                    continue
 
                 endpoints.append(path.split(".", 1)[0])
                 continue  # discovered, so continue
@@ -729,7 +740,7 @@ class EnvoyReader:
         token_refresh_buffer_seconds=0,
         store=None,
         disable_negative_production=False,
-        disabled_endpoints=[],
+        disabled_endpoints=None,
         lifetime_production_correction=0,
         device_data_endpoint="endpoint_device_data",
         token_source=None,
@@ -742,6 +753,7 @@ class EnvoyReader:
 
         self.url_last_queried = {}
         self.fetch_task = None
+        self._auth_lock = asyncio.Lock()
 
         self._async_client = async_client
         self._authorization_header = None
@@ -756,7 +768,7 @@ class EnvoyReader:
 
         self.data: EnvoyData = EnvoyStandard(self)
         self.required_endpoints = set()  # in case we would need it..
-        self.disabled_endpoints = disabled_endpoints
+        self.disabled_endpoints = disabled_endpoints or []
         self.lifetime_production_correction = lifetime_production_correction
         self.device_data_endpoint = device_data_endpoint
 
@@ -789,6 +801,7 @@ class EnvoyReader:
             "last_fetch": 0,
             "installer_required": installer_required,
             "optional": optional,
+            "failures": 0,
         }
         setattr(self, attr, None)
         return self.uri_registry[attr]
@@ -860,15 +873,18 @@ class EnvoyReader:
                             "Received 401 from Envoy; refreshing token, attempt %s of 2",
                             attempt + 1,
                         )
-                        # Only on the first 401 response, we refresh token cookies,
-                        # otherwise we just fetch a new enphase token
-                        could_refresh_cookies = (
-                            await self._refresh_token_cookies()
-                            if received_401 == 0
-                            else False
-                        )
-                        if not could_refresh_cookies:
-                            await self._get_enphase_token()
+                        # Serialize with other authentication flows, so we
+                        # never refresh token/cookies concurrently.
+                        async with self._auth_lock:
+                            # Only on the first 401 response, we refresh token cookies,
+                            # otherwise we just fetch a new enphase token
+                            could_refresh_cookies = (
+                                await self._refresh_token_cookies()
+                                if received_401 == 0
+                                else False
+                            )
+                            if not could_refresh_cookies:
+                                await self._get_enphase_token()
 
                         received_401 += 1
                         continue
@@ -877,7 +893,7 @@ class EnvoyReader:
             except httpx.TransportError as e:
                 _LOGGER.debug("TransportError: %s", e)
                 if attempt == 2:
-                    raise e
+                    raise
 
     async def _async_post(self, url, data=None, **kwargs):
         _LOGGER.debug("HTTP POST Attempt: %s", url)
@@ -897,7 +913,7 @@ class EnvoyReader:
                 return resp
         except httpx.TransportError as e:
             _LOGGER.debug("TransportError: %s", e)
-            raise e
+            raise
 
     async def _async_put(self, url, data, **kwargs):
         _LOGGER.debug(
@@ -918,7 +934,7 @@ class EnvoyReader:
                 return resp
         except httpx.TransportError as e:
             _LOGGER.debug("TransportError: %s", e)
-            raise e
+            raise
 
     async def _fetch_entrez_token(self):
         """
@@ -1068,8 +1084,8 @@ class EnvoyReader:
         exp_epoch = decode["exp"]
         # allow a buffer so we can try and grab it sooner
         exp_epoch -= self.token_refresh_buffer_seconds
-        exp_time = datetime.datetime.fromtimestamp(exp_epoch)
-        if datetime.datetime.now() < exp_time:
+        exp_time = datetime.datetime.fromtimestamp(exp_epoch, tz=datetime.timezone.utc)
+        if datetime.datetime.now(tz=datetime.timezone.utc) < exp_time:
             _LOGGER.debug("Token expires at: %s", exp_time)
             return False
         else:
@@ -1077,18 +1093,22 @@ class EnvoyReader:
             return True
 
     async def init_authentication(self):
-        _LOGGER.debug("Checking Token value: %s", self._token)
-        # Check if a token has already been retrieved
-        if self._token == "":
-            _LOGGER.debug("Found empty token: %s", self._token)
-            await self._get_enphase_token()
-        else:
-            _LOGGER.debug("Token is populated: %s", self._token)
-            if self._is_enphase_token_expired(self._token):
-                _LOGGER.debug("Found Expired token - Retrieving new token")
+        # Serialize authentication: the realtime stream task and the update
+        # coordinator share this reader and must never refresh the token or
+        # cookies concurrently.
+        async with self._auth_lock:
+            _LOGGER.debug("Checking Token value: %s", self._token)
+            # Check if a token has already been retrieved
+            if self._token == "":
+                _LOGGER.debug("Found empty token: %s", self._token)
                 await self._get_enphase_token()
             else:
-                await self._refresh_token_cookies()
+                _LOGGER.debug("Token is populated: %s", self._token)
+                if self._is_enphase_token_expired(self._token):
+                    _LOGGER.debug("Found Expired token - Retrieving new token")
+                    await self._get_enphase_token()
+                else:
+                    await self._refresh_token_cookies()
 
     async def stream_reader(self, meter_callback=None):
         # First, login, etc, make sure we have a token.
@@ -1159,8 +1179,8 @@ class EnvoyReader:
                     if meter_callback:
                         try:
                             meter_callback(StreamData(reading))
-                        except Exception as e:
-                            _LOGGER.exception("Unable to execute callback: %s", e)
+                        except Exception:
+                            _LOGGER.exception("Unable to execute callback")
                             raise
                     else:
                         print(StreamData(reading))
@@ -1171,8 +1191,8 @@ class EnvoyReader:
                 "Stream read timeout — no data received for %.0fs, reconnecting",
                 stream_timeout.read,
             )
-        except Exception as e:
-            _LOGGER.exception("Realtime data error: %s", str(e))
+        except Exception:
+            _LOGGER.exception("Realtime data error")
         finally:
             _LOGGER.debug("Stopped reading realtime data")
             self.is_receiving_realtime_data = False
@@ -1222,10 +1242,39 @@ class EnvoyReader:
                     "UPDATING ENDPOINT %s: %s", endpoint, endpoint_settings["url"]
                 )
                 endpoint_settings["last_fetch"] = time.time()
-                await self._update_endpoint(
-                    attr=endpoint,
-                    url=endpoint_settings["url"],
-                )
+                try:
+                    await self._update_endpoint(
+                        attr=endpoint,
+                        url=endpoint_settings["url"],
+                    )
+                except httpx.HTTPError as err:
+                    failures = endpoint_settings.get("failures", 0) + 1
+                    endpoint_settings["failures"] = failures
+                    # Make sure a failing endpoint is retried on the next
+                    # cycle instead of waiting for its cache time.
+                    endpoint_settings["last_fetch"] = 0
+
+                    if failures < MAX_ENDPOINT_FAILURES:
+                        # Temporary failure; keep serving the previous value
+                        # and continue with the next endpoint.
+                        _LOGGER.warning(
+                            "Error updating endpoint %s (%s), keeping previous value: %s",
+                            endpoint,
+                            endpoint_settings["url"],
+                            err,
+                        )
+                        continue
+
+                    # Persistent failure; abort the update so entities report
+                    # unavailable instead of stale data indefinitely.
+                    _LOGGER.warning(
+                        "Endpoint %s failed %s times in a row, giving up this cycle",
+                        endpoint,
+                        failures,
+                    )
+                    raise
+                else:
+                    endpoint_settings["failures"] = 0
                 _LOGGER.debug(
                     "FETCHING ENDPOINT %s TOOK %.4f seconds",
                     endpoint,
@@ -1263,7 +1312,7 @@ class EnvoyReader:
         # endpoints to be polled.
         self.data.initial_update_finished = True
 
-        if self.endpoint_meters.status_code == 401:
+        if self.endpoint_meters and self.endpoint_meters.status_code == 401:
             self.endpoint_meters.raise_for_status()
 
     @property

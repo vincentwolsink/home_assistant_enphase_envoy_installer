@@ -314,7 +314,7 @@ class TestUpdateProductionMeters:
         assert data["consumption"] == pytest.approx(expected)
 
     def test_calls_async_write_ha_state_for_changed_values(self):
-        callback, _, live_entities, updated_keys = self._build_callback()
+        callback, _, _, updated_keys = self._build_callback()
         sd = StreamData(SAMPLE_STREAM_CHUNK)
         callback(sd)
 
@@ -325,7 +325,7 @@ class TestUpdateProductionMeters:
         assert "consumption" in updated_keys
 
     def test_skips_unchanged_values(self):
-        callback, data, live_entities, updated_keys = self._build_callback()
+        callback, _, _, updated_keys = self._build_callback()
         sd = StreamData(SAMPLE_STREAM_CHUNK)
 
         # First call updates everything
@@ -337,7 +337,7 @@ class TestUpdateProductionMeters:
         assert len(updated_keys) == 0
 
     def test_only_updates_registered_live_entities(self):
-        callback, data, live_entities, updated_keys = self._build_callback()
+        callback, _, live_entities, updated_keys = self._build_callback()
 
         # Remove net_consumption from live entities
         del live_entities["net_consumption"]
