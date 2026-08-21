@@ -45,6 +45,9 @@ READER = "reader"
 DEFAULT_SCAN_INTERVAL = 60  # default in seconds
 DEFAULT_REALTIME_UPDATE_THROTTLE = 10
 DEFAULT_GETDATA_TIMEOUT = 60
+# Refresh the Enphase token this many seconds before it actually expires,
+# so the (slow) cloud refresh does not happen at the last possible moment.
+DEFAULT_TOKEN_REFRESH_BUFFER = 300
 
 CONF_SERIAL = "serial"
 CONF_TOKEN_SOURCE = "token_source"

@@ -49,6 +49,7 @@ from .const import (
     DEFAULT_REALTIME_UPDATE_THROTTLE,
     LIVE_UPDATEABLE_ENTITIES,
     DEFAULT_GETDATA_TIMEOUT,
+    DEFAULT_TOKEN_REFRESH_BUFFER,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -89,6 +90,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             else "endpoint_device_data"
         ),
         token_source=config.get(CONF_TOKEN_SOURCE),
+        token_refresh_buffer_seconds=DEFAULT_TOKEN_REFRESH_BUFFER,
     )
     await envoy_reader._sync_store(load=True)
 

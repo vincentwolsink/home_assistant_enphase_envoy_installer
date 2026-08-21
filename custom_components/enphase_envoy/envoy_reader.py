@@ -33,6 +33,11 @@ ENLIGHTEN_TOKEN_URL = "https://entrez.enphaseenergy.com/tokens"
 
 ENDPOINT_URL_CHECK_JWT = "https://{}/auth/check_jwt"
 
+# Number of consecutive failed fetches an endpoint tolerates while keeping
+# the previous value, before the update cycle is aborted (so entities
+# report unavailable instead of serving stale data indefinitely).
+MAX_ENDPOINT_FAILURES = 3
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -742,6 +747,7 @@ class EnvoyReader:
 
         self.url_last_queried = {}
         self.fetch_task = None
+        self._auth_lock = asyncio.Lock()
 
         self._async_client = async_client
         self._authorization_header = None
@@ -789,6 +795,7 @@ class EnvoyReader:
             "last_fetch": 0,
             "installer_required": installer_required,
             "optional": optional,
+            "failures": 0,
         }
         setattr(self, attr, None)
         return self.uri_registry[attr]
@@ -860,15 +867,18 @@ class EnvoyReader:
                             "Received 401 from Envoy; refreshing token, attempt %s of 2",
                             attempt + 1,
                         )
-                        # Only on the first 401 response, we refresh token cookies,
-                        # otherwise we just fetch a new enphase token
-                        could_refresh_cookies = (
-                            await self._refresh_token_cookies()
-                            if received_401 == 0
-                            else False
-                        )
-                        if not could_refresh_cookies:
-                            await self._get_enphase_token()
+                        # Serialize with other authentication flows, so we
+                        # never refresh token/cookies concurrently.
+                        async with self._auth_lock:
+                            # Only on the first 401 response, we refresh token cookies,
+                            # otherwise we just fetch a new enphase token
+                            could_refresh_cookies = (
+                                await self._refresh_token_cookies()
+                                if received_401 == 0
+                                else False
+                            )
+                            if not could_refresh_cookies:
+                                await self._get_enphase_token()
 
                         received_401 += 1
                         continue
@@ -1077,18 +1087,22 @@ class EnvoyReader:
             return True
 
     async def init_authentication(self):
-        _LOGGER.debug("Checking Token value: %s", self._token)
-        # Check if a token has already been retrieved
-        if self._token == "":
-            _LOGGER.debug("Found empty token: %s", self._token)
-            await self._get_enphase_token()
-        else:
-            _LOGGER.debug("Token is populated: %s", self._token)
-            if self._is_enphase_token_expired(self._token):
-                _LOGGER.debug("Found Expired token - Retrieving new token")
+        # Serialize authentication: the realtime stream task and the update
+        # coordinator share this reader and must never refresh the token or
+        # cookies concurrently.
+        async with self._auth_lock:
+            _LOGGER.debug("Checking Token value: %s", self._token)
+            # Check if a token has already been retrieved
+            if self._token == "":
+                _LOGGER.debug("Found empty token: %s", self._token)
                 await self._get_enphase_token()
             else:
-                await self._refresh_token_cookies()
+                _LOGGER.debug("Token is populated: %s", self._token)
+                if self._is_enphase_token_expired(self._token):
+                    _LOGGER.debug("Found Expired token - Retrieving new token")
+                    await self._get_enphase_token()
+                else:
+                    await self._refresh_token_cookies()
 
     async def stream_reader(self, meter_callback=None):
         # First, login, etc, make sure we have a token.
@@ -1222,10 +1236,39 @@ class EnvoyReader:
                     "UPDATING ENDPOINT %s: %s", endpoint, endpoint_settings["url"]
                 )
                 endpoint_settings["last_fetch"] = time.time()
-                await self._update_endpoint(
-                    attr=endpoint,
-                    url=endpoint_settings["url"],
-                )
+                try:
+                    await self._update_endpoint(
+                        attr=endpoint,
+                        url=endpoint_settings["url"],
+                    )
+                except httpx.HTTPError as err:
+                    failures = endpoint_settings.get("failures", 0) + 1
+                    endpoint_settings["failures"] = failures
+                    # Make sure a failing endpoint is retried on the next
+                    # cycle instead of waiting for its cache time.
+                    endpoint_settings["last_fetch"] = 0
+
+                    if failures < MAX_ENDPOINT_FAILURES:
+                        # Temporary failure; keep serving the previous value
+                        # and continue with the next endpoint.
+                        _LOGGER.warning(
+                            "Error updating endpoint %s (%s), keeping previous value: %s",
+                            endpoint,
+                            endpoint_settings["url"],
+                            err,
+                        )
+                        continue
+
+                    # Persistent failure; abort the update so entities report
+                    # unavailable instead of stale data indefinitely.
+                    _LOGGER.warning(
+                        "Endpoint %s failed %s times in a row, giving up this cycle",
+                        endpoint,
+                        failures,
+                    )
+                    raise
+                else:
+                    endpoint_settings["failures"] = 0
                 _LOGGER.debug(
                     "FETCHING ENDPOINT %s TOOK %.4f seconds",
                     endpoint,
@@ -1263,7 +1306,7 @@ class EnvoyReader:
         # endpoints to be polled.
         self.data.initial_update_finished = True
 
-        if self.endpoint_meters.status_code == 401:
+        if self.endpoint_meters and self.endpoint_meters.status_code == 401:
             self.endpoint_meters.raise_for_status()
 
     @property

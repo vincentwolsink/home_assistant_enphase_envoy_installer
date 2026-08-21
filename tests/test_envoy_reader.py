@@ -4,13 +4,18 @@ Imports envoy_reader directly to avoid pulling in the full homeassistant
 dependency tree (same pattern as test_stream_staleness.py).
 """
 
+import asyncio
 import importlib
 import json
+import logging
 import os
 import sys
+import time
 from types import ModuleType
 from unittest.mock import MagicMock
 
+import httpx
+import jwt
 import pytest
 
 TEST_DATA_DIR = os.path.join(
@@ -792,3 +797,174 @@ class TestEndpointRegistration:
         expected = {f"endpoint_{k}" for k in ENDPOINTS}
         for ep in expected:
             assert ep in reader.uri_registry, f"Missing endpoint: {ep}"
+
+
+# ===========================================================================
+# Endpoint fetch error handling
+# ===========================================================================
+
+
+class TestUpdateEndpointsErrorHandling:
+    """A failing endpoint is tolerated while serving stale data;
+    on the third consecutive failure the update cycle aborts."""
+
+    def _setup(self):
+        r = make_reader()
+        r.data = EnvoyMeteredWithCT(r)
+        load_all(r)
+        return r
+
+    @pytest.mark.asyncio
+    async def test_transport_error_keeps_stale_value(self, caplog):
+        r = self._setup()
+        stale_info = r.data.get("inverter_info")
+
+        called = []
+
+        async def fake_update(attr, url, only_on_success=False):
+            if attr == "endpoint_inventory":
+                raise httpx.ConnectError("Connection refused")
+            called.append(attr)
+
+        r._update_endpoint = fake_update
+
+        with caplog.at_level(logging.WARNING):
+            await r.update_endpoints(
+                ["endpoint_inventory", "endpoint_production_report"]
+            )
+
+        # Failing endpoint kept its stale parsed data
+        assert r.data.get("inverter_info") == stale_info
+        # The failure was counted and a retry on the next cycle is scheduled
+        settings = r.uri_registry["endpoint_inventory"]
+        assert settings["failures"] == 1
+        assert settings["last_fetch"] == 0
+        # Other endpoints were still fetched
+        assert "endpoint_production_report" in called
+        assert r.data.get("production") == 3366.764
+        # And a warning was logged
+        assert "Error updating endpoint endpoint_inventory" in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_first_fetch_failure_does_not_raise(self, caplog):
+        r = make_reader()
+        r.data = EnvoyMeteredWithCT(r)
+
+        async def fake_update(attr, url, only_on_success=False):
+            raise httpx.ConnectError("Connection refused")
+
+        r._update_endpoint = fake_update
+
+        with caplog.at_level(logging.WARNING):
+            await r.update_endpoints(["endpoint_inventory"])
+
+        # No response object was set and no exception escaped
+        assert r.endpoint_inventory is None
+
+    @pytest.mark.asyncio
+    async def test_timeout_error_keeps_stale_value(self):
+        r = self._setup()
+        stale_production = r.data.get("production")
+
+        async def fake_update(attr, url, only_on_success=False):
+            raise httpx.ReadTimeout("timed out")
+
+        r._update_endpoint = fake_update
+
+        await r.update_endpoints(["endpoint_production_report"])
+
+        assert r.data.get("production") == stale_production
+
+    @pytest.mark.asyncio
+    async def test_persistent_failure_aborts_update_after_three_cycles(self):
+        r = self._setup()
+        stale_info = r.data.get("inverter_info")
+
+        async def fake_update(attr, url, only_on_success=False):
+            if attr == "endpoint_inventory":
+                raise httpx.ConnectError("Connection refused")
+
+        r._update_endpoint = fake_update
+
+        # The first two consecutive failures are tolerated
+        await r.update_endpoints(["endpoint_inventory"])
+        await r.update_endpoints(["endpoint_inventory"])
+        assert r.uri_registry["endpoint_inventory"]["failures"] == 2
+        assert r.data.get("inverter_info") == stale_info
+
+        # The third consecutive failure aborts the update cycle
+        with pytest.raises(httpx.ConnectError):
+            await r.update_endpoints(["endpoint_inventory"])
+
+        assert r.uri_registry["endpoint_inventory"]["failures"] == 3
+        # Stale data is kept for when the Envoy comes back
+        assert r.data.get("inverter_info") == stale_info
+
+    @pytest.mark.asyncio
+    async def test_success_resets_failure_count(self):
+        r = self._setup()
+        original_update = r._update_endpoint
+
+        async def failing(attr, url, only_on_success=False):
+            raise httpx.ConnectError("Connection refused")
+
+        r._update_endpoint = failing
+        await r.update_endpoints(["endpoint_production_report"])
+        assert r.uri_registry["endpoint_production_report"]["failures"] == 1
+
+        r._update_endpoint = original_update
+        await r.update_endpoints(["endpoint_production_report"])
+        assert r.uri_registry["endpoint_production_report"]["failures"] == 0
+
+
+# ===========================================================================
+# Authentication: locking and proactive token refresh
+# ===========================================================================
+
+
+class TestAuthentication:
+    @staticmethod
+    def _token_expiring_in(seconds):
+        return jwt.encode(
+            {"exp": int(time.time()) + seconds}, "secret", algorithm="HS256"
+        )
+
+    def test_valid_token_not_expired(self):
+        r = EnvoyReader("192.168.1.1")
+        assert r._is_enphase_token_expired(self._token_expiring_in(3600)) is False
+
+    def test_token_expiry_respects_buffer(self):
+        token = self._token_expiring_in(300)
+        r_now = EnvoyReader("192.168.1.1")
+        r_buffered = EnvoyReader("192.168.1.1", token_refresh_buffer_seconds=600)
+
+        # Without a buffer the token is still valid; with the buffer it is
+        # treated as expired so it gets refreshed proactively.
+        assert r_now._is_enphase_token_expired(token) is False
+        assert r_buffered._is_enphase_token_expired(token) is True
+
+    def test_expired_token_detected(self):
+        r = EnvoyReader("192.168.1.1")
+        assert r._is_enphase_token_expired(self._token_expiring_in(-10)) is True
+
+    @pytest.mark.asyncio
+    async def test_init_authentication_serialized(self):
+        r = make_reader()
+        r._store_data["token"] = self._token_expiring_in(3600)
+
+        active = 0
+        peak = 0
+
+        async def fake_refresh():
+            nonlocal active, peak
+            active += 1
+            peak = max(peak, active)
+            await asyncio.sleep(0)
+            active -= 1
+            return True
+
+        r._refresh_token_cookies = fake_refresh
+
+        await asyncio.gather(*(r.init_authentication() for _ in range(3)))
+
+        assert peak == 1
