@@ -14,7 +14,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-
 # ---- Import envoy_reader directly, bypassing __init__.py ----
 # We temporarily prevent __init__.py from being loaded by pre-registering
 # a stub for the package, then import the module file directly.
@@ -42,7 +41,7 @@ _ep.ENDPOINT_URL_INSTALLER_AGF_SET_PROFILE = "https://{}/installer/agf/set"
 _ep.ENDPOINT_URL_INSTALLER_AGF_UPLOAD_PROFILE = "https://{}/installer/agf/upload"
 
 # Now load envoy_reader from source.
-import importlib.util  # noqa: E402
+import importlib.util
 
 spec = importlib.util.spec_from_file_location(
     f"{_pkg_name}.envoy_reader",

@@ -1,31 +1,32 @@
 """The enphase_envoy component."""
 
 from dataclasses import dataclass
+
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntityDescription,
 )
+from homeassistant.components.number import NumberDeviceClass, NumberEntityDescription
+from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntityDescription,
     SensorStateClass,
 )
 from homeassistant.components.switch import SwitchDeviceClass, SwitchEntityDescription
-from homeassistant.components.select import SelectEntityDescription
-from homeassistant.components.number import NumberDeviceClass, NumberEntityDescription
 from homeassistant.const import (
-    Platform,
     PERCENTAGE,
+    EntityCategory,
+    Platform,
     UnitOfApparentPower,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
     UnitOfEnergy,
     UnitOfFrequency,
     UnitOfPower,
-    UnitOfElectricPotential,
-    UnitOfElectricCurrent,
+    UnitOfReactivePower,
     UnitOfTemperature,
     UnitOfTime,
-    UnitOfReactivePower,
-    EntityCategory,
 )
 
 DOMAIN = "enphase_envoy"

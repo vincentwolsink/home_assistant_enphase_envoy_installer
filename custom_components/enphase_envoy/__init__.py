@@ -3,15 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import timedelta
-import logging
-from typing import Optional
 import copy
+import logging
+from datetime import timedelta
 
 import async_timeout
-from .envoy_reader import EnvoyReader, StreamData
 import httpx
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_HOST,
@@ -21,36 +18,36 @@ from homeassistant.const import (
     EVENT_HOMEASSISTANT_STOP,
 )
 from homeassistant.core import (
-    HomeAssistant,
-    callback,
     CoreState,
     Event,
+    HomeAssistant,
     ServiceCall,
     ServiceResponse,
     SupportsResponse,
+    callback,
 )
 from homeassistant.exceptions import ConfigEntryAuthFailed
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.helpers.storage import Store
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import Throttle
 
-
 from .const import (
-    COORDINATOR,
-    DOMAIN,
-    NAME,
-    PLATFORMS,
     CONF_SERIAL,
     CONF_TOKEN_SOURCE,
+    COORDINATOR,
+    DEFAULT_GETDATA_TIMEOUT,
+    DEFAULT_REALTIME_UPDATE_THROTTLE,
+    DEFAULT_SCAN_INTERVAL,
+    DEFAULT_TOKEN_REFRESH_BUFFER,
+    DOMAIN,
+    LIVE_UPDATEABLE_ENTITIES,
+    NAME,
+    PLATFORMS,
+    READER,
     STORAGE_KEY,
     STORAGE_VERSION,
-    READER,
-    DEFAULT_SCAN_INTERVAL,
-    DEFAULT_REALTIME_UPDATE_THROTTLE,
-    LIVE_UPDATEABLE_ENTITIES,
-    DEFAULT_GETDATA_TIMEOUT,
-    DEFAULT_TOKEN_REFRESH_BUFFER,
 )
+from .envoy_reader import EnvoyReader, StreamData
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -58,13 +55,13 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Enphase Envoy from a config entry."""
 
-    task: Optional[asyncio.Future] = None
+    task: asyncio.Future | None = None
     config = entry.data
     options = entry.options
     name = config[CONF_NAME]
 
     # Setup persistent storage, to save tokens between home assistant restarts
-    store = Store(hass, STORAGE_VERSION, ".".join([STORAGE_KEY, entry.entry_id]))
+    store = Store(hass, STORAGE_VERSION, f"{STORAGE_KEY}.{entry.entry_id}")
 
     disabled_endpoints = options.get("disabled_endpoints", [])
     if (
@@ -293,7 +290,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def _cancel_realtime_task(task: Optional[asyncio.Future]) -> None:
+async def _cancel_realtime_task(task: asyncio.Future | None) -> None:
     if not task:
         _LOGGER.debug("No task to cancel")
         return
@@ -303,9 +300,9 @@ async def _cancel_realtime_task(task: Optional[asyncio.Future]) -> None:
         await task
     except asyncio.CancelledError:
         pass
-    except Exception as e:
+    except Exception:
         _LOGGER.exception(
-            f"While waiting for task to be cancelled, this execption occured: {e}"
+            "While waiting for task to be cancelled, an exception occured"
         )
 
 

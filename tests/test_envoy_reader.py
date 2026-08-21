@@ -707,7 +707,7 @@ class TestParseDevstatus:
 
     def test_pcu_has_expected_fields(self):
         result = parse_devstatus(self._load())
-        pcu = [d for d in result if d["type"] == "pcu"][0]
+        pcu = next(d for d in result if d["type"] == "pcu")
         assert "sn" in pcu
         assert "type" in pcu
         assert "temperature" in pcu
@@ -720,7 +720,7 @@ class TestParseDevstatus:
 
     def test_gone_field_negated(self):
         result = parse_devstatus(self._load())
-        pcu = [d for d in result if d["type"] == "pcu"][0]
+        pcu = next(d for d in result if d["type"] == "pcu")
         assert pcu["gone"] is False
 
 
@@ -739,7 +739,7 @@ class TestParseDevicedata:
 
     def test_pcu_has_all_fields(self):
         result = parse_devicedata(self._load())
-        pcu = [d for d in result if d["type"] == "pcu"][0]
+        pcu = next(d for d in result if d["type"] == "pcu")
         for f in (
             "sn",
             "watts",
@@ -756,7 +756,7 @@ class TestParseDevicedata:
 
     def test_nsrb_fields(self):
         result = parse_devicedata(self._load())
-        nsrb = [d for d in result if d["type"] == "nsrb"][0]
+        nsrb = next(d for d in result if d["type"] == "nsrb")
         assert nsrb["sn"] == "999999968177"
         assert nsrb["voltage_l1"] == 231.220
         assert nsrb["voltage_l2"] == 1.640
