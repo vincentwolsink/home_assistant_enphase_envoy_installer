@@ -1088,3 +1088,103 @@ class TestTokenRefreshLoop:
 
         assert r._get_enphase_token.await_count >= 2
         assert "Proactive token refresh failed" in caplog.text
+
+
+# ===========================================================================
+# Envoy session-cookie caching + stream 401 recovery
+# ===========================================================================
+
+
+def _post_response(status_code=200):
+    resp = MagicMock()
+    resp.status_code = status_code
+    resp.cookies = {"sessionId": "abc123"}
+    return resp
+
+
+class TestCookieSessionCaching:
+    def _reader(self):
+        r = make_reader()
+        r._store_data["token"] = TestAuthentication._token_expiring_in(3600)
+        r.token_type = "owner"
+        return r
+
+    @pytest.mark.asyncio
+    async def test_check_jwt_called_once_for_same_token(self):
+        r = self._reader()
+        r._async_post = AsyncMock(return_value=_post_response())
+
+        assert await r._refresh_token_cookies() is True
+        assert await r._refresh_token_cookies() is True
+
+        # One session per token: no re-minting on every poll cycle
+        r._async_post.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_new_token_mints_new_session(self):
+        r = self._reader()
+        r._async_post = AsyncMock(return_value=_post_response())
+
+        await r._refresh_token_cookies()
+
+        # Simulate the background loop installing a fresh token
+        r._store_data["token"] = TestAuthentication._token_expiring_in(7200)
+        await r._refresh_token_cookies()
+
+        assert r._async_post.await_count == 2
+
+    @pytest.mark.asyncio
+    async def test_force_mints_new_session_for_same_token(self):
+        r = self._reader()
+        r._async_post = AsyncMock(return_value=_post_response())
+
+        await r._refresh_token_cookies()
+        await r._refresh_token_cookies(force=True)
+
+        assert r._async_post.await_count == 2
+
+    @pytest.mark.asyncio
+    async def test_failed_check_jwt_does_not_cache(self):
+        r = self._reader()
+        r._async_post = AsyncMock(return_value=_post_response(500))
+
+        assert await r._refresh_token_cookies() is False
+        assert r._cookies_token == ""
+
+
+class TestStreamSessionRecovery:
+    def _reader(self):
+        r = make_reader()
+        r._store_data["token"] = TestAuthentication._token_expiring_in(3600)
+        r.token_type = "owner"
+        return r
+
+    @pytest.mark.asyncio
+    async def test_recover_mints_new_session_without_cloud_fetch(self):
+        r = self._reader()
+        r._async_post = AsyncMock(return_value=_post_response())
+        r._get_enphase_token = AsyncMock()
+
+        await r.recover_stream_session()
+
+        r._async_post.assert_awaited_once()
+        r._get_enphase_token.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_recover_falls_back_to_cloud_when_envoy_refuses(self):
+        r = self._reader()
+        r._async_post = AsyncMock(return_value=_post_response(401))
+        r._get_enphase_token = AsyncMock()
+
+        await r.recover_stream_session()
+
+        r._get_enphase_token.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_recover_swallows_auth_errors(self):
+        r = make_reader()
+        r._store_data["token"] = TestAuthentication._token_expiring_in(3600)
+        r._refresh_token_cookies = AsyncMock(side_effect=EnlightenError("nope"))
+
+        # Must not raise: the stream loop keeps retrying regardless
+        await r.recover_stream_session()
