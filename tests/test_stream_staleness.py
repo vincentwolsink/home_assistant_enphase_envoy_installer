@@ -73,6 +73,10 @@ def _make_reader(**kwargs):
     reader.init_authentication = AsyncMock()
     # Bind the real stream_reader method to the mock instance.
     reader.stream_reader = lambda **kw: EnvoyReader.stream_reader(reader, **kw)
+    # Also bind the SSE line parser, since stream_reader delegates to it.
+    reader._process_stream_line = lambda *a, **kw: EnvoyReader._process_stream_line(
+        reader, *a, **kw
+    )
     for k, v in kwargs.items():
         setattr(reader, k, v)
     return reader
@@ -192,6 +196,101 @@ async def test_stream_normal_data_flow():
     assert callback.called
     assert reader.is_receiving_realtime_data is False
     assert fake_client.closed
+
+
+@pytest.mark.asyncio
+async def test_stream_reassembles_split_chunks():
+    """An event split across multiple TCP chunks must still be processed."""
+    reader = _make_reader()
+    callback = MagicMock()
+
+    chunks = [
+        'data: {"production": {}, "net-consumption"',
+        ': {}, "total-consumption": {}}\n',
+    ]
+    response = _FakeResponse(status_code=200, chunks=chunks)
+    fake_client = _FakeClient(response)
+
+    with (
+        patch.object(envoy_reader_mod.httpx, "Timeout"),
+        patch.object(envoy_reader_mod.httpx, "AsyncClient", return_value=fake_client),
+    ):
+        result = await reader.stream_reader(meter_callback=callback)
+
+    assert result is True
+    assert callback.call_count == 1
+    assert fake_client.closed
+
+
+@pytest.mark.asyncio
+async def test_stream_handles_multiple_events_in_one_chunk():
+    """Several events coalesced into one chunk must each be processed."""
+    reader = _make_reader()
+    callback = MagicMock()
+
+    event = '{"production": {}, "net-consumption": {}, "total-consumption": {}}'
+    chunks = [f"data: {event}\ndata: {event}\n"]
+    response = _FakeResponse(status_code=200, chunks=chunks)
+    fake_client = _FakeClient(response)
+
+    with (
+        patch.object(envoy_reader_mod.httpx, "Timeout"),
+        patch.object(envoy_reader_mod.httpx, "AsyncClient", return_value=fake_client),
+    ):
+        result = await reader.stream_reader(meter_callback=callback)
+
+    assert result is True
+    assert callback.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_transport_error_logged_as_warning_without_traceback(caplog):
+    """Routine disconnects (Envoy closed the connection) log a warning only."""
+    caplog.set_level(logging.DEBUG)
+    reader = _make_reader()
+
+    class _DroppedResponse(_FakeResponse):
+        async def aiter_text(self):
+            yield 'data: {"production": {}, "net-consumption": {}, "total-consumption": {}}\n'
+            raise httpx.RemoteProtocolError("peer closed connection without sending")
+
+    response = _DroppedResponse(status_code=200)
+    fake_client = _FakeClient(response)
+
+    with (
+        patch.object(envoy_reader_mod.httpx, "Timeout"),
+        patch.object(envoy_reader_mod.httpx, "AsyncClient", return_value=fake_client),
+    ):
+        result = await reader.stream_reader(meter_callback=MagicMock())
+
+    # Returns None so __init__.py reconnects after 30s
+    assert result is None
+    warnings = [r for r in caplog.records if r.levelname == "WARNING"]
+    assert any("Realtime data connection lost" in r.message for r in warnings)
+    assert "Unexpected realtime data error" not in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_unexpected_error_still_logs_traceback(caplog):
+    """Non-transport bugs still get full exception logging."""
+    caplog.set_level(logging.DEBUG)
+    reader = _make_reader()
+
+    class _BrokenResponse(_FakeResponse):
+        async def aiter_text(self):
+            raise ValueError("bug in processing")
+
+    response = _BrokenResponse(status_code=200)
+    fake_client = _FakeClient(response)
+
+    with (
+        patch.object(envoy_reader_mod.httpx, "Timeout"),
+        patch.object(envoy_reader_mod.httpx, "AsyncClient", return_value=fake_client),
+    ):
+        result = await reader.stream_reader(meter_callback=MagicMock())
+
+    assert result is None
+    assert "Unexpected realtime data error" in caplog.text
 
 
 @pytest.mark.asyncio
