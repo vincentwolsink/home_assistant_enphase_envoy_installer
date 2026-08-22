@@ -195,10 +195,33 @@ async def test_stream_normal_data_flow():
 
 
 @pytest.mark.asyncio
-async def test_stream_401_stops_reconnection():
-    """Stream returns False on 401 to stop reconnection attempts."""
+async def test_stream_401_reauths_and_retries():
+    """Stream re-authenticates and returns True on 401 to keep reconnecting.
+
+    A rejected session is recoverable, so realtime updates must not be
+    permanently stopped by it.
+    """
     reader = _make_reader()
+    reader.recover_stream_session = AsyncMock()
     response = _FakeResponse(status_code=401)
+    fake_client = _FakeClient(response)
+
+    with (
+        patch.object(envoy_reader_mod.httpx, "Timeout"),
+        patch.object(envoy_reader_mod.httpx, "AsyncClient", return_value=fake_client),
+    ):
+        result = await reader.stream_reader()
+
+    assert result is True
+    reader.recover_stream_session.assert_awaited_once()
+    assert fake_client.closed
+
+
+@pytest.mark.asyncio
+async def test_stream_404_stops_reconnection():
+    """Stream returns False on 404: endpoint missing, stop reconnection."""
+    reader = _make_reader()
+    response = _FakeResponse(status_code=404)
     fake_client = _FakeClient(response)
 
     with (

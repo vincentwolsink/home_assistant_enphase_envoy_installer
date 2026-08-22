@@ -761,6 +761,9 @@ class EnvoyReader:
         self._async_client = async_client
         self._authorization_header = None
         self._cookies = None
+        # Token the current session cookies were minted for; used to avoid
+        # re-minting a session on every poll cycle.
+        self._cookies_token = ""
         self.enlighten_user = enlighten_user
         self.enlighten_pass = enlighten_pass
         self.commissioned = commissioned
@@ -880,9 +883,10 @@ class EnvoyReader:
                         # never refresh token/cookies concurrently.
                         async with self._auth_lock:
                             # Only on the first 401 response, we refresh token cookies,
-                            # otherwise we just fetch a new enphase token
+                            # otherwise we just fetch a new enphase token.
+                            # Force a new session: the current one was rejected.
                             could_refresh_cookies = (
-                                await self._refresh_token_cookies()
+                                await self._refresh_token_cookies(force=True)
                                 if received_401 == 0
                                 else False
                             )
@@ -1040,11 +1044,22 @@ class EnvoyReader:
 
         await self._refresh_token_cookies()
 
-    async def _refresh_token_cookies(self):
+    async def _refresh_token_cookies(self, force=False):
         """
         Refresh the client's cookie with the token (if valid)
+
+        :param force: mint a new session even if cookies exist for this
+            token (used when a request was rejected with 401)
         :returns True if cookie refreshed, False if it couldn't be
         """
+        if not force and self._cookies_token == self._token:
+            # Cookies were already minted for this exact token. Minting a new
+            # Envoy session on every poll cycle is wasteful and can invalidate
+            # other active sessions (e.g. the realtime stream) on firmwares
+            # that limit concurrent sessions per user.
+            _LOGGER.debug("Session cookies already present for this token")
+            return True
+
         # Create HTTP Header
         self._authorization_header = {"Authorization": "Bearer " + self._token}
 
@@ -1056,6 +1071,7 @@ class EnvoyReader:
         if token_validation.status_code == 200:
             # set the cookies for future clients
             self._cookies = token_validation.cookies
+            self._cookies_token = self._token
 
             # search for all cookies with session in the name (sessionId, session_id, etc)
             session_cookies = [k for k in self._cookies if "session" in k.lower()]
@@ -1102,6 +1118,23 @@ class EnvoyReader:
             self._token, options={"verify_signature": False}, algorithms="ES256"
         )
         return decode["exp"] - self.token_refresh_buffer_seconds - time.time()
+
+    async def recover_stream_session(self):
+        """Re-authenticate after the realtime stream was rejected (HTTP 401).
+
+        Forces a fresh Envoy session; falls back to a full cloud token fetch
+        when the current token itself is refused by the Envoy. Never raises:
+        the stream loop will simply retry and report again if it keeps
+        failing.
+        """
+        async with self._auth_lock:
+            # Intentionally broad: a background recovery path must not take
+            # down the stream loop with an unexpected error.
+            try:
+                if not await self._refresh_token_cookies(force=True):
+                    await self._get_enphase_token()
+            except Exception as e:  # noqa: BLE001
+                _LOGGER.error("Stream re-authentication failed: %s", e)
 
     async def init_authentication(self):
         # Serialize authentication: the realtime stream task, the update
@@ -1189,15 +1222,24 @@ class EnvoyReader:
                 headers=self._authorization_header,
                 cookies=self._cookies,
             ) as response:
-                if response.status_code in (401, 404):
+                if response.status_code == 404:
                     await response.aread()
                     _LOGGER.warning(
-                        "Could not load the stream, HTTP %s: %s",
-                        response.status_code,
+                        "Could not load the stream, HTTP 404: %s",
                         response.text,
                     )
-                    # No access, lets stop reconnection.
+                    # Endpoint does not exist on this Envoy: stop reconnection.
                     return False
+
+                if response.status_code == 401:
+                    await response.aread()
+                    _LOGGER.warning(
+                        "The Envoy rejected the realtime stream session "
+                        "(HTTP 401); re-authenticating and reconnecting"
+                    )
+                    await self.recover_stream_session()
+                    # Session was rejected, not the stream itself: retry.
+                    return True
 
                 if response.status_code != 200:
                     await response.aread()
