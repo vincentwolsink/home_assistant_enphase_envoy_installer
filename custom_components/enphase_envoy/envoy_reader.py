@@ -1188,6 +1188,28 @@ class EnvoyReader:
                 delay = TOKEN_REFRESH_RETRY_SECONDS
             await asyncio.sleep(delay)
 
+    def _process_stream_line(self, line, meter_callback):
+        """Parse one SSE line from /stream/meter and dispatch the reading."""
+        line = line.rstrip("\r")
+        if not line.startswith("data:"):
+            return
+
+        payload = line[5:].strip()
+        try:
+            reading = json.loads(payload)
+        except JSONDecodeError:
+            _LOGGER.debug("Unable to decode json line: %s", payload)
+            return
+
+        if meter_callback:
+            try:
+                meter_callback(StreamData(reading))
+            except Exception:
+                _LOGGER.exception("Unable to execute callback")
+                raise
+        else:
+            print(StreamData(reading))
+
     async def stream_reader(self, meter_callback=None):
         # First, login, etc, make sure we have a token.
         await self.init_authentication()
@@ -1253,24 +1275,18 @@ class EnvoyReader:
                 self.is_receiving_realtime_data = True
                 _LOGGER.info("Connected to /stream/meter, receiving realtime data")
 
+                buffer = ""
                 async for chunk in response.aiter_text():
-                    if not chunk.startswith("data:"):
-                        continue
-
-                    try:
-                        reading = json.loads(chunk[6:])
-                    except JSONDecodeError:
-                        _LOGGER.debug("Unable to decode json chunk: %s", chunk[6:])
-                        continue
-
-                    if meter_callback:
-                        try:
-                            meter_callback(StreamData(reading))
-                        except Exception:
-                            _LOGGER.exception("Unable to execute callback")
-                            raise
-                    else:
-                        print(StreamData(reading))
+                    # TCP chunks are not line-aligned: a single event can be
+                    # split across chunks, or several events can arrive in
+                    # one chunk. Buffer and split on newlines instead of
+                    # requiring every chunk to start with "data:".
+                    buffer += chunk
+                    while "\n" in buffer:
+                        line, buffer = buffer.split("\n", 1)
+                        self._process_stream_line(line, meter_callback)
+                # Flush any trailing event without a final newline
+                self._process_stream_line(buffer, meter_callback)
 
             return True
         except httpx.ReadTimeout:
@@ -1278,8 +1294,12 @@ class EnvoyReader:
                 "Stream read timeout — no data received for %.0fs, reconnecting",
                 stream_timeout.read,
             )
+        except httpx.HTTPError as e:
+            # Routine disconnects (Envoy reboot, network blip); recovered by
+            # the reconnect loop in __init__.py, so no traceback needed.
+            _LOGGER.warning("Realtime data connection lost (%s), reconnecting", e)
         except Exception:
-            _LOGGER.exception("Realtime data error")
+            _LOGGER.exception("Unexpected realtime data error")
         finally:
             _LOGGER.debug("Stopped reading realtime data")
             self.is_receiving_realtime_data = False
