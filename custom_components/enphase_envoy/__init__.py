@@ -47,7 +47,7 @@ from .const import (
     STORAGE_KEY,
     STORAGE_VERSION,
 )
-from .envoy_reader import EnvoyReader, StreamData
+from .envoy_reader import EnlightenError, EnvoyReader, StreamData
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -91,6 +91,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
     await envoy_reader._sync_store(load=True)
 
+    # Keep the Enphase token fresh in the background, so a slow or failing
+    # cloud refresh never blocks or fails the data polling cycle.
+    token_refresh_task = asyncio.create_task(envoy_reader.run_token_refresh_loop())
+
     async def async_update_data():
         """Fetch data from API endpoint."""
         data = {}
@@ -101,7 +105,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 await envoy_reader.get_data()
             except httpx.HTTPStatusError as err:
                 raise ConfigEntryAuthFailed from err
-            except httpx.HTTPError as err:
+            except (httpx.HTTPError, EnlightenError) as err:
                 raise UpdateFailed(f"Error communicating with API: {err}") from err
 
             # The envoy_reader.all_values will adjust production values, based on option key
@@ -280,6 +284,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         hass.data[DOMAIN][entry.entry_id]["realtime_loop"] = False
 
+        if token_refresh_task and not token_refresh_task.done():
+            _LOGGER.debug("Stopping token refresh loop")
+            await _cancel_realtime_task(token_refresh_task)
+            hass.data[DOMAIN][entry.entry_id]["token_refresh_loop"] = False
+
     # Make sure task is cancelled on shutdown (or tests complete)
     entry.async_on_unload(
         hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _async_stop)
@@ -287,6 +296,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Save the task to be able to cancel it when unloading
     hass.data[DOMAIN][entry.entry_id]["realtime_loop"] = task
+    hass.data[DOMAIN][entry.entry_id]["token_refresh_loop"] = token_refresh_task
     return True
 
 
@@ -314,6 +324,12 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await _cancel_realtime_task(task)
 
         hass.data[DOMAIN][entry.entry_id]["realtime_loop"] = False
+
+    if task := hass.data[DOMAIN][entry.entry_id].get("token_refresh_loop"):
+        _LOGGER.debug("Stopping token refresh loop")
+        await _cancel_realtime_task(task)
+
+        hass.data[DOMAIN][entry.entry_id]["token_refresh_loop"] = False
 
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:

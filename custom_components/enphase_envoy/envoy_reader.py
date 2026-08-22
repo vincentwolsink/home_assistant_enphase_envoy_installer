@@ -39,6 +39,9 @@ ENDPOINT_URL_CHECK_JWT = "https://{}/auth/check_jwt"
 # report unavailable instead of serving stale data indefinitely).
 MAX_ENDPOINT_FAILURES = 3
 
+# Retry interval for the background token refresh loop when a refresh fails.
+TOKEN_REFRESH_RETRY_SECONDS = 60
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -1069,7 +1072,7 @@ class EnvoyReader:
         # token not valid if we get here
         return False
 
-    def _is_enphase_token_expired(self, token):
+    def _is_enphase_token_expired(self, token, use_buffer=True):
         try:
             decode = jwt.decode(
                 token, options={"verify_signature": False}, algorithms="ES256"
@@ -1083,7 +1086,8 @@ class EnvoyReader:
 
         exp_epoch = decode["exp"]
         # allow a buffer so we can try and grab it sooner
-        exp_epoch -= self.token_refresh_buffer_seconds
+        if use_buffer:
+            exp_epoch -= self.token_refresh_buffer_seconds
         exp_time = datetime.datetime.fromtimestamp(exp_epoch, tz=datetime.timezone.utc)
         if datetime.datetime.now(tz=datetime.timezone.utc) < exp_time:
             _LOGGER.debug("Token expires at: %s", exp_time)
@@ -1092,10 +1096,17 @@ class EnvoyReader:
             _LOGGER.debug("Token expired on: %s", exp_time)
             return True
 
+    def _seconds_until_token_refresh(self):
+        """Seconds until the token crosses its proactive refresh threshold."""
+        decode = jwt.decode(
+            self._token, options={"verify_signature": False}, algorithms="ES256"
+        )
+        return decode["exp"] - self.token_refresh_buffer_seconds - time.time()
+
     async def init_authentication(self):
-        # Serialize authentication: the realtime stream task and the update
-        # coordinator share this reader and must never refresh the token or
-        # cookies concurrently.
+        # Serialize authentication: the realtime stream task, the update
+        # coordinator and the background token refresh loop share this
+        # reader and must never refresh the token or cookies concurrently.
         async with self._auth_lock:
             _LOGGER.debug("Checking Token value: %s", self._token)
             # Check if a token has already been retrieved
@@ -1104,11 +1115,45 @@ class EnvoyReader:
                 await self._get_enphase_token()
             else:
                 _LOGGER.debug("Token is populated: %s", self._token)
-                if self._is_enphase_token_expired(self._token):
+                if self._is_enphase_token_expired(self._token, use_buffer=False):
                     _LOGGER.debug("Found Expired token - Retrieving new token")
                     await self._get_enphase_token()
                 else:
+                    # Token is still valid (the background refresh loop keeps
+                    # it fresh); just refresh the session cookies.
                     await self._refresh_token_cookies()
+
+    async def _token_refresh_step(self):
+        """One iteration of the proactive refresh loop.
+
+        Returns the number of seconds to wait before checking again.
+        """
+        async with self._auth_lock:
+            if not self._token or self._is_enphase_token_expired(self._token):
+                await self._get_enphase_token()
+            return max(self._seconds_until_token_refresh(), 1)
+
+    async def run_token_refresh_loop(self):
+        """Keep the Enphase token fresh, independent of the data polling.
+
+        Runs as a background task: when a refresh fails, data polling
+        continues on the current cookies and the refresh is retried.
+        """
+        while True:
+            try:
+                delay = await self._token_refresh_step()
+            except asyncio.CancelledError:
+                raise
+            # Intentionally broad: this background loop must survive any
+            # error and keep retrying; polling continues meanwhile.
+            except Exception as e:  # noqa: BLE001
+                _LOGGER.warning(
+                    "Proactive token refresh failed (%s), retrying in %s seconds",
+                    e,
+                    TOKEN_REFRESH_RETRY_SECONDS,
+                )
+                delay = TOKEN_REFRESH_RETRY_SECONDS
+            await asyncio.sleep(delay)
 
     async def stream_reader(self, meter_callback=None):
         # First, login, etc, make sure we have a token.

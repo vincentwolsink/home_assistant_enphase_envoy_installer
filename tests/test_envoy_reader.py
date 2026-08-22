@@ -5,6 +5,7 @@ dependency tree (same pattern as test_stream_staleness.py).
 """
 
 import asyncio
+import contextlib
 import importlib
 import json
 import logging
@@ -12,7 +13,7 @@ import os
 import sys
 import time
 from types import ModuleType
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import httpx
 import jwt
@@ -59,6 +60,7 @@ merge_metersdata = envoy_reader_mod.merge_metersdata
 FileData = envoy_reader_mod.FileData
 ENVOY_MODEL_M = envoy_reader_mod.ENVOY_MODEL_M
 ENVOY_MODEL_S = envoy_reader_mod.ENVOY_MODEL_S
+EnlightenError = envoy_reader_mod.EnlightenError
 
 ENDPOINTS = {}
 for fname in os.listdir(TEST_DATA_DIR):
@@ -968,3 +970,121 @@ class TestAuthentication:
         await asyncio.gather(*(r.init_authentication() for _ in range(3)))
 
         assert peak == 1
+
+
+# ===========================================================================
+# Background token refresh loop (decoupled from data polling)
+# ===========================================================================
+
+
+class TestTokenRefreshLoop:
+    @pytest.mark.asyncio
+    async def test_expiry_check_ignores_buffer_when_disabled(self):
+        r = EnvoyReader("192.168.1.1", token_refresh_buffer_seconds=600)
+        token = TestAuthentication._token_expiring_in(300)
+
+        # Within the buffer: expired for the refresh loop, but still valid
+        # for a polling cycle, so it must not force an inline cloud refresh.
+        assert r._is_enphase_token_expired(token) is True
+        assert r._is_enphase_token_expired(token, use_buffer=False) is False
+
+    @pytest.mark.asyncio
+    async def test_init_authentication_does_not_refresh_within_buffer(self):
+        r = make_reader()
+        r.token_type = "owner"
+        r._store_data["token"] = TestAuthentication._token_expiring_in(300)
+        r.token_refresh_buffer_seconds = 600
+        r._get_enphase_token = AsyncMock()
+        r._refresh_token_cookies = AsyncMock(return_value=True)
+
+        await r.init_authentication()
+
+        r._get_enphase_token.assert_not_awaited()
+        r._refresh_token_cookies.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_init_authentication_fetches_truly_expired_token(self):
+        r = make_reader()
+        r.token_type = "owner"
+        r._store_data["token"] = TestAuthentication._token_expiring_in(-10)
+        r._get_enphase_token = AsyncMock()
+        r._refresh_token_cookies = AsyncMock(return_value=True)
+
+        await r.init_authentication()
+
+        r._get_enphase_token.assert_awaited_once()
+
+    def test_seconds_until_token_refresh(self):
+        r = EnvoyReader("192.168.1.1")
+        r._store_data["token"] = TestAuthentication._token_expiring_in(3600)
+        remaining = r._seconds_until_token_refresh()
+        assert 3500 < remaining <= 3600
+
+        r_buffered = EnvoyReader("192.168.1.1", token_refresh_buffer_seconds=600)
+        r_buffered._store_data["token"] = TestAuthentication._token_expiring_in(3600)
+        remaining = r_buffered._seconds_until_token_refresh()
+        assert 2900 < remaining <= 3000
+
+    @pytest.mark.asyncio
+    async def test_step_sleeps_until_due_without_fetching(self):
+        r = make_reader()
+        r._store_data["token"] = TestAuthentication._token_expiring_in(7200)
+        r._get_enphase_token = AsyncMock()
+
+        delay = await r._token_refresh_step()
+
+        r._get_enphase_token.assert_not_awaited()
+        assert 7000 < delay <= 7200
+
+    @pytest.mark.asyncio
+    async def test_step_fetches_when_expired(self):
+        r = make_reader()
+        r._store_data["token"] = TestAuthentication._token_expiring_in(-10)
+        r._get_enphase_token = AsyncMock()
+        r._seconds_until_token_refresh = lambda: 0
+
+        await r._token_refresh_step()
+
+        r._get_enphase_token.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_step_propagates_refresh_errors(self):
+        r = make_reader()
+        r._store_data["token"] = TestAuthentication._token_expiring_in(-10)
+        r._get_enphase_token = AsyncMock(side_effect=EnlightenError("cloud down"))
+
+        with pytest.raises(EnlightenError):
+            await r._token_refresh_step()
+
+    @pytest.mark.asyncio
+    async def test_loop_idles_without_fetching_when_token_fresh(self, monkeypatch):
+        monkeypatch.setattr(envoy_reader_mod, "TOKEN_REFRESH_RETRY_SECONDS", 0)
+        r = make_reader()
+        r._store_data["token"] = TestAuthentication._token_expiring_in(7200)
+        r._get_enphase_token = AsyncMock()
+        r._seconds_until_token_refresh = lambda: 0.02
+
+        task = asyncio.create_task(r.run_token_refresh_loop())
+        await asyncio.sleep(0.1)
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
+
+        r._get_enphase_token.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_loop_retries_after_failed_refresh(self, monkeypatch, caplog):
+        caplog.set_level(logging.WARNING)
+        monkeypatch.setattr(envoy_reader_mod, "TOKEN_REFRESH_RETRY_SECONDS", 0)
+        r = make_reader()
+        r._store_data["token"] = TestAuthentication._token_expiring_in(-10)
+        r._get_enphase_token = AsyncMock(side_effect=EnlightenError("cloud down"))
+
+        task = asyncio.create_task(r.run_token_refresh_loop())
+        await asyncio.sleep(0.05)
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
+
+        assert r._get_enphase_token.await_count >= 2
+        assert "Proactive token refresh failed" in caplog.text
