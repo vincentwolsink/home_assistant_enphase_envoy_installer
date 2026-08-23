@@ -374,14 +374,20 @@ class EnvoyData:
         # Loop through all local attributes, and return unique first required jsonpath attribute.
         for attr in dir(self):
             if attr.endswith("_value") and isinstance(
-                (path := getattr(self, attr)), (str)
+                (path := getattr(self, attr)), (str, list, tuple)
             ):
-                if self.initial_update_finished and self._resolve_path(path) is None:
-                    # Check if the path resolves; if the resolved path is None,
-                    # we skip this path for the endpoints
+                paths = path if isinstance(path, (list, tuple)) else [path]
+                if self.initial_update_finished and all(
+                    self._resolve_path(p) is None for p in paths
+                ):
+                    # Check if the paths resolve; if none of them resolve to
+                    # a value, we skip this attribute for the endpoints
                     continue
 
-                endpoints.append(path.split(".", 1)[0])
+                # Register the endpoint of every candidate, so fallback
+                # sources are fetched too.
+                for p in paths:
+                    endpoints.append(p.split(".", 1)[0])
                 continue  # discovered, so continue
 
             if attr in self._envoy_properties and isinstance(
@@ -449,8 +455,16 @@ class EnvoyData:
     def get(self, name):
         result = None
         if (attr := f"{name}_value") in dir(self):
-            path = getattr(self, attr)
-            result = self._resolve_path(path)
+            paths = getattr(self, attr)
+            if isinstance(paths, (list, tuple)):
+                # Ordered fallback candidates: first path that resolves
+                # to a value wins (e.g. CT metering, else inverters).
+                for path in paths:
+                    result = self._resolve_path(path)
+                    if result is not None:
+                        break
+            else:
+                result = self._resolve_path(paths)
         elif name in self._envoy_properties:
             result = getattr(self, name)
         else:
@@ -677,6 +691,20 @@ class EnvoyMeteredWithCT(EnvoyMetered):
                 full_path = f"{ct_path}.lines[{i}]{path}"
                 setattr(cls, f"{attr}_{phase}_value", full_path)
 
+        # Fall back to non-CT (inverter based) sources when the CT values
+        # are unavailable, e.g. when the production CT stopped reporting
+        # or was removed after detection. Note: the inverter lifetime
+        # fallback is the raw value (no lifetime_production_correction).
+        for attr, fallback_path in {
+            "production": "endpoint_production_json.production[?(@.type=='inverters')].wNow",
+            "lifetime_production": "endpoint_production_json.production[?(@.type=='inverters')].whLifetime",
+        }.items():
+            setattr(
+                cls,
+                f"{attr}_value",
+                [getattr(cls, f"{attr}_value"), fallback_path],
+            )
+
         for i, phase in enumerate(["l1", "l2", "l3"]):
             setattr(
                 cls,
@@ -705,9 +733,10 @@ class EnvoyMeteredWithCT(EnvoyMetered):
     def meters_readings(self):
         return self._resolve_path("endpoint_meters_readings")
 
-    daily_production_value = (
-        "endpoint_production_json.production[?(@.type=='eim')].whToday"
-    )
+    daily_production_value: ClassVar[list] = [
+        "endpoint_production_json.production[?(@.type=='eim')].whToday",
+        "endpoint_pdm_energy.production.pcu.wattHoursToday",
+    ]
     lifetime_net_production_value = "endpoint_meters_readings.[?(@.measurementType == 'net-consumption' and @.state == 'enabled')].actEnergyRcvd"
 
     lifetime_batteries_charged_value = "endpoint_meters_readings.[?(@.measurementType == 'storage' and @.state == 'enabled')].actEnergyRcvd"
@@ -793,6 +822,10 @@ class EnvoyReader:
         self.disable_installer_account_use = False
 
         self.is_receiving_realtime_data = False
+
+        # Per-CT-type detection, set by detect_model() from /ivp/meters.
+        self.production_ct_enabled = False
+        self.consumption_ct_enabled = False
 
         self._store = store
         self._store_data = {}
@@ -1435,7 +1468,8 @@ class EnvoyReader:
 
     @property
     def is_metering_enabled(self):
-        return isinstance(self.data, EnvoyMeteredWithCT)
+        """Realtime metering is available when any CT type is installed."""
+        return self.production_ct_enabled or self.consumption_ct_enabled
 
     async def detect_model(self):
         """Method to determine if the Envoy supports consumption values or only production."""
@@ -1450,10 +1484,29 @@ class EnvoyReader:
         ):
             self.endpoint_type = ENVOY_MODEL_M
 
-            # It is a metered Envoy, check meters if CTs are enabled
-            if self.data._resolve_path(
-                "endpoint_meters.[?(@.measurementType == 'production' and @.state == 'enabled')]"
-            ):
+            # It is a metered Envoy; detect each CT type separately, so CT
+            # endpoints and realtime metering are only used for the types
+            # that are actually installed.
+            meters = self.data._resolve_path("endpoint_meters", default=[])
+            if not isinstance(meters, list):
+                meters = [meters]
+
+            def _enabled(measurement_types):
+                return any(
+                    m.get("state") == "enabled"
+                    and m.get("measurementType") in measurement_types
+                    for m in meters
+                    if isinstance(m, dict)
+                )
+
+            self.production_ct_enabled = _enabled({"production"})
+            # Installing a consumption CT provides both total-consumption
+            # and net-consumption meters.
+            self.consumption_ct_enabled = _enabled(
+                {"total-consumption", "net-consumption"}
+            )
+
+            if self.production_ct_enabled:
                 self.data = EnvoyMeteredWithCT(self)
             else:
                 self.data = EnvoyMetered(self)
