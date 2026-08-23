@@ -214,34 +214,58 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         total_consumption = 0
         total_net_consumption = 0
 
+        # Only use the meter sections for CT types that are actually
+        # installed; the Envoy omits the other sections from /stream/meter.
+        production_phases = (
+            streamdata.production if envoy_reader.production_ct_enabled else {}
+        )
+        consumption_phases = (
+            streamdata.consumption if envoy_reader.consumption_ct_enabled else {}
+        )
+        net_phases = (
+            streamdata.net_consumption if envoy_reader.consumption_ct_enabled else {}
+        )
+        # Phase electrical values (voltage, frequency, ...) come from the
+        # production meter when present, otherwise from the consumption meter.
+        electrical_source = production_phases or consumption_phases
+
         for phase in ["l1", "l2", "l3"]:
-            production_watts = envoy_reader.process_production_value(
-                streamdata.production[phase].watts
-            )
-            consumption_watts = streamdata.consumption[phase].watts
-            net_consumption_watts = streamdata.net_consumption[phase].watts
+            if phase in production_phases:
+                production_watts = envoy_reader.process_production_value(
+                    production_phases[phase].watts
+                )
+                total_production += production_watts
+                new_data["production_" + phase] = production_watts
 
-            total_production += production_watts
-            total_consumption += consumption_watts
-            total_net_consumption += net_consumption_watts
+            if phase in consumption_phases:
+                consumption_watts = consumption_phases[phase].watts
+                total_consumption += consumption_watts
+                new_data["consumption_" + phase] = consumption_watts
 
-            new_data.update(
-                {
-                    "production_" + phase: production_watts,
-                    "voltage_" + phase: streamdata.production[phase].volt,
-                    "ampere_" + phase: streamdata.production[phase].amps,
-                    "apparent_power_" + phase: streamdata.production[phase].volt_ampere,
-                    "power_factor" + phase: streamdata.production[phase].pf,
-                    "reactive_power_" + phase: streamdata.production[phase].var,
-                    "frequency_" + phase: streamdata.production[phase].hz,
-                    "consumption_" + phase: consumption_watts,
-                    "net_consumption_" + phase: net_consumption_watts,
-                }
-            )
+            if phase in net_phases:
+                net_consumption_watts = net_phases[phase].watts
+                total_net_consumption += net_consumption_watts
+                new_data["net_consumption_" + phase] = net_consumption_watts
 
-        new_data["production"] = total_production
-        new_data["consumption"] = total_consumption
-        new_data["net_consumption"] = total_net_consumption
+            if phase in electrical_source:
+                phase_data = electrical_source[phase]
+                new_data.update(
+                    {
+                        "voltage_" + phase: phase_data.volt,
+                        "ampere_" + phase: phase_data.amps,
+                        "apparent_power_" + phase: phase_data.volt_ampere,
+                        "power_factor" + phase: phase_data.pf,
+                        "reactive_power_" + phase: phase_data.var,
+                        "frequency_" + phase: phase_data.hz,
+                    }
+                )
+
+        if production_phases:
+            new_data["production"] = total_production
+        if consumption_phases:
+            new_data["consumption"] = total_consumption
+        if net_phases:
+            new_data["net_consumption"] = total_net_consumption
 
         for key, value in new_data.items():
             if live_entities.get(key, False) and coordinator.data.get(key) != value:

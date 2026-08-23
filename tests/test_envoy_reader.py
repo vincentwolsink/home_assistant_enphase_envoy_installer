@@ -54,6 +54,7 @@ EnvoyData = envoy_reader_mod.EnvoyData
 EnvoyStandard = envoy_reader_mod.EnvoyStandard
 EnvoyMetered = envoy_reader_mod.EnvoyMetered
 EnvoyMeteredWithCT = envoy_reader_mod.EnvoyMeteredWithCT
+StreamData = envoy_reader_mod.StreamData
 parse_devstatus = envoy_reader_mod.parse_devstatus
 parse_devicedata = envoy_reader_mod.parse_devicedata
 merge_metersdata = envoy_reader_mod.merge_metersdata
@@ -1188,3 +1189,166 @@ class TestStreamSessionRecovery:
 
         # Must not raise: the stream loop keeps retrying regardless
         await r.recover_stream_session()
+
+
+# ===========================================================================
+# Per-CT-type detection (production vs consumption)
+# ===========================================================================
+
+
+class TestCtDetection:
+    @staticmethod
+    def _reader_with_meters(meters):
+        r = make_reader()
+        r.data = EnvoyMetered(r)
+        r.data.data = {
+            "endpoint_info": {"envoy_info": {"device": {"imeter": "true"}}},
+            "endpoint_meters": meters,
+        }
+        r.endpoint_info = MagicMock(status_code=200)
+        r.endpoint_meters = MagicMock(status_code=200)
+        r.update_endpoints = AsyncMock()
+        return r
+
+    @pytest.mark.asyncio
+    async def test_production_ct_only(self):
+        r = self._reader_with_meters(
+            [{"measurementType": "production", "state": "enabled"}]
+        )
+
+        await r.detect_model()
+
+        assert isinstance(r.data, EnvoyMeteredWithCT)
+        assert r.production_ct_enabled is True
+        assert r.consumption_ct_enabled is False
+        assert r.is_metering_enabled is True
+
+    @pytest.mark.asyncio
+    async def test_consumption_ct_only_gets_realtime(self):
+        for mtype in ("total-consumption", "net-consumption"):
+            r = self._reader_with_meters(
+                [{"measurementType": mtype, "state": "enabled"}]
+            )
+            await r.detect_model()
+
+            # No production CT: keep inverter-based production class...
+            assert isinstance(r.data, EnvoyMetered)
+            assert r.production_ct_enabled is False
+            # ...but the consumption CT must enable realtime metering
+            assert r.consumption_ct_enabled is True
+            assert r.is_metering_enabled is True
+
+    @pytest.mark.asyncio
+    async def test_both_cts(self):
+        r = self._reader_with_meters(
+            [
+                {"measurementType": "production", "state": "enabled"},
+                {"measurementType": "net-consumption", "state": "enabled"},
+            ]
+        )
+
+        await r.detect_model()
+
+        assert isinstance(r.data, EnvoyMeteredWithCT)
+        assert r.production_ct_enabled is True
+        assert r.consumption_ct_enabled is True
+
+    @pytest.mark.asyncio
+    async def test_no_cts_no_realtime(self):
+        r = self._reader_with_meters(
+            [{"measurementType": "production", "state": "disabled"}]
+        )
+
+        await r.detect_model()
+
+        assert isinstance(r.data, EnvoyMetered)
+        assert r.production_ct_enabled is False
+        assert r.consumption_ct_enabled is False
+        assert r.is_metering_enabled is False
+
+    def test_streamdata_with_only_production_sections(self):
+        phase = {"p": 100, "i": 1, "s": 110, "v": 230, "pf": 0.9, "f": 50, "q": 10}
+        sd = StreamData({"production": {"ph-a": phase}})
+
+        assert set(sd.production) == {"l1"}
+        assert sd.consumption == {}
+        assert sd.net_consumption == {}
+
+
+# ===========================================================================
+# CT value fallback to non-CT (inverter) sources in EnvoyMeteredWithCT
+# ===========================================================================
+
+
+class TestCtFallbackPaths:
+    @staticmethod
+    def _withct_reader():
+        r = make_reader()
+        r.data = EnvoyMeteredWithCT(r)
+        return r
+
+    def test_production_prefers_ct_report(self):
+        r = self._withct_reader()
+        r.data.data = {
+            "endpoint_production_report": {"cumulative": {"currW": 1234}},
+            "endpoint_production_json": {
+                "production": [{"type": "inverters", "wNow": 999}]
+            },
+        }
+
+        assert r.data.get("production") == 1234
+
+    def test_production_falls_back_to_inverters(self):
+        r = self._withct_reader()
+        r.data.data = {
+            "endpoint_production_json": {
+                "production": [{"type": "inverters", "wNow": 999}]
+            },
+        }
+
+        assert r.data.get("production") == 999
+
+    def test_lifetime_production_falls_back_to_inverters(self):
+        r = self._withct_reader()
+        r.data.data = {
+            "endpoint_production_json": {
+                "production": [{"type": "inverters", "whLifetime": 5_000_000}]
+            },
+        }
+
+        assert r.data.get("lifetime_production") == 5_000_000
+
+    def test_daily_production_falls_back_to_pdm(self):
+        r = self._withct_reader()
+        r.data.data = {
+            "endpoint_pdm_energy": {"production": {"pcu": {"wattHoursToday": 8_000}}},
+        }
+
+        assert r.data.get("daily_production") == 8_000
+
+    def test_required_endpoints_include_fallback_sources(self):
+        r = make_reader()
+        r.device_data_endpoint = "endpoint_device_data"
+        r.data = EnvoyMeteredWithCT(r)
+        r.required_endpoints = envoy_reader_mod.EnvoyData.required_endpoints.__get__(
+            r.data
+        )
+
+        endpoints = r.data.required_endpoints
+
+        # Both the CT source and its fallback must be fetched
+        assert "endpoint_production_report" in endpoints
+        assert "endpoint_production_json" in endpoints
+        assert "endpoint_pdm_energy" in endpoints
+
+    def test_unresolved_attr_pruned_only_when_all_candidates_fail(self):
+        r = make_reader()
+        r.device_data_endpoint = "endpoint_device_data"
+        r.data = EnvoyMeteredWithCT(r)
+        r.data.initial_update_finished = True
+        r.data.data = {}  # nothing resolves
+
+        endpoints = r.data.required_endpoints
+
+        assert "endpoint_production_report" not in endpoints
+        assert "endpoint_production_json" not in endpoints
