@@ -68,6 +68,7 @@ PRODUCT_ID_MAPPING = {
     "800-01359": {"name": "IQ8+ Microinverter", "sku": "IQ8PLUS-72-M-INT"},
     "800-01361": {"name": "IQ8M Microinverter", "sku": "IQ8M-72-M-INT"},
     "800-01391": {"name": "IQ8HC Microinverter", "sku": "IQ8HC-72-M-INT"},
+    "800-01395": {"name": "IQ8AC Microinverter", "sku": "IQ8AC-72-M-INT"},
     "800-01396": {"name": "IQ8MC Microinverter", "sku": "IQ8MC-72-M-INT"},
     "800-01736": {"name": "IQ7+ Microinverter", "sku": "IQ7PLUS-72-M-INT"},
     "800-00631": {"name": "IQ7+ Microinverter", "sku": "IQ7PLUS-72-2-INT"},
