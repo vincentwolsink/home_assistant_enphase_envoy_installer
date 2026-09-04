@@ -41,6 +41,26 @@ _LOGGER = logging.getLogger(__name__)
 
 ENVOY = "Envoy"
 ADVANCED_OPTIONS = "advanced_options"
+REACHABILITY_TIMEOUT = 3
+
+
+async def _async_check_host_is_envoy(
+    hass: HomeAssistant, host: str, expected_serial: str
+) -> bool:
+    """Check if host is reachable and is the expected Envoy by verifying its serial."""
+    try:
+        async with httpx.AsyncClient(
+            verify=False, timeout=REACHABILITY_TIMEOUT
+        ) as client:
+            response = await client.get(f"https://{host}/info.xml")
+            if response.status_code >= 500:
+                return False
+            if "<sn>" in response.text:
+                serial = response.text.split("<sn>")[1].split("</sn>")[0]
+                return serial == expected_serial
+            return False
+    except httpx.HTTPError:
+        return False
 
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> EnvoyReader:
@@ -135,14 +155,20 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
                 if entry.data[CONF_HOST] != self.ip_address:
                     """Update current host ip to new discovered one if same ip version"""
                     if (
-                        is_ipv4_address(entry.data[CONF_HOST])
-                        and is_ipv4_address(self.ip_address)
-                    ) or (
-                        is_ipv6_address(entry.data[CONF_HOST])
-                        and is_ipv6_address(self.ip_address)
+                        (
+                            is_ipv4_address(entry.data[CONF_HOST])
+                            and is_ipv4_address(self.ip_address)
+                        )
+                        or (
+                            is_ipv6_address(entry.data[CONF_HOST])
+                            and is_ipv6_address(self.ip_address)
+                        )
+                    ) and not await _async_check_host_is_envoy(
+                        self.hass, entry.data[CONF_HOST], serial
                     ):
                         self.hass.config_entries.async_update_entry(
-                            entry, data={**entry.data, CONF_HOST: self.ip_address}
+                            entry,
+                            data={**entry.data, CONF_HOST: self.ip_address},
                         )
                         self.hass.async_create_task(
                             self.hass.config_entries.async_reload(entry.entry_id),
