@@ -254,7 +254,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         "voltage_" + phase: phase_data.volt,
                         "ampere_" + phase: phase_data.amps,
                         "apparent_power_" + phase: phase_data.volt_ampere,
-                        "power_factor" + phase: phase_data.pf,
+                        "power_factor_" + phase: phase_data.pf,
                         "reactive_power_" + phase: phase_data.var,
                         "frequency_" + phase: phase_data.hz,
                     }
