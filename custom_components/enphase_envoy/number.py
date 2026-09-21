@@ -9,6 +9,7 @@ from .const import (
     COORDINATOR,
     DOMAIN,
     NAME,
+    PVLIMIT_PCT_NUMBER,
     READER,
     STORAGE_RESERVE_SOC_NUMBER,
 )
@@ -41,6 +42,21 @@ async def async_setup_entry(
                 reader,
             )
         )
+
+    if coordinator.data.get(PVLIMIT_PCT_NUMBER.key) is not None:
+        entity_name = f"{name} {PVLIMIT_PCT_NUMBER.name}"
+        entities.append(
+            EnvoyPvLimitEntity(
+                PVLIMIT_PCT_NUMBER,
+                entity_name,
+                name,
+                config_entry.unique_id,
+                None,
+                coordinator,
+                reader,
+            )
+        )
+
     async_add_entities(entities)
 
 
@@ -91,6 +107,18 @@ class EnvoyNumberEntity(CoordinatorEntity, NumberEntity):
             model=f"Envoy-S {model}",
             name=self._device_name,
         )
+
+
+class EnvoyPvLimitEntity(EnvoyNumberEntity):
+    @property
+    def native_value(self) -> float:
+        """Return the status of the requested attribute."""
+        return self.coordinator.data.get("pvlimit_pct")
+
+    async def async_set_native_value(self, value: float) -> None:
+        """Update the current value."""
+        await self.reader.set_pvlimit(pct=value)
+        await self.coordinator.async_request_refresh()
 
 
 class EnvoyStorageReservedSocEntity(EnvoyNumberEntity):

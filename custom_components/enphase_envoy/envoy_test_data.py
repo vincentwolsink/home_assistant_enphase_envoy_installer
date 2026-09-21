@@ -56,6 +56,12 @@ ENVOY_ENDPOINTS = {
         "installer_required": True,
         "optional": False,
     },
+    "pvlimit": {
+        "url": TEST_DATA + "endpoint_pvlimit.json",
+        "cache": 20,
+        "installer_required": False,
+        "optional": False,
+    },
     # Battery endpoints
     "ensemble_inventory": {
         "url": TEST_DATA + "endpoint_ensemble_inventory.json",

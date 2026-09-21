@@ -499,6 +499,9 @@ class EnvoyStandard(EnvoyData):
     daily_production_value = "endpoint_production_v1.wattHoursToday"
     _lifetime_production_path = "endpoint_production_v1.wattHoursLifetime"
 
+    pvlimit_enable_value = "endpoint_pvlimit.enable"
+    pvlimit_pct_value = "endpoint_pvlimit.pv_limit_pct"
+
     @envoy_property(required_endpoint="endpoint_production_v1")
     def lifetime_production(self):
         lifetime_production = self._resolve_path(self._lifetime_production_path)
@@ -1659,6 +1662,36 @@ class EnvoyReader:
             await self._async_put(formatted_url, data={"tariff": tariff})
             # Make sure the next poll will update the endpoint.
             self._clear_endpoint_cache("endpoint_admin_tariff")
+
+    async def set_pvlimit(self, enable=None, pct=None):
+        """Set PV limit, POSTing both enable and percentage in one request.
+
+        The Envoy rejects a payload missing either key, so both values are
+        always sent: the given value for the changed setting and the last
+        known value (or its default) for the other.
+        """
+        if self.endpoint_pvlimit is None:
+            return
+
+        formatted_url = ENVOY_ENDPOINTS["pvlimit"]["url"].format(self.host)
+        current_enable = self.data.get("pvlimit_enable")
+        current_pct = self.data.get("pvlimit_pct")
+        data = {
+            "enable": bool(current_enable) if current_enable is not None else False,
+            "pv_limit_pct": int(current_pct) if current_pct is not None else 100,
+        }
+        if enable is not None:
+            data["enable"] = bool(enable)
+        if pct is not None:
+            data["pv_limit_pct"] = int(pct)
+        resp = await self._async_post(formatted_url, json=data)
+        # Make sure the next poll will update the endpoint.
+        self._clear_endpoint_cache("endpoint_pvlimit")
+        return resp
+
+    async def set_pvlimit_enable(self, enable):
+        """Enable/disable the PV limit, keeping the current percentage."""
+        await self.set_pvlimit(enable=enable)
 
     def run_stream(self):
         print("Reading stream...")
