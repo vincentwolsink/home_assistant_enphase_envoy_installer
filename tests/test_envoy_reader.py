@@ -531,6 +531,87 @@ class TestDPEL:
 
 
 # ===========================================================================
+# PV Limit
+# ===========================================================================
+
+
+class TestSetPvLimit:
+    def _setup(self):
+        r = make_reader(token_type="installer")
+        r.data = EnvoyMeteredWithCT(r)
+        load_all(r)
+        return r
+
+    @pytest.mark.asyncio
+    async def test_set_pvlimit_sends_both_values(self):
+        r = self._setup()
+        r._async_post = AsyncMock()
+
+        await r.set_pvlimit(enable=True, pct=50)
+
+        r._async_post.assert_awaited_once()
+        url, kwargs = r._async_post.call_args
+        assert url[0] == "https://192.168.1.1/ivp/sc/pvlimit"
+        assert kwargs["json"] == {"enable": True, "pv_limit_pct": 50}
+
+    @pytest.mark.asyncio
+    async def test_set_pvlimit_enable_keeps_current_pct(self):
+        r = self._setup()
+        r._async_post = AsyncMock()
+
+        await r.set_pvlimit_enable(True)
+
+        _, kwargs = r._async_post.call_args
+        assert kwargs["json"] == {"enable": True, "pv_limit_pct": 100}
+
+    @pytest.mark.asyncio
+    async def test_set_pvlimit_pct_keeps_current_enable(self):
+        r = self._setup()
+        r._async_post = AsyncMock()
+
+        await r.set_pvlimit(pct=75)
+
+        _, kwargs = r._async_post.call_args
+        assert kwargs["json"] == {"enable": False, "pv_limit_pct": 75}
+
+    @pytest.mark.asyncio
+    async def test_set_pvlimit_always_sends_both_keys(self):
+        r = self._setup()
+        r._async_post = AsyncMock()
+
+        await r.set_pvlimit(enable=True)
+
+        _, kwargs = r._async_post.call_args
+        assert kwargs["json"] == {"enable": True, "pv_limit_pct": 100}
+
+    @pytest.mark.asyncio
+    async def test_set_pvlimit_uses_defaults_when_data_missing(self):
+        r = self._setup()
+        r.data.data = {}
+        r._async_post = AsyncMock()
+
+        await r.set_pvlimit(enable=False)
+
+        _, kwargs = r._async_post.call_args
+        assert kwargs["json"] == {"enable": False, "pv_limit_pct": 100}
+
+        await r.set_pvlimit(pct=20)
+
+        _, kwargs = r._async_post.call_args
+        assert kwargs["json"] == {"enable": False, "pv_limit_pct": 20}
+
+    @pytest.mark.asyncio
+    async def test_set_pvlimit_clears_endpoint_cache(self):
+        r = self._setup()
+        r._async_post = AsyncMock()
+        r.uri_registry["endpoint_pvlimit"]["last_fetch"] = 1234
+
+        await r.set_pvlimit(enable=False, pct=10)
+
+        assert r.uri_registry["endpoint_pvlimit"]["last_fetch"] == 0
+
+
+# ===========================================================================
 # Envoy info
 # ===========================================================================
 

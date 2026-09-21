@@ -824,6 +824,22 @@ SWITCHES = (
         icon="mdi:power-plug-battery",
         device_class=SwitchDeviceClass.SWITCH,
     ),
+    SwitchEntityDescription(
+        key="pvlimit_enable",
+        name="PV Limit Enabled",
+        icon="mdi:solar-power",
+        device_class=SwitchDeviceClass.SWITCH,
+    ),
+)
+
+PVLIMIT_PCT_NUMBER = NumberEntityDescription(
+    key="pvlimit_pct",
+    name="PV Limit",
+    native_min_value=0,
+    native_max_value=100,
+    native_step=1,
+    native_unit_of_measurement="%",
+    icon="mdi:solar-power",
 )
 
 STORAGE_MODE_SELECT = SelectEntityDescription(

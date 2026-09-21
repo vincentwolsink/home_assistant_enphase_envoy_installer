@@ -55,6 +55,12 @@ ENVOY_ENDPOINTS = {
         "installer_required": True,
         "optional": False,
     },
+    "pvlimit": {
+        "url": "https://{}/ivp/sc/pvlimit",
+        "cache": 0,
+        "installer_required": False,
+        "optional": True,
+    },
     # Battery endpoints
     "ensemble_inventory": {
         "url": "https://{}/ivp/ensemble/inventory",
