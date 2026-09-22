@@ -529,6 +529,134 @@ class TestDPEL:
         r = self._setup()
         assert r.data.get("dpel_mode") == "Export"
 
+    def test_dpel_values_fall_back_to_cached_when_disabled(self):
+        r = self._setup()
+        assert r.data.get("dpel_limit") == 50.0
+        assert r.data.get("dpel_mode") == "Export"
+
+        # When DPEL is disabled the Envoy omits limit_value_W and
+        # export_limit, so the last known values must be kept.
+        r.data.data["endpoint_dpel"] = {
+            "dynamic_pel_settings": {
+                "enable": False,
+                "filename": "site_settings",
+                "version": "00.00.01",
+            }
+        }
+        assert r.data.get("dpel_enabled") is False
+        assert r.data.get("dpel_limit") == 50.0
+        assert r.data.get("dpel_mode") == "Export"
+
+    def test_dpel_values_use_defaults_when_never_seen(self):
+        r = self._setup()
+        r.data.data = {}
+        r.data.data["endpoint_dpel"] = {"dynamic_pel_settings": {"enable": False}}
+        assert r.data.get("dpel_enabled") is False
+        assert r.data.get("dpel_limit") == 0.0
+        assert r.data.get("dpel_mode") == "Production"
+
+
+class TestSetDpel:
+    def _setup(self):
+        r = make_reader(token_type="installer")
+        r.data = EnvoyMeteredWithCT(r)
+        load_all(r)
+        return r
+
+    @pytest.mark.asyncio
+    async def test_set_dpel_watt_keeps_current_values(self):
+        r = self._setup()
+        r._async_post = AsyncMock()
+
+        await r.set_dpel(watt=1000)
+
+        r._async_post.assert_awaited_once()
+        url, kwargs = r._async_post.call_args
+        assert url[0] == "https://192.168.1.1/ivp/ss/dpel"
+        payload = json.loads(kwargs["data"])
+        assert payload["dynamic_pel_settings"] == {
+            "enable": True,
+            "export_limit": True,
+            "limit_value_W": 1000.0,
+            "slew_rate": 50.0,
+            "enable_dynamic_limiting": False,
+        }
+
+    @pytest.mark.asyncio
+    async def test_set_dpel_uses_defaults_when_data_missing(self):
+        r = self._setup()
+        r.data.data = {}
+        r._async_post = AsyncMock()
+
+        await r.set_dpel(enable=True, watt=500)
+
+        _, kwargs = r._async_post.call_args
+        payload = json.loads(kwargs["data"])
+        assert payload["dynamic_pel_settings"]["enable"] is True
+        assert payload["dynamic_pel_settings"]["limit_value_W"] == 500.0
+        assert payload["dynamic_pel_settings"]["export_limit"] is False
+        assert payload["dynamic_pel_settings"]["slew_rate"] == float(
+            r.default_dpel_slew_rate()
+        )
+
+    @pytest.mark.asyncio
+    async def test_set_dpel_clears_endpoint_cache(self):
+        r = self._setup()
+        r._async_post = AsyncMock()
+        r.uri_registry["endpoint_dpel"]["last_fetch"] = 1234
+
+        await r.set_dpel(enable=False)
+
+        assert r.uri_registry["endpoint_dpel"]["last_fetch"] == 0
+
+    @pytest.mark.asyncio
+    async def test_enable_dpel(self):
+        r = self._setup()
+        r._async_post = AsyncMock()
+
+        await r.enable_dpel(watt=200, slew=100, export_limit=False)
+
+        _, kwargs = r._async_post.call_args
+        payload = json.loads(kwargs["data"])
+        assert payload["dynamic_pel_settings"]["enable"] is True
+        assert payload["dynamic_pel_settings"]["limit_value_W"] == 200.0
+        assert payload["dynamic_pel_settings"]["slew_rate"] == 100.0
+        assert payload["dynamic_pel_settings"]["export_limit"] is False
+
+    @pytest.mark.asyncio
+    async def test_enable_dpel_uses_default_slew_rate(self):
+        r = self._setup()
+        r.data.data = {}
+        r._async_post = AsyncMock()
+
+        await r.enable_dpel(watt=200, export_limit=False)
+
+        _, kwargs = r._async_post.call_args
+        payload = json.loads(kwargs["data"])
+        assert payload["dynamic_pel_settings"]["slew_rate"] == float(
+            r.default_dpel_slew_rate()
+        )
+
+    def test_default_dpel_slew_rate_scales_with_capacity(self):
+        r = self._setup()
+        # 14 inverters x 297 W => 4158 W, 0.5%/s => 21 W/s
+        assert r.default_dpel_slew_rate() == 21
+
+    def test_default_dpel_slew_rate_fallback_without_capacity(self):
+        r = self._setup()
+        r.data.data = {}
+        assert r.default_dpel_slew_rate() == 100
+
+    @pytest.mark.asyncio
+    async def test_disable_dpel(self):
+        r = self._setup()
+        r._async_post = AsyncMock()
+
+        await r.disable_dpel()
+
+        payload = json.loads(r._async_post.call_args.kwargs["data"])
+        assert payload["dynamic_pel_settings"]["enable"] is False
+
 
 # ===========================================================================
 # PV Limit

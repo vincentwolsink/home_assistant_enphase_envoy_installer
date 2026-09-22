@@ -5,7 +5,16 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import COORDINATOR, DOMAIN, NAME, READER, STORAGE_MODE_SELECT, STORAGE_MODES
+from .const import (
+    COORDINATOR,
+    DOMAIN,
+    DPEL_MODE_SELECT,
+    DPEL_MODES,
+    NAME,
+    READER,
+    STORAGE_MODE_SELECT,
+    STORAGE_MODES,
+)
 
 
 async def async_setup_entry(
@@ -35,6 +44,21 @@ async def async_setup_entry(
                 reader,
             )
         )
+
+    if coordinator.data.get(DPEL_MODE_SELECT.key) is not None:
+        entity_name = f"{name} {DPEL_MODE_SELECT.name}"
+        entities.append(
+            EnvoyDpelModeSelectEntity(
+                DPEL_MODE_SELECT,
+                entity_name,
+                name,
+                config_entry.unique_id,
+                None,
+                coordinator,
+                reader,
+            )
+        )
+
     async_add_entities(entities)
 
 
@@ -100,4 +124,20 @@ class EnvoyStorageModeSelectEntity(EnvoySelectEntity):
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
         await self.reader.set_storage("mode", option)
+        await self.coordinator.async_request_refresh()
+
+
+class EnvoyDpelModeSelectEntity(EnvoySelectEntity):
+    @property
+    def current_option(self) -> str:
+        """Return the status of the requested attribute."""
+        return self.coordinator.data.get("dpel_mode")
+
+    @property
+    def options(self) -> list:
+        return DPEL_MODES
+
+    async def async_select_option(self, option: str) -> None:
+        """Change the selected option."""
+        await self.reader.set_dpel(export_limit=option == "Export")
         await self.coordinator.async_request_refresh()

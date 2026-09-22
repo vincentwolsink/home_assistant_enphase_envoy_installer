@@ -557,25 +557,6 @@ SENSORS = (
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SensorEntityDescription(
-        key="dpel_limit",
-        name="DPEL Limit",
-        icon="mdi:transmission-tower-import",
-        native_unit_of_measurement=UnitOfPower.WATT,
-        state_class=SensorStateClass.MEASUREMENT,
-        device_class=SensorDeviceClass.POWER,
-        entity_category=EntityCategory.DIAGNOSTIC,
-    ),
-    SensorEntityDescription(
-        key="dpel_mode",
-        name="DPEL Mode",
-        icon="mdi:transmission-tower-import",
-        native_unit_of_measurement=None,
-        state_class=None,
-        device_class=SensorDeviceClass.ENUM,
-        options=["Production", "Export"],
-        entity_category=EntityCategory.DIAGNOSTIC,
-    ),
-    SensorEntityDescription(
         key="token_type",
         name="Token Type",
         icon="mdi:account-hard-hat",
@@ -802,13 +783,6 @@ BINARY_SENSORS = (
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:power-sleep",
     ),
-    BinarySensorEntityDescription(
-        key="dpel_enabled",
-        name="DPEL",
-        # 'tower-import' icon means 'sending power to grid'
-        icon="mdi:transmission-tower-import",
-        entity_category=EntityCategory.DIAGNOSTIC,
-    ),
 )
 
 SWITCHES = (
@@ -846,6 +820,24 @@ STORAGE_MODE_SELECT = SelectEntityDescription(
     key="storage_mode",
     name="Batteries Mode",
     icon="mdi:battery-sync",
+)
+
+DPEL_MODES = ["Production", "Export"]
+
+DPEL_MODE_SELECT = SelectEntityDescription(
+    key="dpel_mode",
+    name="DPEL Mode",
+    icon="mdi:transmission-tower-import",
+)
+
+DPEL_LIMIT_NUMBER = NumberEntityDescription(
+    key="dpel_limit",
+    name="DPEL Limit",
+    icon="mdi:transmission-tower-import",
+    native_min_value=0,
+    native_step=1,
+    native_unit_of_measurement=UnitOfPower.WATT,
+    device_class=NumberDeviceClass.POWER,
 )
 
 STORAGE_RESERVE_SOC_NUMBER = NumberEntityDescription(
