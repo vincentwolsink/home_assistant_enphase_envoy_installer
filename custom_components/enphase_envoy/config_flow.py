@@ -328,8 +328,11 @@ class EnvoyOptionsFlowHandler(OptionsFlowWithReload):
             ): vol.All(vol.Coerce(int), vol.Range(min=5)),
             vol.Optional(
                 "getdata_timeout",
-                default=self.config_entry.options.get(
-                    "getdata_timeout", DEFAULT_GETDATA_TIMEOUT
+                default=max(
+                    self.config_entry.options.get(
+                        "getdata_timeout", DEFAULT_GETDATA_TIMEOUT
+                    ),
+                    MIN_GETDATA_TIMEOUT,
                 ),
             ): vol.All(vol.Coerce(int), vol.Range(min=MIN_GETDATA_TIMEOUT)),
             vol.Optional(
