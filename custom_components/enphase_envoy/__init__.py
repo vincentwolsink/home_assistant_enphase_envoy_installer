@@ -48,7 +48,6 @@ from .const import (
     STORAGE_VERSION,
 )
 from .envoy_reader import (
-    MIN_GETDATA_TIMEOUT,
     EnlightenError,
     EnvoyReader,
     StreamData,
