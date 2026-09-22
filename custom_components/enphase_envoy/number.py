@@ -8,6 +8,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import (
     COORDINATOR,
     DOMAIN,
+    DPEL_LIMIT_NUMBER,
     NAME,
     PVLIMIT_PCT_NUMBER,
     READER,
@@ -48,6 +49,20 @@ async def async_setup_entry(
         entities.append(
             EnvoyPvLimitEntity(
                 PVLIMIT_PCT_NUMBER,
+                entity_name,
+                name,
+                config_entry.unique_id,
+                None,
+                coordinator,
+                reader,
+            )
+        )
+
+    if coordinator.data.get(DPEL_LIMIT_NUMBER.key) is not None:
+        entity_name = f"{name} {DPEL_LIMIT_NUMBER.name}"
+        entities.append(
+            EnvoyDpelLimitEntity(
+                DPEL_LIMIT_NUMBER,
                 entity_name,
                 name,
                 config_entry.unique_id,
@@ -130,4 +145,16 @@ class EnvoyStorageReservedSocEntity(EnvoyNumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
         await self.reader.set_storage("reserved_soc", value)
+        await self.coordinator.async_request_refresh()
+
+
+class EnvoyDpelLimitEntity(EnvoyNumberEntity):
+    @property
+    def native_value(self) -> float:
+        """Return the status of the requested attribute."""
+        return self.coordinator.data.get("dpel_limit")
+
+    async def async_set_native_value(self, value: float) -> None:
+        """Update the current value."""
+        await self.reader.set_dpel(watt=value)
         await self.coordinator.async_request_refresh()

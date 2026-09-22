@@ -1,4 +1,8 @@
-from homeassistant.components.switch import SwitchEntity
+from homeassistant.components.switch import (
+    SwitchDeviceClass,
+    SwitchEntity,
+    SwitchEntityDescription,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
@@ -25,6 +29,18 @@ async def async_setup_entry(
     reader = data[READER]
 
     entities = []
+    if coordinator.data.get("dpel_enabled") is not None:
+        entities.append(
+            EnvoyDpelSwitchEntity(
+                name,
+                name,
+                config_entry.unique_id,
+                None,
+                coordinator,
+                reader,
+            )
+        )
+
     for switch_description in SWITCHES:
         if switch_description.key.startswith("storage_"):
             if (
@@ -135,4 +151,74 @@ class EnvoyStorageSwitchEntity(EnvoySwitchEntity):
     async def async_turn_off(self, **kwargs):
         """Turn the entity off."""
         await self.reader.set_storage(self.entity_description.key[8:], False)
+        await self.coordinator.async_request_refresh()
+
+
+class EnvoyDpelSwitchEntity(CoordinatorEntity, SwitchEntity):
+    def __init__(
+        self,
+        name,
+        device_name,
+        device_serial_number,
+        serial_number,
+        coordinator,
+        reader,
+    ):
+        self.entity_description = SwitchEntityDescription(
+            key="dpel_enabled",
+            name="DPEL",
+            icon="mdi:transmission-tower-import",
+            device_class=SwitchDeviceClass.SWITCH,
+        )
+        self._name = name
+        self._serial_number = serial_number
+        self._device_name = device_name
+        self._device_serial_number = device_serial_number
+        CoordinatorEntity.__init__(self, coordinator)
+        self.reader = reader
+
+    @property
+    def name(self):
+        """Return the name of the sensor."""
+        return f"{self._name} {self.entity_description.name}"
+
+    @property
+    def unique_id(self):
+        """Return the unique id of the sensor."""
+        if self._serial_number:
+            return self._serial_number
+        if self._device_serial_number:
+            return f"{self._device_serial_number}_{self.entity_description.key}"
+
+    @property
+    def device_info(self) -> DeviceInfo or None:
+        """Return the device_info of the device."""
+        if not self._device_serial_number:
+            return None
+
+        model = self.coordinator.data.get("envoy_info", {}).get("model", "Standard")
+
+        return DeviceInfo(
+            identifiers={(DOMAIN, str(self._device_serial_number))},
+            manufacturer="Enphase",
+            model=f"Envoy-S {model}",
+            name=self._device_name,
+        )
+
+    @property
+    def is_on(self) -> bool:
+        """Return the status of the requested attribute."""
+        return self.coordinator.data.get("dpel_enabled")
+
+    async def async_turn_on(self, **kwargs):
+        """Turn the entity on."""
+        await self.reader.enable_dpel(
+            watt=self.coordinator.data.get("dpel_limit", 0) or 0,
+            export_limit=self.coordinator.data.get("dpel_mode") == "Export",
+        )
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs):
+        """Turn the entity off."""
+        await self.reader.disable_dpel()
         await self.coordinator.async_request_refresh()

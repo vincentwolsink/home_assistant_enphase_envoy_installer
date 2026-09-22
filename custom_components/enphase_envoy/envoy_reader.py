@@ -746,15 +746,28 @@ class EnvoyMeteredWithCT(EnvoyMetered):
     lifetime_batteries_discharged_value = "endpoint_meters_readings.[?(@.measurementType == 'storage' and @.state == 'enabled')].actEnergyDlvd"
 
     dpel_enabled_value = "endpoint_dpel.dynamic_pel_settings.enable"
-    dpel_limit_value = "endpoint_dpel.dynamic_pel_settings.limit_value_W"
+
+    @envoy_property(required_endpoint="endpoint_dpel")
+    def dpel_limit(self):
+        # When DPEL is disabled the Envoy may omit limit_value_W from the
+        # payload, so keep the last known value (or 0 as a safe default)
+        # to keep the entity available for configuration.
+        value = self._resolve_path("endpoint_dpel.dynamic_pel_settings.limit_value_W")
+        if value is not None:
+            self._last_dpel_limit = value
+        return value if value is not None else getattr(self, "_last_dpel_limit", 0.0)
 
     @envoy_property(required_endpoint="endpoint_dpel")
     def dpel_mode(self):
+        # Same caching as dpel_limit: export_limit may be missing when DPEL
+        # is disabled, so fall back to the last known mode.
         export_limit = self._resolve_path(
             "endpoint_dpel.dynamic_pel_settings.export_limit"
         )
         if export_limit is not None:
-            return "Export" if export_limit else "Production"
+            self._last_dpel_mode = "Export" if export_limit else "Production"
+            return self._last_dpel_mode
+        return getattr(self, "_last_dpel_mode", "Production")
 
 
 class EnvoyReader:
@@ -1596,34 +1609,78 @@ class EnvoyReader:
             # Make sure the next poll will update the endpoint.
             self._clear_endpoint_cache("endpoint_production_power")
 
-    async def enable_dpel(self, watt, slew, export_limit):
+    def default_dpel_slew_rate(self):
+        """Recommended DPEL slew rate: 0.5% of installed AC capacity per second.
+
+        Enphase EMEA guidance for Dynamic PEL (per VDE-AR-N 4105:2018,
+        section 5.7.4.1) specifies a power ramp between 0.33% and 0.66% of
+        the installed inverter capacity, with 0.5% suggested when the grid
+        operator does not specify a value. E.g. 250 W/s for a 50 kWp system.
+        """
+        total_capacity = sum(
+            int(inverter.get("maxReportWatts") or 0)
+            for inverter in (self.data.get("inverter_production") or {}).values()
+        )
+        if total_capacity:
+            return round(total_capacity * 0.005)
+        return 100
+
+    async def set_dpel(self, enable=None, watt=None, slew=None, export_limit=None):
+        """Set DPEL settings, always posting the full dynamic_pel_settings dict.
+
+        Only the provided fields change; the others keep their current value
+        (or their default when no value is known yet).
+        """
+        if self.endpoint_dpel is None:
+            return
+
         formatted_url = ENVOY_ENDPOINTS["dpel"]["url"].format(self.host)
+        current = (
+            self.data.data.get("endpoint_dpel", {}).get("dynamic_pel_settings", {})
+            or {}
+        )
         dynamic_pel_settings = {
-            "enable": True,
-            "export_limit": export_limit,
-            "limit_value_W": float(watt),
-            "slew_rate": float(slew),
-            "enable_dynamic_limiting": False,
+            "enable": (
+                bool(enable)
+                if enable is not None
+                else bool(current.get("enable", False))
+            ),
+            "export_limit": (
+                bool(export_limit)
+                if export_limit is not None
+                else bool(current.get("export_limit", False))
+            ),
+            "limit_value_W": (
+                float(watt)
+                if watt is not None
+                else float(current.get("limit_value_W", 0))
+            ),
+            "slew_rate": (
+                float(slew)
+                if slew is not None
+                else float(current.get("slew_rate") or self.default_dpel_slew_rate())
+            ),
+            "enable_dynamic_limiting": current.get("enable_dynamic_limiting", False),
         }
-        enable_dpel_json = json.dumps(
+        dpel_json = json.dumps(
             {
                 "dynamic_pel_settings": dynamic_pel_settings,
                 "filename": "site_settings",
                 "version": "00.00.01",
             }
         )
-        await self._async_post(formatted_url, data=enable_dpel_json)
+        resp = await self._async_post(formatted_url, data=dpel_json)
+        # Make sure the next poll will update the endpoint.
+        self._clear_endpoint_cache("endpoint_dpel")
+        return resp
+
+    async def enable_dpel(self, watt, slew=None, export_limit=True):
+        await self.set_dpel(
+            enable=True, watt=watt, slew=slew, export_limit=export_limit
+        )
 
     async def disable_dpel(self):
-        formatted_url = ENVOY_ENDPOINTS["dpel"]["url"].format(self.host)
-        disable_dpel_json = json.dumps(
-            {
-                "dynamic_pel_settings": {"enable": False},
-                "filename": "site_settings",
-                "version": "00.00.01",
-            }
-        )
-        await self._async_post(formatted_url, data=disable_dpel_json)
+        await self.set_dpel(enable=False)
 
     async def set_grid_profile(self, profile_id):
         if self.endpoint_installer_agf is not None:
