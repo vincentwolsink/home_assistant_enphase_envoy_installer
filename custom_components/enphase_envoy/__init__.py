@@ -47,7 +47,12 @@ from .const import (
     STORAGE_KEY,
     STORAGE_VERSION,
 )
-from .envoy_reader import EnlightenError, EnvoyReader, StreamData
+from .envoy_reader import (
+    MIN_GETDATA_TIMEOUT,
+    EnlightenError,
+    EnvoyReader,
+    StreamData,
+)
 
 _LOGGER = logging.getLogger(__name__)
 

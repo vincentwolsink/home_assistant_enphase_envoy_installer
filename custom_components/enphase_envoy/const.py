@@ -29,6 +29,8 @@ from homeassistant.const import (
     UnitOfTime,
 )
 
+from .envoy_reader import MIN_GETDATA_TIMEOUT
+
 DOMAIN = "enphase_envoy"
 
 PLATFORMS = [
@@ -45,7 +47,7 @@ READER = "reader"
 
 DEFAULT_SCAN_INTERVAL = 60  # default in seconds
 DEFAULT_REALTIME_UPDATE_THROTTLE = 10
-DEFAULT_GETDATA_TIMEOUT = 60
+DEFAULT_GETDATA_TIMEOUT = MIN_GETDATA_TIMEOUT
 # Refresh the Enphase token this many seconds before it actually expires,
 # so the (slow) cloud refresh does not happen at the last possible moment.
 DEFAULT_TOKEN_REFRESH_BUFFER = 300

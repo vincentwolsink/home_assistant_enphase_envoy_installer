@@ -39,6 +39,22 @@ ENDPOINT_URL_CHECK_JWT = "https://{}/auth/check_jwt"
 # report unavailable instead of serving stale data indefinitely).
 MAX_ENDPOINT_FAILURES = 3
 
+# Sets how long each request can take before it times out
+PER_REQUEST_TIMEOUT = 30
+
+# How many requests an endpoint can take within a cycle
+REQUEST_ATTEMPTS = 3
+
+# If the user configured timeout "getdata_timeout" is less than the
+# combined timeout for each cycle (REQUEST_ATTEMPTS * PER_REQUEST_TIMEOUT),
+# and the time elapses, then the graceful mechanism intended to serve stale
+# data until MAX_ENDPOINT_FAILURES elapses, doesn't work and entities report
+# unavailable, even before MAX_ENDPOINT_FAILURES elapse. To catch 
+# this, define a MIN_GETDATA_TIMEOUT based on the per-request timeouts
+# and use it in the config flow to block/catch lower settings. A margin
+# of 10 seconds (arbitrary) is added to catch overhead/race conditions.
+MIN_GETDATA_TIMEOUT = REQUEST_ATTEMPTS * PER_REQUEST_TIMEOUT + 10
+
 # Retry interval for the background token refresh loop when a refresh fails.
 TOKEN_REFRESH_RETRY_SECONDS = 60
 
@@ -893,7 +909,7 @@ class EnvoyReader:
     async def _async_fetch_with_retry(self, url, **kwargs):
         """Retry 3 times to fetch the url if there is a transport error."""
         received_401 = 0
-        for attempt in range(3):
+        for attempt in range(REQUEST_ATTEMPTS):
             _LOGGER.debug(
                 "HTTP GET Attempt #%s: %s: Header:%s Cookies:%s",
                 attempt + 1,
@@ -907,10 +923,10 @@ class EnvoyReader:
                         url,
                         headers=self._authorization_header,
                         cookies=self._cookies,
-                        timeout=30,
+                        timeout=PER_REQUEST_TIMEOUT,
                         **kwargs,
                     )
-                    if resp.status_code == 401 and attempt < 2:
+                    if resp.status_code == 401 and attempt < (REQUEST_ATTEMPTS - 1):
                         _LOGGER.debug(
                             "Received 401 from Envoy; refreshing token, attempt %s of 2",
                             attempt + 1,
@@ -935,7 +951,7 @@ class EnvoyReader:
                     return resp
             except httpx.TransportError as e:
                 _LOGGER.debug("TransportError: %s", e)
-                if attempt == 2:
+                if attempt == (REQUEST_ATTEMPTS - 1):
                     raise
 
     async def _async_post(self, url, data=None, **kwargs):
@@ -948,7 +964,7 @@ class EnvoyReader:
                     headers=self._authorization_header,
                     cookies=self._cookies,
                     data=data,
-                    timeout=30,
+                    timeout=PER_REQUEST_TIMEOUT,
                     **kwargs,
                 )
                 _LOGGER.debug("HTTP POST %s: %s: %s", url, resp, resp.text)
@@ -970,7 +986,7 @@ class EnvoyReader:
                     headers=self._authorization_header,
                     cookies=self._cookies,
                     json=data,
-                    timeout=30,
+                    timeout=PER_REQUEST_TIMEOUT,
                     **kwargs,
                 )
                 _LOGGER.debug("HTTP PUT %s: %s: %s", url, resp, resp.text)

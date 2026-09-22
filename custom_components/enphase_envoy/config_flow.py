@@ -35,7 +35,12 @@ from .const import (
     STORAGE_VERSION,
 )
 from .envoy_endpoints import ENVOY_ENDPOINTS
-from .envoy_reader import EnlightenError, EnvoyError, EnvoyReader
+from .envoy_reader import (
+    MIN_GETDATA_TIMEOUT,
+    EnlightenError,
+    EnvoyError,
+    EnvoyReader,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -326,7 +331,7 @@ class EnvoyOptionsFlowHandler(OptionsFlowWithReload):
                 default=self.config_entry.options.get(
                     "getdata_timeout", DEFAULT_GETDATA_TIMEOUT
                 ),
-            ): vol.All(vol.Coerce(int), vol.Range(min=30)),
+            ): vol.All(vol.Coerce(int), vol.Range(min=MIN_GETDATA_TIMEOUT)),
             vol.Optional(
                 "disable_negative_production",
                 default=self.config_entry.options.get(
