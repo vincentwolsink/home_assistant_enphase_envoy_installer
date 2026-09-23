@@ -891,52 +891,55 @@ class EnvoyReader:
             setattr(self, attr, data)
 
     async def _async_fetch_with_retry(self, url, **kwargs):
-        """Retry 3 times to fetch the url if there is a transport error."""
-        received_401 = 0
-        for attempt in range(3):
+        """Fetch the url, retrying once on a 401 after refreshing auth.
+
+        Transport errors are not retried here: the endpoint failure is
+        counted per cycle and retried on the next update run instead.
+        """
+        _LOGGER.debug(
+            "HTTP GET Attempt #1: %s: Header:%s Cookies:%s",
+            url,
+            self._authorization_header,
+            self._cookies,
+        )
+        async with self.async_client as client:
+            resp = await client.get(
+                url,
+                headers=self._authorization_header,
+                cookies=self._cookies,
+                timeout=30,
+                **kwargs,
+            )
+            if resp.status_code != 401:
+                _LOGGER.debug("Fetched from %s: %s: %s", url, resp, resp.text)
+                return resp
+
+            _LOGGER.debug("Received 401 from Envoy; refreshing auth and retrying")
+            # Serialize with other authentication flows, so we never refresh
+            # token/cookies concurrently.
+            async with self._auth_lock:
+                # The current session was rejected; force a new one, falling
+                # back to a fresh enphase token when it can't be restored.
+                could_refresh_cookies = await self._refresh_token_cookies(force=True)
+                if not could_refresh_cookies:
+                    await self._get_enphase_token()
+
             _LOGGER.debug(
-                "HTTP GET Attempt #%s: %s: Header:%s Cookies:%s",
-                attempt + 1,
+                "HTTP GET Attempt #2: %s: Header:%s Cookies:%s",
                 url,
                 self._authorization_header,
                 self._cookies,
             )
-            try:
-                async with self.async_client as client:
-                    resp = await client.get(
-                        url,
-                        headers=self._authorization_header,
-                        cookies=self._cookies,
-                        timeout=30,
-                        **kwargs,
-                    )
-                    if resp.status_code == 401 and attempt < 2:
-                        _LOGGER.debug(
-                            "Received 401 from Envoy; refreshing token, attempt %s of 2",
-                            attempt + 1,
-                        )
-                        # Serialize with other authentication flows, so we
-                        # never refresh token/cookies concurrently.
-                        async with self._auth_lock:
-                            # Only on the first 401 response, we refresh token cookies,
-                            # otherwise we just fetch a new enphase token.
-                            # Force a new session: the current one was rejected.
-                            could_refresh_cookies = (
-                                await self._refresh_token_cookies(force=True)
-                                if received_401 == 0
-                                else False
-                            )
-                            if not could_refresh_cookies:
-                                await self._get_enphase_token()
-
-                        received_401 += 1
-                        continue
-                    _LOGGER.debug("Fetched from %s: %s: %s", url, resp, resp.text)
-                    return resp
-            except httpx.TransportError as e:
-                _LOGGER.debug("TransportError: %s", e)
-                if attempt == 2:
-                    raise
+            async with self.async_client as client:
+                resp = await client.get(
+                    url,
+                    headers=self._authorization_header,
+                    cookies=self._cookies,
+                    timeout=30,
+                    **kwargs,
+                )
+                _LOGGER.debug("Fetched from %s: %s: %s", url, resp, resp.text)
+                return resp
 
     async def _async_post(self, url, data=None, **kwargs):
         _LOGGER.debug("HTTP POST Attempt: %s", url)
