@@ -27,6 +27,7 @@ from .const import (
     get_model_name,
     resolve_hardware_id,
 )
+from .helpers import via_device_kw
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -66,7 +67,7 @@ async def async_setup_entry(
                             device_serial_number=serial_number,
                             serial_number=None,
                             coordinator=coordinator,
-                            parent_device=config_entry.unique_id,
+                            config_entry=config_entry,
                         )
                     )
 
@@ -84,7 +85,7 @@ async def async_setup_entry(
                             device_serial_number=serial_number,
                             serial_number=None,
                             coordinator=coordinator,
-                            parent_device=config_entry.unique_id,
+                            config_entry=config_entry,
                         )
                     )
 
@@ -101,7 +102,7 @@ async def async_setup_entry(
                             device_serial_number=serial_number,
                             serial_number=None,
                             coordinator=coordinator,
-                            parent_device=config_entry.unique_id,
+                            config_entry=config_entry,
                         )
                     )
 
@@ -124,7 +125,7 @@ async def async_setup_entry(
                                 device_serial_number=serial_number,
                                 serial_number=None,
                                 coordinator=coordinator,
-                                parent_device=config_entry.unique_id,
+                                config_entry=config_entry,
                             )
                         )
 
@@ -141,7 +142,7 @@ async def async_setup_entry(
                             device_serial_number=serial_number,
                             serial_number=None,
                             coordinator=coordinator,
-                            parent_device=config_entry.unique_id,
+                            config_entry=config_entry,
                         )
                     )
 
@@ -175,7 +176,7 @@ async def async_setup_entry(
                                 device_serial_number=serial_number,
                                 serial_number=None,
                                 coordinator=coordinator,
-                                parent_device=config_entry.unique_id,
+                                config_entry=config_entry,
                             )
                         )
 
@@ -192,7 +193,7 @@ async def async_setup_entry(
                             device_serial_number=serial_number,
                             serial_number=None,
                             coordinator=coordinator,
-                            parent_device=config_entry.unique_id,
+                            config_entry=config_entry,
                         )
                     )
 
@@ -209,7 +210,7 @@ async def async_setup_entry(
                             device_serial_number=serial_number,
                             serial_number=None,
                             coordinator=coordinator,
-                            parent_device=config_entry.unique_id,
+                            config_entry=config_entry,
                         )
                     )
 
@@ -226,7 +227,7 @@ async def async_setup_entry(
                             device_serial_number=serial_number,
                             serial_number=None,
                             coordinator=coordinator,
-                            parent_device=config_entry.unique_id,
+                            config_entry=config_entry,
                         )
                     )
 
@@ -381,14 +382,14 @@ class EnvoyDeviceEntity(CoordinatorEntity, SensorEntity):
         device_serial_number,
         serial_number,
         coordinator,
-        parent_device,
+        config_entry,
     ):
         self.entity_description = description
         self._name = name
         self._serial_number = serial_number
         self._device_name = device_name
         self._device_serial_number = device_serial_number
-        self._parent_device = parent_device
+        self._config_entry = config_entry
         CoordinatorEntity.__init__(self, coordinator)
 
     @property
@@ -495,9 +496,7 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
         """Return the device_info of the device."""
         if not self._device_serial_number:
             return None
-        device_info_kw = {}
-        if self._parent_device:
-            device_info_kw["via_device"] = (DOMAIN, self._parent_device)
+        device_info_kw = via_device_kw(self.hass, self._config_entry)
 
         if self.coordinator.data.get("inverter_info") and self.coordinator.data.get(
             "inverter_info"
@@ -583,9 +582,7 @@ class EnvoyRelayEntity(EnvoyDeviceEntity):
         """Return the device_info of the device."""
         if not self._device_serial_number:
             return None
-        device_info_kw = {}
-        if self._parent_device:
-            device_info_kw["via_device"] = (DOMAIN, self._parent_device)
+        device_info_kw = via_device_kw(self.hass, self._config_entry)
 
         info = self.coordinator.data.get("relay_info", {}).get(
             self._device_serial_number, {}
@@ -704,10 +701,10 @@ class EnvoyBatteryEntity(EnvoyDeviceEntity):
             manufacturer="Enphase",
             model=get_model_name("Battery", hw_version),
             name=self._device_name,
-            via_device=(DOMAIN, self._parent_device),
             sw_version=sw_version,
             hw_version=resolve_hardware_id(hw_version),
             serial_number=str(self._device_serial_number),
+            **via_device_kw(self.hass, self._config_entry),
         )
 
 

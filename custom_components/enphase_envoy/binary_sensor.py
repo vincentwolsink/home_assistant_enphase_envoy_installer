@@ -15,6 +15,7 @@ from .const import (
     get_model_name,
     resolve_hardware_id,
 )
+from .helpers import via_device_kw
 
 
 async def async_setup_entry(
@@ -75,7 +76,7 @@ async def async_setup_entry(
                                 serial_number,
                                 serial_number,
                                 coordinator,
-                                config_entry.unique_id,
+                                config_entry,
                             )
                         )
                     else:
@@ -87,7 +88,7 @@ async def async_setup_entry(
                                 serial_number,
                                 None,
                                 coordinator,
-                                config_entry.unique_id,
+                                config_entry,
                             )
                         )
 
@@ -105,7 +106,7 @@ async def async_setup_entry(
                             serial_number,
                             None,
                             coordinator,
-                            config_entry.unique_id,
+                            config_entry,
                         )
                     )
 
@@ -225,7 +226,7 @@ class EnvoyBaseEntity(CoordinatorEntity):
         device_serial_number,
         serial_number,
         coordinator,
-        parent_device=None,
+        config_entry=None,
     ):
         """Initialize Envoy entity."""
         self.entity_description = description
@@ -233,7 +234,7 @@ class EnvoyBaseEntity(CoordinatorEntity):
         self._serial_number = serial_number
         self._device_name = device_name
         self._device_serial_number = device_serial_number
-        self._parent_device = parent_device
+        self._config_entry = config_entry
 
         super().__init__(coordinator)
 
@@ -266,8 +267,8 @@ class EnvoyBaseEntity(CoordinatorEntity):
         if not self._device_serial_number:
             return None
         device_info_kw = {}
-        if self._parent_device:
-            device_info_kw["via_device"] = (DOMAIN, self._parent_device)
+        if self._config_entry:
+            device_info_kw.update(via_device_kw(self.hass, self._config_entry))
 
         model_name = self.MODEL
         if self.MODEL == "Envoy":
@@ -302,7 +303,7 @@ class EnvoyBinaryEntity(EnvoyBaseEntity, BinarySensorEntity):
         device_serial_number,
         serial_number,
         coordinator,
-        parent_device=None,
+        config_entry=None,
     ):
         super().__init__(
             description=description,
@@ -311,7 +312,7 @@ class EnvoyBinaryEntity(EnvoyBaseEntity, BinarySensorEntity):
             device_serial_number=device_serial_number,
             serial_number=serial_number,
             coordinator=coordinator,
-            parent_device=parent_device,
+            config_entry=config_entry,
         )
 
     @property
@@ -372,14 +373,14 @@ class EnvoyBatteryEntity(CoordinatorEntity, BinarySensorEntity):
         device_serial_number,
         serial_number,
         coordinator,
-        parent_device,
+        config_entry,
     ):
         self.entity_description = description
         self._name = name
         self._serial_number = serial_number
         self._device_name = device_name
         self._device_serial_number = device_serial_number
-        self._parent_device = parent_device
+        self._config_entry = config_entry
         CoordinatorEntity.__init__(self, coordinator)
 
     @property
@@ -443,7 +444,7 @@ class EnvoyBatteryEntity(CoordinatorEntity, BinarySensorEntity):
             manufacturer="Enphase",
             model=get_model_name("Battery", hw_version),
             name=self._device_name,
-            via_device=(DOMAIN, self._parent_device),
             sw_version=sw_version,
             hw_version=resolve_hardware_id(hw_version),
+            **via_device_kw(self.hass, self._config_entry),
         )
