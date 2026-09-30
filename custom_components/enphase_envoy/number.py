@@ -150,11 +150,11 @@ class EnvoyStorageReservedSocEntity(EnvoyNumberEntity):
 
 class EnvoyDpelLimitEntity(EnvoyNumberEntity):
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> int:
         """Return the status of the requested attribute."""
-        return self.coordinator.data.get("dpel_limit")
+        return round(self.coordinator.data.get("dpel_limit"))
 
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
-        await self.reader.set_dpel(watt=value)
+        await self.reader.set_dpel(watt=round(value))
         await self.coordinator.async_request_refresh()

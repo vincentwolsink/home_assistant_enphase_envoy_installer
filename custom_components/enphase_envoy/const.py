@@ -830,11 +830,18 @@ DPEL_MODE_SELECT = SelectEntityDescription(
     icon="mdi:transmission-tower-import",
 )
 
+# A number entity cannot have an unbounded max: when native_max_value is not
+# set Home Assistant falls back to 100.0. The DPEL limit is therefore capped
+# at 1 GW, which is far above any realistic system size.
+DPEL_LIMIT_MAX_W = 1_000_000_000
+
 DPEL_LIMIT_NUMBER = NumberEntityDescription(
     key="dpel_limit",
     name="DPEL Limit",
     icon="mdi:transmission-tower-import",
+    mode="box",
     native_min_value=0,
+    native_max_value=DPEL_LIMIT_MAX_W,
     native_step=1,
     native_unit_of_measurement=UnitOfPower.WATT,
     device_class=NumberDeviceClass.POWER,
