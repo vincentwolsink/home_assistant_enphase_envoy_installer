@@ -27,6 +27,7 @@ from homeassistant.core import (
     callback,
 )
 from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import Throttle
@@ -146,6 +147,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     live_entities = hass.data[DOMAIN][entry.entry_id].setdefault(
         LIVE_UPDATEABLE_ENTITIES, {}
     )
+
+    # Create the Envoy device before the platforms are set up, so the inverter,
+    # relay and battery devices can reference it as their via device. The
+    # entities of the Envoy device itself fill in the remaining details.
+    if entry.unique_id:
+        dr.async_get(hass).async_get_or_create(
+            config_entry_id=entry.entry_id,
+            identifiers={(DOMAIN, entry.unique_id)},
+            manufacturer="Enphase",
+            name=name,
+        )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
