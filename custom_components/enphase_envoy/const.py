@@ -812,7 +812,7 @@ SWITCHES = (
 INVERTER_SWITCHES = (
     SwitchEntityDescription(
         key="inverter_production",
-        name="Production Switch",
+        name="Production",
         icon="mdi:solar-power",
         device_class=SwitchDeviceClass.SWITCH,
     ),
