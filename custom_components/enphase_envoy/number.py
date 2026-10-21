@@ -58,7 +58,7 @@ async def async_setup_entry(
             )
         )
 
-    if coordinator.data.get(DPEL_LIMIT_NUMBER.key) is not None:
+    if reader.supports_dpel:
         entity_name = f"{name} {DPEL_LIMIT_NUMBER.name}"
         entities.append(
             EnvoyDpelLimitEntity(
@@ -149,6 +149,11 @@ class EnvoyStorageReservedSocEntity(EnvoyNumberEntity):
 
 
 class EnvoyDpelLimitEntity(EnvoyNumberEntity):
+    @property
+    def available(self) -> bool:
+        """The DPEL endpoint is only readable with an installer token."""
+        return super().available and self.reader.endpoint_dpel is not None
+
     @property
     def native_value(self) -> int:
         """Return the status of the requested attribute."""

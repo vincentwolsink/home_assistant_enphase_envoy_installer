@@ -425,9 +425,7 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
                     .get(self.entity_description.key[14:])
                 )
                 if self.entity_description.key.endswith("last_reading"):
-                    return datetime.datetime.fromtimestamp(
-                        int(value), tz=datetime.timezone.utc
-                    )
+                    return datetime.datetime.fromtimestamp(int(value), tz=datetime.UTC)
                 if (
                     self.coordinator.data.get("inverter_device_data")
                     .get(self._device_serial_number)
@@ -460,7 +458,7 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
                     )
                     return {
                         "last_reported": datetime.datetime.fromtimestamp(
-                            int(value), tz=datetime.timezone.utc
+                            int(value), tz=datetime.UTC
                         )
                     }
             elif self.entity_description.key.startswith("inverter_info_"):
@@ -472,7 +470,7 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
                     )
                     return {
                         "last_reported": datetime.datetime.fromtimestamp(
-                            int(value), tz=datetime.timezone.utc
+                            int(value), tz=datetime.UTC
                         )
                     }
             elif self.entity_description.key.startswith("inverter_data_") and (
@@ -485,7 +483,7 @@ class EnvoyInverterEntity(EnvoyDeviceEntity):
                 )
                 return {
                     "last_reported": datetime.datetime.fromtimestamp(
-                        int(value), tz=datetime.timezone.utc
+                        int(value), tz=datetime.UTC
                     )
                 }
         except (ValueError, TypeError):
@@ -533,9 +531,7 @@ class EnvoyRelayEntity(EnvoyDeviceEntity):
                 )
                 value = serial.get(self.entity_description.key[11:])
                 if self.entity_description.key.endswith("last_reading"):
-                    return datetime.datetime.fromtimestamp(
-                        int(value), tz=datetime.timezone.utc
-                    )
+                    return datetime.datetime.fromtimestamp(int(value), tz=datetime.UTC)
                 if serial.get("gone", True):
                     return None
                 return value
@@ -560,7 +556,7 @@ class EnvoyRelayEntity(EnvoyDeviceEntity):
                 )
                 return {
                     "last_reported": datetime.datetime.fromtimestamp(
-                        int(value), tz=datetime.timezone.utc
+                        int(value), tz=datetime.UTC
                     )
                 }
         elif self.entity_description.key.startswith("relay_info_") and (
@@ -573,7 +569,7 @@ class EnvoyRelayEntity(EnvoyDeviceEntity):
             )
             return {
                 "last_reported": datetime.datetime.fromtimestamp(
-                    int(value), tz=datetime.timezone.utc
+                    int(value), tz=datetime.UTC
                 )
             }
 

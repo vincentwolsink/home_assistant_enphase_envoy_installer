@@ -172,7 +172,7 @@ class EnvoyInverterEntity(CoordinatorEntity, BinarySensorEntity):
                 )
                 return {
                     "last_reported": datetime.datetime.fromtimestamp(
-                        int(value), tz=datetime.timezone.utc
+                        int(value), tz=datetime.UTC
                     )
                 }
         except (ValueError, TypeError):
@@ -340,7 +340,7 @@ class EnvoyRelayEntity(EnvoyBinaryEntity):
         )
         return {
             "last_reported": datetime.datetime.fromtimestamp(
-                int(relay_info.get("last_rpt_date")), tz=datetime.timezone.utc
+                int(relay_info.get("last_rpt_date")), tz=datetime.UTC
             ),
             "reason_code": relay_info.get("reason_code"),
             "reason": relay_info.get("reason"),
