@@ -14,6 +14,7 @@ Features:
 - Individual device per Q-relay with relay status.
 - Individual device per battery with information available.
 - Production switch to turn on/off solar power production.
+- Production switch per inverter to turn on/off the production of a single microinverter.
 - Communication level sensors (optional).
 - 3 Phase CT readings.
 - "Realtime" updates of CT readings.
@@ -125,6 +126,7 @@ iguration.
 |Inverter xxx Power Conversion Error Seconds|sensor.inverter_xxx_power_conversion_error_seconds|s|
 |Inverter xxx Producing|binary_sensor.inverter_xxx_producing||
 |Inverter xxx Production|sensor.inverter_xxx_production|W|
+|Inverter xxx Production Switch ³|switch.inverter_xxx_production_switch||
 |Inverter xxx Temperature|sensor.inverter_xxx_temperature|°C|
 |Inverter xxx This Week's Energy Production|sensor.inverter_xxx_this_week_s_energy_production|Wh|
 |Inverter xxx Today's Energy Production|sensor.inverter_xxx_today_s_energy_production|Wh|
@@ -161,6 +163,8 @@ iguration.
 ¹ Optional. Enable via integration configuration.
 
 ² Only available on a metered Envoy with a CT. The DPEL endpoint requires an installer token, the entities are unavailable without it.
+
+³ Only available with an installer token. Every microinverter is polled separately for its power state, so this adds one request per microinverter to every update cycle.
 
 ## Installation
 

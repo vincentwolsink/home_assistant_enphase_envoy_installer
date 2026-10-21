@@ -93,6 +93,8 @@ class InverterSensorEntityDescription(SensorEntityDescription):
 
 
 def resolve_product_mapping(product_id):
+    if not product_id:
+        return None
     return PRODUCT_ID_MAPPING.get(product_id.rsplit("-", 1)[0])
 
 
@@ -801,6 +803,16 @@ SWITCHES = (
     SwitchEntityDescription(
         key="pvlimit_enable",
         name="PV Limit Enabled",
+        icon="mdi:solar-power",
+        device_class=SwitchDeviceClass.SWITCH,
+    ),
+)
+
+# Switches that are created for every microinverter.
+INVERTER_SWITCHES = (
+    SwitchEntityDescription(
+        key="inverter_production",
+        name="Production Switch",
         icon="mdi:solar-power",
         device_class=SwitchDeviceClass.SWITCH,
     ),
