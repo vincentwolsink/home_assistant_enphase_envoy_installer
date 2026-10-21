@@ -555,6 +555,47 @@ class TestDPEL:
         assert r.data.get("dpel_limit") == 0.0
         assert r.data.get("dpel_mode") == "Production"
 
+    def test_dpel_enabled_is_false_when_settings_are_not_reported(self):
+        # The Envoy only reports the dynamic_pel_settings once DPEL has been
+        # enabled, so a missing value means DPEL is not enabled.
+        r = self._setup()
+        r.data.data["endpoint_dpel"] = {
+            "filename": "site_settings",
+            "version": "00.00.01",
+        }
+        assert r.data.get("dpel_enabled") is False
+        assert r.data.get("dpel_limit") == 0.0
+        assert r.data.get("dpel_mode") == "Production"
+
+    def test_dpel_endpoint_is_still_polled_when_not_enabled(self):
+        # The endpoint has to be polled to detect that DPEL got enabled
+        # (also from the Envoy itself).
+        r = self._setup()
+        r.data.data["endpoint_dpel"] = {"dynamic_pel_settings": {"enable": False}}
+        r.data.initial_update_finished = True
+        r.data._required_endpoints = None
+
+        assert "endpoint_dpel" in r.data.required_endpoints
+
+
+class TestDpelAvailability:
+    """The DPEL controls are based on the detected Envoy model."""
+
+    def test_metered_with_ct_supports_dpel(self):
+        reader = make_reader()
+        reader.data = EnvoyMeteredWithCT(reader)
+        assert reader.supports_dpel is True
+
+    def test_metered_without_ct_does_not_support_dpel(self):
+        reader = make_reader()
+        reader.data = EnvoyMetered(reader)
+        assert reader.supports_dpel is False
+
+    def test_standard_does_not_support_dpel(self):
+        reader = make_reader()
+        reader.data = EnvoyStandard(reader)
+        assert reader.supports_dpel is False
+
 
 class TestSetDpel:
     def _setup(self):

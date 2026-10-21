@@ -29,7 +29,7 @@ async def async_setup_entry(
     reader = data[READER]
 
     entities = []
-    if coordinator.data.get("dpel_enabled") is not None:
+    if reader.supports_dpel:
         entities.append(
             EnvoyDpelSwitchEntity(
                 name,
@@ -209,6 +209,11 @@ class EnvoyDpelSwitchEntity(CoordinatorEntity, SwitchEntity):
     def is_on(self) -> bool:
         """Return the status of the requested attribute."""
         return self.coordinator.data.get("dpel_enabled")
+
+    @property
+    def available(self) -> bool:
+        """The DPEL endpoint is only readable with an installer token."""
+        return super().available and self.reader.endpoint_dpel is not None
 
     async def async_turn_on(self, **kwargs):
         """Turn the entity on."""

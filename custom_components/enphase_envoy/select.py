@@ -45,7 +45,7 @@ async def async_setup_entry(
             )
         )
 
-    if coordinator.data.get(DPEL_MODE_SELECT.key) is not None:
+    if reader.supports_dpel:
         entity_name = f"{name} {DPEL_MODE_SELECT.name}"
         entities.append(
             EnvoyDpelModeSelectEntity(
@@ -128,6 +128,11 @@ class EnvoyStorageModeSelectEntity(EnvoySelectEntity):
 
 
 class EnvoyDpelModeSelectEntity(EnvoySelectEntity):
+    @property
+    def available(self) -> bool:
+        """The DPEL endpoint is only readable with an installer token."""
+        return super().available and self.reader.endpoint_dpel is not None
+
     @property
     def current_option(self) -> str:
         """Return the status of the requested attribute."""

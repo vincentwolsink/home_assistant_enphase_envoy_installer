@@ -745,7 +745,12 @@ class EnvoyMeteredWithCT(EnvoyMetered):
     lifetime_batteries_charged_value = "endpoint_meters_readings.[?(@.measurementType == 'storage' and @.state == 'enabled')].actEnergyRcvd"
     lifetime_batteries_discharged_value = "endpoint_meters_readings.[?(@.measurementType == 'storage' and @.state == 'enabled')].actEnergyDlvd"
 
-    dpel_enabled_value = "endpoint_dpel.dynamic_pel_settings.enable"
+    @envoy_property(required_endpoint="endpoint_dpel")
+    def dpel_enabled(self):
+        # The Envoy only reports the DPEL settings once DPEL has been
+        # enabled, so a missing value means DPEL is not enabled.
+        value = self._resolve_path("endpoint_dpel.dynamic_pel_settings.enable")
+        return bool(value)
 
     @envoy_property(required_endpoint="endpoint_dpel")
     def dpel_limit(self):
@@ -1156,8 +1161,8 @@ class EnvoyReader:
         # allow a buffer so we can try and grab it sooner
         if use_buffer:
             exp_epoch -= self.token_refresh_buffer_seconds
-        exp_time = datetime.datetime.fromtimestamp(exp_epoch, tz=datetime.timezone.utc)
-        if datetime.datetime.now(tz=datetime.timezone.utc) < exp_time:
+        exp_time = datetime.datetime.fromtimestamp(exp_epoch, tz=datetime.UTC)
+        if datetime.datetime.now(tz=datetime.UTC) < exp_time:
             _LOGGER.debug("Token expires at: %s", exp_time)
             return False
         else:
@@ -1489,6 +1494,16 @@ class EnvoyReader:
     def is_metering_enabled(self):
         """Realtime metering is available when any CT type is installed."""
         return self.production_ct_enabled or self.consumption_ct_enabled
+
+    @property
+    def supports_dpel(self):
+        """DPEL (Dynamic PEL) is only available on a metered Envoy with a CT.
+
+        The Envoy only reports the DPEL values once DPEL has been enabled,
+        so the availability of the DPEL controls is based on the detected
+        Envoy model instead of the reported values.
+        """
+        return isinstance(self.data, EnvoyMeteredWithCT)
 
     async def detect_model(self):
         """Method to determine if the Envoy supports consumption values or only production."""
