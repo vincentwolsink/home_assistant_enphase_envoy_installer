@@ -49,6 +49,14 @@ ENVOY_ENDPOINTS = {
         "installer_required": True,
         "optional": True,
     },
+    "mod": {
+        # Device list of the Envoy. It contains the control eid of every
+        # device, which is needed to address them individually.
+        "url": "https://{}/ivp/mod",
+        "cache": 3600,
+        "installer_required": True,
+        "optional": True,
+    },
     "pdm_energy": {
         "url": "https://{}/ivp/pdm/energy",
         "cache": 0,
@@ -138,3 +146,7 @@ ENDPOINT_URL_INSTALLER_AGF_SET_PROFILE = "https://{}/installer/agf/set_profile.j
 ENDPOINT_URL_INSTALLER_AGF_UPLOAD_PROFILE = (
     "https://{}/installer/agf/upload_profile_package"
 )
+
+# Power mode of a single device. The eid is the control eid of the device,
+# which is listed on the /ivp/mod endpoint.
+ENDPOINT_URL_MOD_POWER = "https://{}/ivp/mod/{}/mode/power"

@@ -12,10 +12,13 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import (
     COORDINATOR,
     DOMAIN,
+    INVERTER_SWITCHES,
     NAME,
     READER,
     SWITCHES,
+    get_model_name,
 )
+from .helpers import via_device_kw
 
 
 async def async_setup_entry(
@@ -73,6 +76,26 @@ async def async_setup_entry(
                         reader,
                     )
                 )
+
+    # Every microinverter can be forced on/off individually. The power
+    # state is only known when the installer token is used.
+    for switch_description in INVERTER_SWITCHES:
+        for serial_number in coordinator.data.get("inverter_power") or {}:
+            device_name = f"Inverter {serial_number}"
+            entity_name = f"{device_name} {switch_description.name}"
+            entities.append(
+                EnvoyInverterSwitchEntity(
+                    switch_description,
+                    entity_name,
+                    device_name,
+                    serial_number,
+                    None,
+                    coordinator,
+                    reader,
+                    config_entry,
+                )
+            )
+
     async_add_entities(entities)
 
 
@@ -151,6 +174,90 @@ class EnvoyStorageSwitchEntity(EnvoySwitchEntity):
     async def async_turn_off(self, **kwargs):
         """Turn the entity off."""
         await self.reader.set_storage(self.entity_description.key[8:], False)
+        await self.coordinator.async_request_refresh()
+
+
+class EnvoyInverterSwitchEntity(EnvoySwitchEntity):
+    """Switch to force the production of a single microinverter on or off."""
+
+    def __init__(
+        self,
+        description,
+        name,
+        device_name,
+        device_serial_number,
+        serial_number,
+        coordinator,
+        reader,
+        config_entry,
+    ):
+        super().__init__(
+            description,
+            name,
+            device_name,
+            device_serial_number,
+            serial_number,
+            coordinator,
+            reader,
+        )
+        self._config_entry = config_entry
+
+    @property
+    def _inverter(self):
+        """Return the known power state of this microinverter."""
+        return (self.coordinator.data.get("inverter_power") or {}).get(
+            self._device_serial_number
+        )
+
+    @property
+    def is_on(self) -> bool:
+        """Return the status of the requested attribute."""
+        inverter = self._inverter
+        if inverter is None:
+            return None
+        return inverter.get("power_on")
+
+    @property
+    def available(self) -> bool:
+        """The power state is only known with an installer token."""
+        return super().available and self._inverter is not None
+
+    @property
+    def device_info(self) -> DeviceInfo | None:
+        """Return the device_info of the device."""
+        if not self._device_serial_number:
+            return None
+
+        device_info_kw = via_device_kw(self.hass, self._config_entry)
+
+        inverter_info = self.coordinator.data.get("inverter_info") or {}
+        if inverter_info.get(self._device_serial_number):
+            device_info_kw["sw_version"] = inverter_info.get(
+                self._device_serial_number
+            ).get("img_pnum_running")
+            device_info_kw["hw_version"] = inverter_info.get(
+                self._device_serial_number
+            ).get("part_num")
+
+        model_name = get_model_name("Inverter", device_info_kw.get("hw_version"))
+
+        return DeviceInfo(
+            identifiers={(DOMAIN, str(self._device_serial_number))},
+            manufacturer="Enphase",
+            model=model_name,
+            name=self._device_name,
+            serial_number=str(self._device_serial_number),
+            **device_info_kw,
+        )
+
+    async def async_turn_on(self, **kwargs):
+        """Turn the entity on."""
+        await self.reader.set_inverter_power(self._device_serial_number, True)
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs):
+        """Turn the entity off."""
+        await self.reader.set_inverter_power(self._device_serial_number, False)
         await self.coordinator.async_request_refresh()
 
 

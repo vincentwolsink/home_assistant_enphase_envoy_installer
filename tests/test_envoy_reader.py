@@ -59,6 +59,7 @@ parse_devstatus = envoy_reader_mod.parse_devstatus
 parse_devicedata = envoy_reader_mod.parse_devicedata
 merge_metersdata = envoy_reader_mod.merge_metersdata
 FileData = envoy_reader_mod.FileData
+EnvoyError = envoy_reader_mod.EnvoyError
 ENVOY_MODEL_M = envoy_reader_mod.ENVOY_MODEL_M
 ENVOY_MODEL_S = envoy_reader_mod.ENVOY_MODEL_S
 EnlightenError = envoy_reader_mod.EnlightenError
@@ -778,6 +779,151 @@ class TestSetPvLimit:
         await r.set_pvlimit(enable=False, pct=10)
 
         assert r.uri_registry["endpoint_pvlimit"]["last_fetch"] == 0
+
+
+# ===========================================================================
+# Per inverter power (production) control
+# ===========================================================================
+
+
+class FakeResponse:
+    def __init__(self, status_code=200, payload=None):
+        self.status_code = status_code
+        self._payload = payload if payload is not None else {}
+
+    def json(self):
+        return self._payload
+
+
+class TestInverterPower:
+    def _setup(self, token_type="installer"):
+        r = make_reader(token_type=token_type)
+        r.data = EnvoyMeteredWithCT(r)
+        load_all(r)
+        return r
+
+    def test_ctrl_eids_only_contain_microinverters(self):
+        r = self._setup()
+        ctrl_eids = r.data.get("inverter_ctrl_eids")
+        assert set(ctrl_eids) == {
+            "999999913010",
+            "999999913012",
+            "999999912750",
+        }
+        assert ctrl_eids["999999913010"]["ctrl_eid"] == 1099999312
+
+    @pytest.mark.asyncio
+    async def test_update_inverter_power_fetches_every_microinverter(self):
+        r = self._setup()
+        requested = []
+
+        async def fake_fetch(url, **kwargs):
+            requested.append(url)
+            return FakeResponse(payload={"powerForcedOff": False})
+
+        r._async_fetch_with_retry = fake_fetch
+
+        await r.update_inverter_power()
+
+        assert sorted(requested) == [
+            "https://192.168.1.1/ivp/mod/1099999312/mode/power",
+            "https://192.168.1.1/ivp/mod/1099999314/mode/power",
+            "https://192.168.1.1/ivp/mod/1099999316/mode/power",
+        ]
+        assert r.inverter_power["999999913010"]["power_on"] is True
+        assert r.inverter_power["999999913010"]["power_forced_off"] is False
+        assert r.all_values["inverter_power"]["999999913010"]["power_on"] is True
+
+    @pytest.mark.asyncio
+    async def test_update_inverter_power_reports_forced_off(self):
+        r = self._setup()
+
+        async def fake_fetch(url, **kwargs):
+            return FakeResponse(payload={"powerForcedOff": True})
+
+        r._async_fetch_with_retry = fake_fetch
+
+        await r.update_inverter_power()
+
+        assert r.inverter_power["999999913010"]["power_on"] is False
+        assert r.inverter_power["999999913010"]["power_forced_off"] is True
+
+    @pytest.mark.asyncio
+    async def test_update_inverter_power_needs_installer_token(self):
+        r = self._setup(token_type="owner")
+        r._async_fetch_with_retry = AsyncMock()
+
+        await r.update_inverter_power()
+
+        r._async_fetch_with_retry.assert_not_awaited()
+        assert r.inverter_power == {}
+
+    @pytest.mark.asyncio
+    async def test_update_inverter_power_keeps_previous_state_on_failure(self):
+        r = self._setup()
+        r.inverter_power = {
+            "999999913010": {
+                "ctrl_eid": 1099999312,
+                "power_forced_off": False,
+                "power_on": True,
+            }
+        }
+
+        async def fake_fetch(url, **kwargs):
+            raise httpx.ConnectError("connection failed")
+
+        r._async_fetch_with_retry = fake_fetch
+
+        await r.update_inverter_power()
+
+        assert r.inverter_power["999999913010"]["power_on"] is True
+
+    @pytest.mark.asyncio
+    async def test_set_inverter_power_off(self):
+        r = self._setup()
+        r.inverter_power = {
+            "999999913010": {
+                "ctrl_eid": 1099999312,
+                "power_forced_off": False,
+                "power_on": True,
+            }
+        }
+        r._async_put = AsyncMock()
+
+        await r.set_inverter_power("999999913010", False)
+
+        url, kwargs = r._async_put.call_args
+        assert url[0] == "https://192.168.1.1/ivp/mod/1099999312/mode/power"
+        assert kwargs["data"] == {"length": 1, "arr": [1]}
+        assert r.inverter_power["999999913010"]["power_on"] is False
+
+    @pytest.mark.asyncio
+    async def test_set_inverter_power_on(self):
+        r = self._setup()
+        r.inverter_power = {
+            "999999913010": {
+                "ctrl_eid": 1099999312,
+                "power_forced_off": True,
+                "power_on": False,
+            }
+        }
+        r._async_put = AsyncMock()
+
+        await r.set_inverter_power("999999913010", True)
+
+        _, kwargs = r._async_put.call_args
+        assert kwargs["data"] == {"length": 1, "arr": [0]}
+        assert r.inverter_power["999999913010"]["power_on"] is True
+
+    @pytest.mark.asyncio
+    async def test_set_inverter_power_unknown_inverter(self):
+        r = self._setup()
+        r._async_put = AsyncMock()
+
+        with pytest.raises(EnvoyError):
+            await r.set_inverter_power("unknown", True)
+
+        r._async_put.assert_not_awaited()
 
 
 # ===========================================================================
