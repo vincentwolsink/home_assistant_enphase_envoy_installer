@@ -126,7 +126,7 @@ iguration.
 |Inverter xxx Power Conversion Error Seconds|sensor.inverter_xxx_power_conversion_error_seconds|s|
 |Inverter xxx Producing|binary_sensor.inverter_xxx_producing||
 |Inverter xxx Production|sensor.inverter_xxx_production|W|
-|Inverter xxx Production Switch ³|switch.inverter_xxx_production_switch||
+|Inverter xxx Production ³|switch.inverter_xxx_production||
 |Inverter xxx Temperature|sensor.inverter_xxx_temperature|°C|
 |Inverter xxx This Week's Energy Production|sensor.inverter_xxx_this_week_s_energy_production|Wh|
 |Inverter xxx Today's Energy Production|sensor.inverter_xxx_today_s_energy_production|Wh|
