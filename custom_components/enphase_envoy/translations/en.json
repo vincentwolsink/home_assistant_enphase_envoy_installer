@@ -58,11 +58,13 @@
               "disable_negative_production": "Disable negative production values",
               "realtime_update_throttle": "Minimum time between realtime entity updates [s]",
               "enable_additional_metrics": "Enable additional metrics like total amps, frequency, apparent and reactive power and power factor."
+            },
+            "data_description": {
+              "realtime_update_throttle": "Only applies to realtime updates (to preventing any overload on the system)"
             }
           }
         },
         "data_description": {
-          "realtime_update_throttle": "Only applies to realtime updates (to preventing any overload on the system)",
           "time_between_update": "This interval only applies to the polling interval (not on the live updates)"
         }
       }
