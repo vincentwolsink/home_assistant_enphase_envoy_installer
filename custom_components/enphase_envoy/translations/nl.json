@@ -43,17 +43,23 @@
       "user": {
         "title": "Envoy opties",
         "data": {
-          "enable_realtime_updates": "[Envoy-S Metered] Gebruik real-time updates",
-          "realtime_update_throttle": "Minimale tijd tussen real-time updates [s]",
-          "disable_negative_production": "[Envoy-S Metered] Voorkom negatieve productie waardes",
           "time_between_update": "Minimum tijd tussen entity updates [s]",
           "getdata_timeout": "Maximum tijd voor het ophalen van data vanaf envoy [s]",
-          "enable_additional_metrics": "[Envoy-S Metered] Extra metrics inschakelen, zoals total amps, frequency, apparent en reactive power en power factor.",
-          "disable_installer_account_use": "Haal geen data op die een installateur of DHZ enphase account vereisen",
           "enable_pcu_comm_check": "Powerline communication level sensors inschakelen (langzaam)",
           "devstatus_device_data": "Gebruik alternatief endpoint 'devstatus' (alleen installer account) voor apparaat sensoren",
           "lifetime_production_correction": "Correctie van lifetime production waarde (Wh)",
           "disabled_endpoints": "[Geavanceerd] Uitgeschakelde Envoy endpoints"
+        },
+        "sections": {
+          "metered_options": {
+            "name": "Envoy Metered (with CT) only",
+            "data": {
+              "enable_realtime_updates": "Gebruik real-time updates",
+              "disable_negative_production": "Voorkom negatieve productie waardes",
+              "realtime_update_throttle": "Minimale tijd tussen real-time updates [s]",
+              "enable_additional_metrics": "Extra metrics inschakelen, zoals total amps, frequency, apparent and reactive power en power factor."
+            }
+          }
         },
         "data_description": {
           "realtime_update_throttle": "Dit interval is van toepassing op real-time updates (om eventuele overload met updates te voorkomen)",
