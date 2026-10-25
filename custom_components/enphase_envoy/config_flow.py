@@ -301,7 +301,17 @@ class EnvoyOptionsFlowHandler(OptionsFlowWithReload):
         """Handle a flow initialized by the user."""
 
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+            data = user_input.copy()
+            metered_options = data.pop("metered_options", {})
+            for key in (
+                "enable_realtime_updates",
+                "disable_negative_production",
+                "realtime_update_throttle",
+                ENABLE_ADDITIONAL_METRICS,
+            ):
+                if key in metered_options:
+                    data[key] = metered_options[key]
+            return self.async_create_entry(title="", data=data)
 
         optional_endpoints = {
             f"endpoint_{key}": key
@@ -327,26 +337,38 @@ class EnvoyOptionsFlowHandler(OptionsFlowWithReload):
                     "getdata_timeout", DEFAULT_GETDATA_TIMEOUT
                 ),
             ): vol.All(vol.Coerce(int), vol.Range(min=30)),
-            vol.Optional(
-                "disable_negative_production",
-                default=self.config_entry.options.get(
-                    "disable_negative_production", False
+            vol.Optional("metered_options"): section(
+                vol.Schema(
+                    {
+                        vol.Optional(
+                            "enable_realtime_updates",
+                            default=self.config_entry.options.get(
+                                "enable_realtime_updates", False
+                            ),
+                        ): bool,
+                        vol.Optional(
+                            "disable_negative_production",
+                            default=self.config_entry.options.get(
+                                "disable_negative_production", False
+                            ),
+                        ): bool,
+                        vol.Optional(
+                            "realtime_update_throttle",
+                            default=self.config_entry.options.get(
+                                "realtime_update_throttle",
+                                DEFAULT_REALTIME_UPDATE_THROTTLE,
+                            ),
+                        ): vol.All(vol.Coerce(int), vol.Range(min=0)),
+                        vol.Optional(
+                            ENABLE_ADDITIONAL_METRICS,
+                            default=self.config_entry.options.get(
+                                ENABLE_ADDITIONAL_METRICS, False
+                            ),
+                        ): bool,
+                    }
                 ),
-            ): bool,
-            vol.Optional(
-                "enable_realtime_updates",
-                default=self.config_entry.options.get("enable_realtime_updates", False),
-            ): bool,
-            vol.Optional(
-                "realtime_update_throttle",
-                default=self.config_entry.options.get(
-                    "realtime_update_throttle", DEFAULT_REALTIME_UPDATE_THROTTLE
-                ),
-            ): vol.All(vol.Coerce(int), vol.Range(min=0)),
-            vol.Optional(
-                ENABLE_ADDITIONAL_METRICS,
-                default=self.config_entry.options.get(ENABLE_ADDITIONAL_METRICS, False),
-            ): bool,
+                {"collapsed": False},
+            ),
             vol.Optional(
                 "enable_pcu_comm_check",
                 default=self.config_entry.options.get("enable_pcu_comm_check", False),
