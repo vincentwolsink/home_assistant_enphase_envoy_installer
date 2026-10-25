@@ -1,0 +1,65 @@
+{
+  "devlist": [
+    {
+      "id": {
+        "devtype": "pcu",
+        "dev_eid": 553999984,
+        "ctrl_eid": 1099999312,
+        "devidx": 1,
+        "partnum": "800-01736-r02",
+        "ic_partnum": "480-00031-r01-v00.0c.01",
+        "serialnum": "999999913010",
+        "l2protover": 4
+      }
+    },
+    {
+      "id": {
+        "devtype": "pcu",
+        "dev_eid": 553999986,
+        "ctrl_eid": 1099999314,
+        "devidx": 2,
+        "partnum": "800-01736-r02",
+        "ic_partnum": "480-00031-r01-v00.0c.01",
+        "serialnum": "999999913012",
+        "l2protover": 4
+      }
+    },
+    {
+      "id": {
+        "devtype": "pcu",
+        "dev_eid": 553999988,
+        "ctrl_eid": 1099999316,
+        "devidx": 3,
+        "partnum": "800-01736-r02",
+        "ic_partnum": "480-00031-r01-v00.0c.01",
+        "serialnum": "999999912750",
+        "l2protover": 4
+      }
+    },
+    {
+      "id": {
+        "devtype": "eim",
+        "dev_eid": 553999984,
+        "ctrl_eid": 603980032,
+        "devidx": 0,
+        "partnum": "800-00656-r02",
+        "ic_partnum": "480-00030-r01-v00.2c.11",
+        "serialnum": "999999900879",
+        "l2protover": 4
+      }
+    },
+    {
+      "id": {
+        "devtype": "nsrb",
+        "dev_eid": 553999990,
+        "ctrl_eid": 1099999320,
+        "devidx": 1,
+        "partnum": "800-00598-r02",
+        "ic_partnum": "480-00034-r01-v00.0c.01",
+        "serialnum": "999999900880",
+        "l2protover": 4
+      }
+    }
+  ],
+  "count": 5
+}

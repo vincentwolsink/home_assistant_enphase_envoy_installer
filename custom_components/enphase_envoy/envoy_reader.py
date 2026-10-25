@@ -18,6 +18,7 @@ from jsonpath import JSONPath
 from .envoy_endpoints import (
     ENDPOINT_URL_INSTALLER_AGF_SET_PROFILE,
     ENDPOINT_URL_INSTALLER_AGF_UPLOAD_PROFILE,
+    ENDPOINT_URL_MOD_POWER,
     ENDPOINT_URL_STREAM,
     ENVOY_ENDPOINTS,
 )
@@ -515,6 +516,27 @@ class EnvoyStandard(EnvoyData):
         if force_off is not None:
             return not force_off
 
+    @envoy_property(required_endpoint="endpoint_mod")
+    def inverter_ctrl_eids(self):
+        """Return the control eids of the microinverters, keyed by serial number.
+
+        The Envoy lists all devices it knows on the /ivp/mod endpoint. Every
+        device has a control eid, which is needed to address that device
+        individually.
+        """
+        return self._path_to_dict(
+            "endpoint_mod.devlist[?(@.id.devtype=='pcu')].id", "serialnum"
+        )
+
+    @envoy_property()
+    def inverter_power(self):
+        """Return the power state of the microinverters, keyed by serial number.
+
+        The Envoy reports the power mode per device, so this is not read from
+        an endpoint, but collected by the reader (see update_inverter_power).
+        """
+        return self.reader.inverter_power
+
     @envoy_property(required_endpoint="endpoint_ensemble_inventory")
     def grid_status(self):
         grid_status = self._resolve_path(
@@ -827,6 +849,9 @@ class EnvoyReader:
         self.disabled_endpoints = disabled_endpoints or []
         self.lifetime_production_correction = lifetime_production_correction
         self.device_data_endpoint = device_data_endpoint
+
+        # Power state of the microinverters, keyed by serial number.
+        self.inverter_power = {}
 
         self.uri_registry = {}
         for key, endpoint in ENVOY_ENDPOINTS.items():
@@ -1471,6 +1496,10 @@ class EnvoyReader:
         # Fetch inverter status and stuff, raise exception if unauthorized.
         await self.update_endpoints()  # fetch all remaining endpoints
 
+        # The power state of the microinverters is reported per device,
+        # so it needs a request per microinverter.
+        await self.update_inverter_power()
+
         # Set boolean that initial update has completed. This will cause
         # the dataclass to all None results, and possibly discarding some
         # endpoints to be polled.
@@ -1626,6 +1655,82 @@ class EnvoyReader:
             )
             # Make sure the next poll will update the endpoint.
             self._clear_endpoint_cache("endpoint_production_power")
+
+    async def _fetch_inverter_power(self, serial_number, ctrl_eid):
+        """Fetch the power mode of a single microinverter."""
+        formatted_url = ENDPOINT_URL_MOD_POWER.format(self.host, ctrl_eid)
+        response = await self._async_fetch_with_retry(formatted_url)
+        if response.status_code != 200:
+            raise EnvoyError(
+                f"Failed fetching power state of inverter {serial_number}: "
+                f"{response.status_code}"
+            )
+
+        power_forced_off = bool(response.json().get("powerForcedOff"))
+        return {
+            "ctrl_eid": ctrl_eid,
+            "power_forced_off": power_forced_off,
+            "power_on": not power_forced_off,
+        }
+
+    async def update_inverter_power(self):
+        """Update the power state of every microinverter.
+
+        The Envoy reports the power mode per device, so every microinverter
+        needs its own request. The control eids of the microinverters are
+        taken from the device list on the /ivp/mod endpoint.
+        """
+        if self.token_type != "installer" or self.disable_installer_account_use:
+            return
+
+        ctrl_eids = self.data.get("inverter_ctrl_eids") or {}
+        if not ctrl_eids:
+            return
+
+        results = await asyncio.gather(
+            *(
+                self._fetch_inverter_power(serial_number, device.get("ctrl_eid"))
+                for serial_number, device in ctrl_eids.items()
+            ),
+            return_exceptions=True,
+        )
+
+        inverter_power = {}
+        for (serial_number, _), result in zip(ctrl_eids.items(), results):
+            if isinstance(result, Exception):
+                _LOGGER.warning(
+                    "Error fetching power state of inverter %s: %s",
+                    serial_number,
+                    result,
+                )
+                # Keep the previous state, so a temporary failure does not
+                # make the switch unavailable.
+                previous = self.inverter_power.get(serial_number)
+                if previous:
+                    inverter_power[serial_number] = previous
+                continue
+
+            inverter_power[serial_number] = result
+
+        self.inverter_power = inverter_power
+
+    async def set_inverter_power(self, serial_number, power_on):
+        """Force the production of a single microinverter on or off."""
+        inverter = self.inverter_power.get(serial_number)
+        if not inverter:
+            raise EnvoyError(f"Unknown inverter {serial_number}")
+
+        formatted_url = ENDPOINT_URL_MOD_POWER.format(self.host, inverter["ctrl_eid"])
+        power_forced_off = 0 if power_on else 1
+        await self._async_put(
+            formatted_url, data={"length": 1, "arr": [power_forced_off]}
+        )
+
+        # Update the state right away, so the switch reflects the change
+        # without waiting for the next poll.
+        inverter["power_forced_off"] = not power_on
+        inverter["power_on"] = power_on
+        self.inverter_power[serial_number] = inverter
 
     def default_dpel_slew_rate(self):
         """Recommended DPEL slew rate: 0.5% of installed AC capacity per second.

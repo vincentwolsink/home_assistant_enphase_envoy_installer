@@ -14,6 +14,7 @@ Features:
 - Individual device per Q-relay with relay status.
 - Individual device per battery with information available.
 - Production switch to turn on/off solar power production.
+- Production switch per inverter to turn on/off the production of a single microinverter.
 - Communication level sensors (optional).
 - 3 Phase CT readings.
 - "Realtime" updates of CT readings.
@@ -62,9 +63,9 @@ iguration.
 |Envoy xxx Current Voltage L1|sensor.envoy_xxx_current_voltage_l1|V|
 |Envoy xxx Current Voltage L2|sensor.envoy_xxx_current_voltage_l2|V|
 |Envoy xxx Current Voltage L3|sensor.envoy_xxx_current_voltage_l3|V|
-|Envoy xxx DPEL ²|switch.envoy_xxx_dpel_enabled|On / Off|
-|Envoy xxx DPEL Limit ²|number.envoy_xxx_dpel_limit|W|
-|Envoy xxx DPEL Mode ²|select.envoy_xxx_dpel_mode|Production / Export|
+|Envoy xxx DPEL|switch.envoy_xxx_dpel_enabled|On / Off|
+|Envoy xxx DPEL Limit|number.envoy_xxx_dpel_limit|W|
+|Envoy xxx DPEL Mode|select.envoy_xxx_dpel_mode|Production / Export|
 |Envoy xxx Frequency L1 ¹|sensor.envoy_xxx_frequency_l1|Hz|
 |Envoy xxx Frequency L2 ¹|sensor.envoy_xxx_frequency_l2|Hz|
 |Envoy xxx Frequency L3 ¹|sensor.envoy_xxx_frequency_l3|Hz|
@@ -125,6 +126,7 @@ iguration.
 |Inverter xxx Power Conversion Error Seconds|sensor.inverter_xxx_power_conversion_error_seconds|s|
 |Inverter xxx Producing|binary_sensor.inverter_xxx_producing||
 |Inverter xxx Production|sensor.inverter_xxx_production|W|
+|Inverter xxx Production|switch.inverter_xxx_production||
 |Inverter xxx Temperature|sensor.inverter_xxx_temperature|°C|
 |Inverter xxx This Week's Energy Production|sensor.inverter_xxx_this_week_s_energy_production|Wh|
 |Inverter xxx Today's Energy Production|sensor.inverter_xxx_today_s_energy_production|Wh|
@@ -159,8 +161,6 @@ iguration.
 |Relay xxx Voltage L3|sensor.relay_xxx_voltage_l3|V|
 
 ¹ Optional. Enable via integration configuration.
-
-² Only available on a metered Envoy with a CT. The DPEL endpoint requires an installer token, the entities are unavailable without it.
 
 ## Installation
 

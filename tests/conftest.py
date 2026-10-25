@@ -58,6 +58,12 @@ ENDPOINTS = {
         "installer_required": True,
         "optional": True,
     },
+    "mod": {
+        "url": os.path.join(TEST_DATA_DIR, "endpoint_mod.json"),
+        "cache": 3600,
+        "installer_required": True,
+        "optional": True,
+    },
     "pdm_energy": {
         "url": os.path.join(TEST_DATA_DIR, "endpoint_pdm_energy.json"),
         "cache": 0,
