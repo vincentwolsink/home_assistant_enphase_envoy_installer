@@ -9,6 +9,6 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/vincentwolsink/home_assistant_enphase_envoy_installer/issues",
   "requirements": ["xmltodict", "jsonpath-python"],
-  "version": "0.10.2",
+  "version": "0.11.0",
   "zeroconf": ["_enphase-envoy._tcp.local."]
 }
